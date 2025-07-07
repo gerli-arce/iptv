@@ -13,14 +13,21 @@
             box-sizing: border-box;
         }
 
+        html, body {
+            overflow-x: hidden;
+            max-width: 100vw;
+        }
+
         body {
             font-family: 'Inter', sans-serif;
             background: #0a0a0a;
             color: #ffffff;
-            overflow-x: hidden;
+            overflow-x: hidden; /* Prevenir scroll horizontal */
             min-height: 100vh;
             position: relative;
             line-height: 1.6;
+            width: 100%;
+            max-width: 100vw;
         }
 
         /* Minimal grid overlay */
@@ -272,7 +279,7 @@
         .video-container video {
             width: 100%;
             height: auto;
-            max-height: 580px; /* Altura máxima para videos de teléfono */
+            max-height: 280px; /* Altura máxima para videos de teléfono */
             display: block;
             object-fit: contain; /* Mantiene proporción sin recortar */
         }
@@ -394,6 +401,8 @@
             max-width: 1200px;
             margin: 0 auto;
             position: relative;
+            width: 100%;
+            overflow-x: hidden;
         }
 
         .logo-container {
@@ -423,6 +432,8 @@
             letter-spacing: 2px;
             margin-bottom: 0.5rem;
             text-transform: uppercase;
+            word-break: break-word;
+            max-width: 100%;
         }
 
         .tagline {
@@ -442,6 +453,8 @@
             padding: 0 1rem;
             position: relative;
             z-index: 2;
+            width: 100%;
+            overflow-x: hidden;
         }
 
         /* Clean Hero section */
@@ -951,142 +964,151 @@
                 align-items: center;
                 gap: 1rem;
             }
+
+            .video-container {
+                max-width: 450px;
+            }
+
+            .video-container video {
+                max-height: 250px;
+            }
         }
 
         @media (max-width: 768px) {
+            html, body {
+                overflow-x: hidden !important;
+                max-width: 100vw !important;
+            }
+            
+            * {
+                max-width: 100vw;
+                box-sizing: border-box;
+            }
+            
             .header-content {
                 flex-direction: column;
                 gap: 2rem;
-            }
-            
-            .logo-image {
-                width: 100px;
+                padding: 0 1rem;
+                width: 100%;
             }
             
             .logo-text {
                 font-size: 2rem;
-            }
-            
-            .brand-text {
                 text-align: center;
+                word-break: break-word;
             }
             
             .hero h1 {
                 font-size: 2rem;
+                word-break: break-word;
+                text-align: center;
             }
             
-            .hero p {
-                font-size: 1rem;
-            }
-            
-            .downloads {
-                padding: 2rem 1rem;
-            }
-            
-            .download-btn {
-                min-width: 180px;
-                padding: 0.8rem 1.5rem;
-                font-size: 0.8rem;
-            }
-            
-            .floating-buttons {
-                bottom: 20px;
-                right: 20px;
-                flex-direction: column;
-                gap: 8px;
-            }
-            
-            .whatsapp-float, .manual-float {
-                height: 48px;
-            }
-            
-            .manual-float {
-                font-size: 10px;
-                min-width: 70px;
-                padding: 0 12px;
-            }
-            
-            .whatsapp-float {
-                width: 48px;
-            }
-            
-            .whatsapp-icon {
-                width: 24px;
-                height: 24px;
-            }
-            
-            .modal-content {
-                width: 95%;
-                margin: 2% auto;
-            }
-            
-            .modal-body {
-                padding: 1rem;
-            }
-
-            .auto-open-indicator {
-                top: 10px;
-                right: 10px;
-                font-size: 0.7rem;
-                padding: 0.3rem 0.8rem;
-            }
-
-            .video-container {
-                max-width: 100%;
-            }
-
-            .video-container video {
-                max-height: 200px; /* Aún más pequeño en móviles */
-            }
-
-            .video-placeholder {
-                height: 150px;
+            .container {
+                padding: 0 0.5rem;
+                width: 100%;
+                overflow-x: hidden;
             }
         }
 
         @media (max-width: 480px) {
+            html, body {
+                overflow-x: hidden !important;
+                max-width: 100vw !important;
+                position: relative;
+            }
+            
+            * {
+                max-width: 100vw !important;
+                box-sizing: border-box !important;
+            }
+            
             .container {
                 padding: 0 0.5rem;
-            }
-            
-            .hero {
-                padding: 2rem 0;
-            }
-            
-            .hero h1 {
-                font-size: 1.5rem;
+                width: 100%;
+                max-width: 100vw;
+                overflow-x: hidden;
             }
             
             .logo-text {
                 font-size: 1.5rem;
+                text-align: center;
+                word-break: break-word;
+                max-width: 100%;
             }
             
-            .tagline {
-                font-size: 0.8rem;
-            }
-            
-            .iptv-info, .downloads {
-                padding: 2rem 1rem;
-            }
-            
-            .plan-card, .feature-item, .testimonial {
-                padding: 1.5rem;
-            }
-            
-            .floating-buttons {
-                bottom: 16px;
-                right: 16px;
-            }
-
-            .video-container video {
-                max-height: 180px; /* Muy compacto en pantallas pequeñas */
-            }
-
-            .video-placeholder {
-                height: 120px;
-                font-size: 0.9rem;
+            .hero h1 {
+                font-size: 1.5rem;
+                word-break: break-word;
+                text-align: center;
+                max-width: 100%;
             }
         }
+
+/* Extra small phones */
+@media (max-width: 360px) {
+    .modal-content {
+        width: 100%;
+        margin: 0;
+        border-radius: 0;
+        max-height: 100vh;
+    }
+
+    .modal-body {
+        padding: 0.8rem;
+        max-height: calc(100vh - 50px);
+    }
+
+    .modal-header {
+        padding: 0.6rem 0.8rem;
+    }
+
+    .video-container video {
+        max-height: 120px;
+    }
+
+    .video-placeholder {
+        height: 80px;
+        font-size: 0.7rem;
+    }
+
+    .video-section {
+        padding: 0.8rem;
+    }
+
+    .manual-section {
+        margin-bottom: 1.5rem;
+    }
+
+    .manual-section h3 {
+        font-size: 0.9rem;
+        margin-bottom: 0.8rem;
+    }
+
+    .manual-section p, .manual-section li {
+        font-size: 0.8rem;
+        margin-bottom: 0.6rem;
+    }
+}
+
+/* Prevenir scroll horizontal en todos los elementos */
+* {
+    box-sizing: border-box;
+}
+
+.animate-slide-left, .animate-slide-right {
+    max-width: 100vw;
+    overflow: hidden;
+}
+
+/* Asegurar que las animaciones no causen overflow */
+.animate-slide-left {
+    transform: translateX(-30px); /* Reducido de -50px */
+}
+
+.animate-slide-right {
+    transform: translateX(30px); /* Reducido de 50px */
+}
     </style>
 </head>
 <body>
