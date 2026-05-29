@@ -140,4 +140,4 @@ export const TESTIMONIALS = {
 };
 
 export const FOOTER_TEXT =
-  "© 2024 FASTNET TV. Todos los derechos reservados. | Servicio IPTV Premium con Películas y Series";
+  "© 2026 FASTNET TV. Todos los derechos reservados. | Servicio IPTV Premium con Películas y Series";
