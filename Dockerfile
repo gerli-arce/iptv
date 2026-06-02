@@ -12,7 +12,8 @@ RUN apt-get update \
         unzip \
         libzip-dev \
         zlib1g-dev \
-    && docker-php-ext-install -j"$(nproc)" pcntl zip \
+        libicu-dev \
+    && docker-php-ext-install -j"$(nproc)" pcntl zip intl \
     && rm -rf /var/lib/apt/lists/*
 
 COPY composer.json composer.lock ./
