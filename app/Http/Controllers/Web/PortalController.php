@@ -475,6 +475,8 @@ class PortalController extends Controller
             abort(403);
         }
 
+        session()->save();
+
         if (str_contains(strtolower($remoteUrl), '.m3u8')) {
             $playlistResponse = Http::timeout(30)->get($remoteUrl);
             abort_unless($playlistResponse->successful(), 502);
@@ -484,28 +486,52 @@ class PortalController extends Controller
             return response($playlist, 200, [
                 'Content-Type' => 'application/vnd.apple.mpegurl',
                 'Cache-Control' => 'no-store, no-cache, must-revalidate',
+                'X-Accel-Buffering' => 'no',
             ]);
         }
 
-        $streamResponse = Http::withOptions(['stream' => true])->timeout(120)->get($remoteUrl);
+        $requestHeaders = [];
+        if ($request->header('Range')) {
+            $requestHeaders['Range'] = $request->header('Range');
+        }
+
+        set_time_limit(0);
+
+        $streamResponse = Http::withHeaders($requestHeaders)
+            ->withOptions([
+                'stream' => true,
+                'read_timeout' => 30,
+            ])
+            ->timeout(0)
+            ->get($remoteUrl);
         abort_unless($streamResponse->successful(), 502);
 
         $body = $streamResponse->toPsrResponse()->getBody();
+        $status = $streamResponse->status();
         $headers = [
             'Content-Type' => $streamResponse->header('Content-Type', 'application/octet-stream'),
             'Cache-Control' => 'no-store, no-cache, must-revalidate',
+            'Accept-Ranges' => $streamResponse->header('Accept-Ranges', 'bytes'),
+            'X-Accel-Buffering' => 'no',
         ];
 
         if ($streamResponse->header('Content-Length')) {
             $headers['Content-Length'] = $streamResponse->header('Content-Length');
         }
 
+        if ($streamResponse->header('Content-Range')) {
+            $headers['Content-Range'] = $streamResponse->header('Content-Range');
+        }
+
         return response()->stream(function () use ($body) {
             while (! $body->eof()) {
-                echo $body->read(8192);
+                echo $body->read(65536);
+                if (ob_get_level() > 0) {
+                    ob_flush();
+                }
                 flush();
             }
-        }, 200, $headers);
+        }, $status, $headers);
     }
 
     public function apiMovies(): JsonResponse
@@ -538,9 +564,9 @@ class PortalController extends Controller
 
     private function buildStreamProxyUrl(string $remoteUrl): string
     {
-        return route('stream.proxy', [
-            'u' => rtrim(strtr(base64_encode($remoteUrl), '+/', '-_'), '='),
-        ]);
+        $encodedUrl = rtrim(strtr(base64_encode($remoteUrl), '+/', '-_'), '=');
+
+        return "/stream?u={$encodedUrl}";
     }
 
     private function isAllowedStreamUrl(string $remoteUrl, string $serverUrl): bool
@@ -564,24 +590,44 @@ class PortalController extends Controller
         foreach ($lines as $line) {
             $trimmed = trim($line);
 
-            if ($trimmed === '' || str_starts_with($trimmed, '#')) {
+            if ($trimmed === '') {
                 $rewritten[] = $line;
                 continue;
             }
 
-            if (preg_match('#^https?://#i', $trimmed)) {
-                $absoluteUrl = $trimmed;
-            } elseif (str_starts_with($trimmed, '/')) {
-                $serverBase = rtrim($serverUrl, '/');
-                $absoluteUrl = $serverBase . $trimmed;
-            } else {
-                $absoluteUrl = $baseUrl . ltrim($trimmed, '/');
+            if (str_starts_with($trimmed, '#')) {
+                $rewritten[] = $this->rewriteM3u8TagUris($line, $baseUrl, $serverUrl);
+                continue;
             }
 
-            $rewritten[] = $this->buildStreamProxyUrl($absoluteUrl);
+            $rewritten[] = $this->buildStreamProxyUrl(
+                $this->resolveStreamUrl($trimmed, $baseUrl, $serverUrl)
+            );
         }
 
         return implode("\n", $rewritten);
+    }
+
+    private function rewriteM3u8TagUris(string $line, string $baseUrl, string $serverUrl): string
+    {
+        return preg_replace_callback('/URI="([^"]+)"/', function (array $matches) use ($baseUrl, $serverUrl) {
+            $absoluteUrl = $this->resolveStreamUrl($matches[1], $baseUrl, $serverUrl);
+
+            return 'URI="' . $this->buildStreamProxyUrl($absoluteUrl) . '"';
+        }, $line) ?? $line;
+    }
+
+    private function resolveStreamUrl(string $value, string $baseUrl, string $serverUrl): string
+    {
+        if (preg_match('#^https?://#i', $value)) {
+            return $value;
+        }
+
+        if (str_starts_with($value, '/')) {
+            return rtrim($serverUrl, '/') . $value;
+        }
+
+        return $baseUrl . ltrim($value, '/');
     }
 
     private function decodeBase64Url(string $value): string|false
