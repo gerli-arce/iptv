@@ -9,6 +9,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Http;
 use Throwable;
 use Illuminate\View\View;
 
@@ -223,8 +224,8 @@ class PortalController extends Controller
 
         if ($type === 'channel') {
             $candidates = [
-                rtrim($serverUrl, '/') . "/live/{$username}/{$password}/{$id}.m3u8",
-                rtrim($serverUrl, '/') . "/live/{$username}/{$password}/{$id}.ts",
+                $this->buildStreamProxyUrl(rtrim($serverUrl, '/') . "/live/{$username}/{$password}/{$id}.m3u8"),
+                $this->buildStreamProxyUrl(rtrim($serverUrl, '/') . "/live/{$username}/{$password}/{$id}.ts"),
             ];
             $url = $candidates[0];
             $title = "Canal {$id}";
@@ -233,11 +234,11 @@ class PortalController extends Controller
         if ($type === 'movie') {
             $ext = request()->query('ext', 'mp4');
             $candidates = array_values(array_unique([
-                rtrim($serverUrl, '/') . "/movie/{$username}/{$password}/{$id}.{$ext}",
-                rtrim($serverUrl, '/') . "/movie/{$username}/{$password}/{$id}.mp4",
-                rtrim($serverUrl, '/') . "/movie/{$username}/{$password}/{$id}.mkv",
-                rtrim($serverUrl, '/') . "/movie/{$username}/{$password}/{$id}.m3u8",
-                rtrim($serverUrl, '/') . "/movie/{$username}/{$password}/{$id}.ts",
+                $this->buildStreamProxyUrl(rtrim($serverUrl, '/') . "/movie/{$username}/{$password}/{$id}.{$ext}"),
+                $this->buildStreamProxyUrl(rtrim($serverUrl, '/') . "/movie/{$username}/{$password}/{$id}.mp4"),
+                $this->buildStreamProxyUrl(rtrim($serverUrl, '/') . "/movie/{$username}/{$password}/{$id}.mkv"),
+                $this->buildStreamProxyUrl(rtrim($serverUrl, '/') . "/movie/{$username}/{$password}/{$id}.m3u8"),
+                $this->buildStreamProxyUrl(rtrim($serverUrl, '/') . "/movie/{$username}/{$password}/{$id}.ts"),
             ]));
             $url = $candidates[0];
             $title = "Pelicula {$id}";
@@ -312,11 +313,11 @@ class PortalController extends Controller
 
         $selectedExt = $selected['ext'] ?: 'mp4';
         $candidates = array_values(array_unique([
-            rtrim($serverUrl, '/') . "/series/{$username}/{$password}/{$selected['id']}.{$selectedExt}",
-            rtrim($serverUrl, '/') . "/series/{$username}/{$password}/{$selected['id']}.mp4",
-            rtrim($serverUrl, '/') . "/series/{$username}/{$password}/{$selected['id']}.mkv",
-            rtrim($serverUrl, '/') . "/series/{$username}/{$password}/{$selected['id']}.m3u8",
-            rtrim($serverUrl, '/') . "/series/{$username}/{$password}/{$selected['id']}.ts",
+            $this->buildStreamProxyUrl(rtrim($serverUrl, '/') . "/series/{$username}/{$password}/{$selected['id']}.{$selectedExt}"),
+            $this->buildStreamProxyUrl(rtrim($serverUrl, '/') . "/series/{$username}/{$password}/{$selected['id']}.mp4"),
+            $this->buildStreamProxyUrl(rtrim($serverUrl, '/') . "/series/{$username}/{$password}/{$selected['id']}.mkv"),
+            $this->buildStreamProxyUrl(rtrim($serverUrl, '/') . "/series/{$username}/{$password}/{$selected['id']}.m3u8"),
+            $this->buildStreamProxyUrl(rtrim($serverUrl, '/') . "/series/{$username}/{$password}/{$selected['id']}.ts"),
         ]));
         $url = $candidates[0];
         $title = $selected['title'];
@@ -445,8 +446,8 @@ class PortalController extends Controller
         if (!empty($currentChannel['stream_id'])) {
             $base = rtrim($serverUrl, '/') . "/live/{$username}/{$password}/{$currentChannel['stream_id']}";
             $streamCandidates = [
-                "{$base}.m3u8",
-                "{$base}.ts",
+                $this->buildStreamProxyUrl("{$base}.m3u8"),
+                $this->buildStreamProxyUrl("{$base}.ts"),
             ];
             $streamUrl = $streamCandidates[0];
         }
@@ -458,6 +459,53 @@ class PortalController extends Controller
             'streamCandidates' => $streamCandidates,
             'selectedCategory' => $selectedCategory,
         ]);
+    }
+
+    public function streamProxy(Request $request)
+    {
+        [$serverUrl] = $this->getIptvSessionCredentials();
+        if (! $this->hasIptvSession()) {
+            abort(401);
+        }
+
+        $encodedUrl = (string) $request->query('u', '');
+        $remoteUrl = $this->decodeBase64Url($encodedUrl);
+
+        if (! $remoteUrl || ! $this->isAllowedStreamUrl($remoteUrl, $serverUrl)) {
+            abort(403);
+        }
+
+        if (str_contains(strtolower($remoteUrl), '.m3u8')) {
+            $playlistResponse = Http::timeout(30)->get($remoteUrl);
+            abort_unless($playlistResponse->successful(), 502);
+
+            $playlist = $this->rewriteM3u8Playlist($playlistResponse->body(), $remoteUrl, $serverUrl);
+
+            return response($playlist, 200, [
+                'Content-Type' => 'application/vnd.apple.mpegurl',
+                'Cache-Control' => 'no-store, no-cache, must-revalidate',
+            ]);
+        }
+
+        $streamResponse = Http::withOptions(['stream' => true])->timeout(120)->get($remoteUrl);
+        abort_unless($streamResponse->successful(), 502);
+
+        $body = $streamResponse->toPsrResponse()->getBody();
+        $headers = [
+            'Content-Type' => $streamResponse->header('Content-Type', 'application/octet-stream'),
+            'Cache-Control' => 'no-store, no-cache, must-revalidate',
+        ];
+
+        if ($streamResponse->header('Content-Length')) {
+            $headers['Content-Length'] = $streamResponse->header('Content-Length');
+        }
+
+        return response()->stream(function () use ($body) {
+            while (! $body->eof()) {
+                echo $body->read(8192);
+                flush();
+            }
+        }, 200, $headers);
     }
 
     public function apiMovies(): JsonResponse
@@ -486,5 +534,65 @@ class PortalController extends Controller
             'items' => $items,
             'categories' => $categories,
         ]);
+    }
+
+    private function buildStreamProxyUrl(string $remoteUrl): string
+    {
+        return route('stream.proxy', [
+            'u' => rtrim(strtr(base64_encode($remoteUrl), '+/', '-_'), '='),
+        ]);
+    }
+
+    private function isAllowedStreamUrl(string $remoteUrl, string $serverUrl): bool
+    {
+        $remoteHost = parse_url($remoteUrl, PHP_URL_HOST);
+        $serverHost = parse_url($serverUrl, PHP_URL_HOST);
+
+        if (! $remoteHost || ! $serverHost) {
+            return false;
+        }
+
+        return strtolower($remoteHost) === strtolower($serverHost);
+    }
+
+    private function rewriteM3u8Playlist(string $playlist, string $remoteUrl, string $serverUrl): string
+    {
+        $lines = preg_split("/\r\n|\n|\r/", $playlist) ?: [];
+        $baseUrl = rtrim(dirname($remoteUrl), '/') . '/';
+        $rewritten = [];
+
+        foreach ($lines as $line) {
+            $trimmed = trim($line);
+
+            if ($trimmed === '' || str_starts_with($trimmed, '#')) {
+                $rewritten[] = $line;
+                continue;
+            }
+
+            if (preg_match('#^https?://#i', $trimmed)) {
+                $absoluteUrl = $trimmed;
+            } elseif (str_starts_with($trimmed, '/')) {
+                $serverBase = rtrim($serverUrl, '/');
+                $absoluteUrl = $serverBase . $trimmed;
+            } else {
+                $absoluteUrl = $baseUrl . ltrim($trimmed, '/');
+            }
+
+            $rewritten[] = $this->buildStreamProxyUrl($absoluteUrl);
+        }
+
+        return implode("\n", $rewritten);
+    }
+
+    private function decodeBase64Url(string $value): string|false
+    {
+        $base64 = strtr($value, '-_', '+/');
+        $padding = strlen($base64) % 4;
+
+        if ($padding > 0) {
+            $base64 .= str_repeat('=', 4 - $padding);
+        }
+
+        return base64_decode($base64, true);
     }
 }

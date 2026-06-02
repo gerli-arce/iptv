@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [PortalController::class, 'landing'])->name('landing');
 Route::get('/login', [PortalController::class, 'showLogin'])->name('login');
 Route::get('/app', [PortalController::class, 'showApp'])->name('app');
+Route::get('/stream', [PortalController::class, 'streamProxy'])->name('stream.proxy');
 
 foreach (['/api/player', '/portal-api'] as $prefix) {
     Route::prefix($prefix)->group(function () {
