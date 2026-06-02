@@ -1,0 +1,39 @@
+{
+  "_index-Kg3Hig6q.js": {
+    "file": "assets/index-Kg3Hig6q.js",
+    "name": "index"
+  },
+  "resources/css/app.css": {
+    "file": "assets/app-C6Pdnsb0.css",
+    "src": "resources/css/app.css",
+    "isEntry": true,
+    "name": "app",
+    "names": [
+      "app.css"
+    ]
+  },
+  "resources/js/landing.jsx": {
+    "file": "assets/landing-Bhr_liNv.js",
+    "name": "landing",
+    "src": "resources/js/landing.jsx",
+    "isEntry": true,
+    "imports": [
+      "_index-Kg3Hig6q.js"
+    ],
+    "css": [
+      "assets/app-C6Pdnsb0.css"
+    ]
+  },
+  "resources/js/spa.jsx": {
+    "file": "assets/spa-BAaP6diU.js",
+    "name": "spa",
+    "src": "resources/js/spa.jsx",
+    "isEntry": true,
+    "imports": [
+      "_index-Kg3Hig6q.js"
+    ],
+    "css": [
+      "assets/app-C6Pdnsb0.css"
+    ]
+  }
+}
