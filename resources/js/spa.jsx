@@ -16,7 +16,7 @@ async function api(path, opts = {}) {
 
 const TMDB_IMG_BASE = "https://image.tmdb.org/t/p/w500";
 const SERIES_TEMP_DISABLED = false;
-const SERIES_DEGRADED_MODE = true;
+const SERIES_DEGRADED_MODE = false;
 
 function normalizeTitle(value = "") {
   return String(value)
@@ -87,7 +87,7 @@ function Side({ page, setPage, onLogout, user }) {
     ["home", "Inicio"],
     ["live", "TV en vivo"],
     ["movies", "Peliculas"],
-    ["series", SERIES_DEGRADED_MODE ? "Series (beta)" : "Series"],
+    ["series", "Series"],
     ["list", "Mi lista"],
   ];
 
@@ -535,6 +535,7 @@ function LiveLayout({ data, query, setQuery }) {
   const categories = data?.categories || [];
   const videoRef = useRef(null);
   const hlsRef = useRef(null);
+  const retryRef = useRef(0);
   const [volume, setVolume] = useState(0.85);
   const [playError, setPlayError] = useState("");
   const [candidateIndex, setCandidateIndex] = useState(0);
@@ -566,6 +567,7 @@ function LiveLayout({ data, query, setQuery }) {
 
     if (!src) return;
     setPlayError("");
+    retryRef.current = 0;
 
     const canPlayNativeHls = video.canPlayType("application/vnd.apple.mpegurl");
     const shouldUseHlsJs = src.includes(".m3u8") && window.Hls && Hls.isSupported();
@@ -585,6 +587,17 @@ function LiveLayout({ data, query, setQuery }) {
       hls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(() => {}));
       hls.on(Hls.Events.ERROR, (_, event) => {
         if (!event?.fatal) return;
+        if (retryRef.current < 2) {
+          retryRef.current += 1;
+          if (event.type === Hls.ErrorTypes.NETWORK_ERROR) {
+            hls.startLoad();
+            return;
+          }
+          if (event.type === Hls.ErrorTypes.MEDIA_ERROR) {
+            hls.recoverMediaError();
+            return;
+          }
+        }
         if (event.type === Hls.ErrorTypes.NETWORK_ERROR) {
           hls.startLoad();
           tryNextCandidate();
