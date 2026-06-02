@@ -468,6 +468,8 @@ class PortalController extends Controller
             abort(401);
         }
 
+        set_time_limit(0);
+
         $encodedUrl = (string) $request->query('u', '');
         $remoteUrl = $this->decodeBase64Url($encodedUrl);
 
@@ -477,8 +479,12 @@ class PortalController extends Controller
 
         session()->save();
 
+        $requestHeaders = $this->buildUpstreamStreamHeaders($request, $serverUrl);
+
         if (str_contains(strtolower($remoteUrl), '.m3u8')) {
-            $playlistResponse = Http::timeout(30)->get($remoteUrl);
+            $playlistResponse = Http::withHeaders($requestHeaders)
+                ->timeout(30)
+                ->get($remoteUrl);
             abort_unless($playlistResponse->successful(), 502);
 
             $playlist = $this->rewriteM3u8Playlist($playlistResponse->body(), $remoteUrl, $serverUrl);
@@ -489,13 +495,6 @@ class PortalController extends Controller
                 'X-Accel-Buffering' => 'no',
             ]);
         }
-
-        $requestHeaders = [];
-        if ($request->header('Range')) {
-            $requestHeaders['Range'] = $request->header('Range');
-        }
-
-        set_time_limit(0);
 
         $streamResponse = Http::withHeaders($requestHeaders)
             ->withOptions([
@@ -567,6 +566,35 @@ class PortalController extends Controller
         $encodedUrl = rtrim(strtr(base64_encode($remoteUrl), '+/', '-_'), '=');
 
         return "/stream?u={$encodedUrl}";
+    }
+
+    private function buildUpstreamStreamHeaders(Request $request, string $serverUrl): array
+    {
+        $headers = [
+            'Accept' => $request->header('Accept', 'video/*,application/vnd.apple.mpegurl,application/x-mpegURL,*/*'),
+            'Accept-Language' => $request->header('Accept-Language', 'es-ES,es;q=0.7,en;q=0.3'),
+            'User-Agent' => $request->header('User-Agent', 'Mozilla/5.0'),
+            'Referer' => $request->header('Referer', $serverUrl),
+            'Origin' => $request->header('Origin', $serverUrl),
+        ];
+
+        foreach (['Range', 'Cache-Control', 'Pragma'] as $header) {
+            if ($request->filled($header) || $request->headers->has($header)) {
+                $headers[$header] = $request->header($header);
+            }
+        }
+
+        if ($request->headers->has('Sec-Fetch-Site')) {
+            $headers['Sec-Fetch-Site'] = $request->header('Sec-Fetch-Site');
+        }
+        if ($request->headers->has('Sec-Fetch-Mode')) {
+            $headers['Sec-Fetch-Mode'] = $request->header('Sec-Fetch-Mode');
+        }
+        if ($request->headers->has('Sec-Fetch-Dest')) {
+            $headers['Sec-Fetch-Dest'] = $request->header('Sec-Fetch-Dest');
+        }
+
+        return $headers;
     }
 
     private function isAllowedStreamUrl(string $remoteUrl, string $serverUrl): bool
