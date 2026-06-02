@@ -1,0 +1,67 @@
+@import "tailwindcss";
+@source "../js/**/*.{js,jsx,ts,tsx}";
+@source "../views/**/*.blade.php";
+
+@theme {
+  --color-fp-night: #030712;
+  --color-fp-accent: #1f6fff;
+  --shadow-fp-glow: 0 30px 90px rgba(25, 117, 255, 0.22);
+  --shadow-fp-soft: 0 12px 45px rgba(0, 0, 0, 0.45);
+  --shadow-fp-button: 0 10px 30px rgba(38, 124, 255, 0.45);
+  --shadow-fp-card: 0 16px 35px rgba(15, 23, 42, 0.6);
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background:
+      radial-gradient(1200px 700px at 5% -10%, rgba(44, 88, 204, 0.4), transparent 50%),
+      radial-gradient(1000px 700px at 90% 0%, rgba(42, 99, 255, 0.16), transparent 45%),
+      #030712;
+    color: #fff;
+    font-family: "Manrope", "Segoe UI", system-ui, sans-serif;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+}
+
+@layer components {
+  .fp-input {
+    @apply w-full rounded-xl border border-white/20 bg-white/5 px-4 py-3 text-white outline-none transition duration-300 focus:border-sky-300/60 focus:bg-white/10;
+  }
+
+  .fp-section-title {
+    @apply text-2xl md:text-3xl font-black text-white tracking-tight mt-1 mb-4;
+  }
+
+  .fp-skeleton {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(120deg, rgba(30, 41, 59, 0.35), rgba(51, 65, 85, 0.45), rgba(30, 41, 59, 0.35));
+    background-size: 200% 100%;
+    animation: fpShimmer 1.4s ease-in-out infinite;
+  }
+
+  .fp-no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .fp-no-scrollbar::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+  }
+}
+
+@keyframes fpShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}

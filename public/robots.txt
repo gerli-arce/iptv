@@ -1,4 +1,2 @@
 User-agent: *
-Allow: /
-
-# Agrega la ruta del sitemap cuando se despliegue (ej: https://fastnet.tv/sitemap.xml)
+Disallow:
