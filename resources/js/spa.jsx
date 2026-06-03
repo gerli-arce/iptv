@@ -20,15 +20,20 @@ const SERIES_TEMP_DISABLED = false;
 const SERIES_DEGRADED_MODE = false;
 const HLS_CONFIG = {
   enableWorker: true,
-  lowLatencyMode: true,
-  liveSyncDurationCount: 1,
-  liveMaxLatencyDurationCount: 2,
-  maxBufferLength: 10,
-  maxMaxBufferLength: 20,
-  backBufferLength: 10,
-  manifestLoadingTimeOut: 10000,
-  levelLoadingTimeOut: 10000,
-  fragLoadingTimeOut: 20000,
+  lowLatencyMode: false,
+  liveSyncDurationCount: 2,
+  liveMaxLatencyDurationCount: 5,
+  initialLiveManifestSize: 1,
+  startFragPrefetch: true,
+  maxBufferLength: 15,
+  maxMaxBufferLength: 30,
+  backBufferLength: 15,
+  manifestLoadingTimeOut: 15000,
+  levelLoadingTimeOut: 15000,
+  fragLoadingTimeOut: 30000,
+  manifestLoadingMaxRetry: 3,
+  levelLoadingMaxRetry: 3,
+  fragLoadingMaxRetry: 5,
 };
 
 function normalizeTitle(value = "") {
@@ -554,6 +559,7 @@ function LiveLayout({ data, query, setQuery }) {
   const hlsRef = useRef(null);
   const volumeRef = useRef(0.85);
   const retryRef = useRef(0);
+  const selectionStartRef = useRef(0);
   const [volume, setVolume] = useState(0.85);
   const [playError, setPlayError] = useState("");
   const [candidateIndex, setCandidateIndex] = useState(0);
@@ -598,7 +604,8 @@ function LiveLayout({ data, query, setQuery }) {
       if (playPromise && typeof playPromise.then === "function") {
         await playPromise;
       }
-      logHls(`playback started (${mode})`, { src });
+      const elapsedMs = selectionStartRef.current ? Math.round(performance.now() - selectionStartRef.current) : null;
+      logHls(`playback started (${mode})`, { src, elapsedMs });
       video.muted = false;
       video.volume = volumeRef.current;
     } catch (error) {
@@ -634,10 +641,17 @@ function LiveLayout({ data, query, setQuery }) {
     if (shouldUseHlsJs) {
       const hls = new Hls(HLS_CONFIG);
       hlsRef.current = hls;
-      logHls("loading manifest", { src, candidateIndex });
+      logHls("loading manifest", {
+        src,
+        candidateIndex,
+        elapsedMs: selectionStartRef.current ? Math.round(performance.now() - selectionStartRef.current) : null,
+      });
 
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        logHls("manifest loaded", { src });
+        logHls("manifest loaded", {
+          src,
+          elapsedMs: selectionStartRef.current ? Math.round(performance.now() - selectionStartRef.current) : null,
+        });
         startPlayback(video, src, "hls.js");
       });
 
@@ -685,7 +699,10 @@ function LiveLayout({ data, query, setQuery }) {
     }
 
     if (src.includes(".m3u8") && canPlayNativeHls) {
-      logHls("using native HLS fallback", { src });
+      logHls("using native HLS fallback", {
+        src,
+        elapsedMs: selectionStartRef.current ? Math.round(performance.now() - selectionStartRef.current) : null,
+      });
       video.preload = "auto";
       video.muted = true;
       video.src = src;
@@ -696,7 +713,10 @@ function LiveLayout({ data, query, setQuery }) {
       };
     }
 
-    logHls("using direct stream fallback", { src });
+    logHls("using direct stream fallback", {
+      src,
+      elapsedMs: selectionStartRef.current ? Math.round(performance.now() - selectionStartRef.current) : null,
+    });
     video.src = src;
     video.preload = "auto";
     video.muted = true;
@@ -713,6 +733,16 @@ function LiveLayout({ data, query, setQuery }) {
   useEffect(() => {
     setCandidateIndex(0);
     setPlayError("");
+  }, [data?.currentChannel?.stream_id]);
+
+  useEffect(() => {
+    if (data?.currentChannel?.stream_id) {
+      logHls("channel selected", {
+        streamId: data.currentChannel.stream_id,
+        name: data.currentChannel.name,
+        elapsedMs: selectionStartRef.current ? Math.round(performance.now() - selectionStartRef.current) : null,
+      });
+    }
   }, [data?.currentChannel?.stream_id]);
 
   useEffect(() => {
@@ -735,7 +765,11 @@ function LiveLayout({ data, query, setQuery }) {
           {channels.map((ch, i) => (
             <button
               key={`${ch.stream_id}-${i}`}
-              onClick={() => setQuery({ ...query, ch: ch.stream_id })}
+              onClick={() => {
+                selectionStartRef.current = performance.now();
+                logHls("channel clicked", { streamId: ch.stream_id, name: ch.name });
+                setQuery({ ...query, ch: ch.stream_id });
+              }}
               className={`w-full text-left px-3 py-3 border-b border-white/5 ${Number(query.ch) === Number(ch.stream_id) ? "bg-sky-500/25 text-white" : "text-slate-300"}`}
             >
               <span className="flex items-center gap-3">

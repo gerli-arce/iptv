@@ -480,9 +480,16 @@ class PortalController extends Controller
         session()->save();
 
         $requestHeaders = $this->buildUpstreamStreamHeaders($request, $serverUrl);
+        $isPlaylist = str_contains(strtolower($remoteUrl), '.m3u8');
+        $isTsSegment = str_contains(strtolower($remoteUrl), '.ts');
 
-        if (str_contains(strtolower($remoteUrl), '.m3u8')) {
+        if ($isPlaylist) {
             $playlistResponse = Http::withHeaders($requestHeaders)
+                ->withOptions([
+                    'stream' => true,
+                    'decode_content' => false,
+                    'http_errors' => false,
+                ])
                 ->timeout(30)
                 ->get($remoteUrl);
             abort_unless($playlistResponse->successful(), 502);
@@ -491,14 +498,18 @@ class PortalController extends Controller
 
             return response($playlist, 200, [
                 'Content-Type' => 'application/vnd.apple.mpegurl',
-                'Cache-Control' => 'no-store, no-cache, must-revalidate',
+                'Cache-Control' => 'no-cache',
                 'X-Accel-Buffering' => 'no',
+                'Access-Control-Allow-Origin' => '*',
+                'Content-Encoding' => 'identity',
             ]);
         }
 
         $streamResponse = Http::withHeaders($requestHeaders)
             ->withOptions([
                 'stream' => true,
+                'decode_content' => false,
+                'http_errors' => false,
                 'read_timeout' => 30,
             ])
             ->timeout(0)
@@ -507,11 +518,19 @@ class PortalController extends Controller
 
         $body = $streamResponse->toPsrResponse()->getBody();
         $status = $streamResponse->status();
+        $contentType = $streamResponse->header('Content-Type');
+        if ($isTsSegment) {
+            $contentType = 'video/mp2t';
+        } elseif ($isPlaylist) {
+            $contentType = 'application/vnd.apple.mpegurl';
+        }
+
         $headers = [
-            'Content-Type' => $streamResponse->header('Content-Type', 'application/octet-stream'),
-            'Cache-Control' => 'no-store, no-cache, must-revalidate',
-            'Accept-Ranges' => $streamResponse->header('Accept-Ranges', 'bytes'),
+            'Content-Type' => $contentType ?: 'application/octet-stream',
+            'Cache-Control' => 'no-cache',
             'X-Accel-Buffering' => 'no',
+            'Access-Control-Allow-Origin' => '*',
+            'Content-Encoding' => 'identity',
         ];
 
         if ($streamResponse->header('Content-Length')) {
@@ -520,6 +539,10 @@ class PortalController extends Controller
 
         if ($streamResponse->header('Content-Range')) {
             $headers['Content-Range'] = $streamResponse->header('Content-Range');
+        }
+
+        if ($streamResponse->header('Accept-Ranges')) {
+            $headers['Accept-Ranges'] = $streamResponse->header('Accept-Ranges');
         }
 
         return response()->stream(function () use ($body) {
@@ -572,6 +595,7 @@ class PortalController extends Controller
     {
         $headers = [
             'Accept' => $request->header('Accept', 'video/*,application/vnd.apple.mpegurl,application/x-mpegURL,*/*'),
+            'Accept-Encoding' => 'identity',
             'Accept-Language' => $request->header('Accept-Language', 'es-ES,es;q=0.7,en;q=0.3'),
             'User-Agent' => $request->header('User-Agent', 'Mozilla/5.0'),
             'Referer' => $request->header('Referer', $serverUrl),
