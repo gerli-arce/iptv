@@ -56,7 +56,8 @@ Servicios incluidos:
 
 Notas:
 
-- La imagen requiere `public/build/manifest.json`, asi que ejecuta `npm install && npm run build` antes del build Docker.
+- La imagen compila el frontend dentro del build de Docker, asi que no necesitas subir `public/build` a mano.
+- Si haces despliegue manual fuera de Docker, ejecuta `npm install && npm run build` y sube el contenido de `public/build`.
 - `compose.yaml` corre migraciones automaticamente con `RUN_MIGRATIONS=true`.
 - Si quieres usar otras credenciales, ajusta `compose.yaml` o tu `.env`.
 

@@ -21,3 +21,5 @@ storage/framework/views/*
 bootstrap/cache/*.php
 *.swp
 *.log
+/public/build
+/public/hot

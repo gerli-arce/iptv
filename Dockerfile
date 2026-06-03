@@ -1,5 +1,18 @@
 # syntax=docker/dockerfile:1.7
 
+FROM node:22-bookworm-slim AS frontend
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+
+RUN npm ci
+
+COPY . .
+
+RUN npm run build && rm -f public/hot
+
+
 FROM php:8.4-cli-bookworm AS vendor
 
 WORKDIR /app
@@ -69,9 +82,11 @@ RUN apt-get update \
 
 COPY . .
 COPY --from=vendor /app/vendor ./vendor
+COPY --from=frontend /app/public/build ./public/build
+RUN rm -f public/hot
 
 RUN test -f public/build/manifest.json \
-    || (echo "ERROR: falta public/build/manifest.json. Ejecuta npm install && npm run build antes de construir la imagen." >&2; exit 1)
+    || (echo "ERROR: falta public/build/manifest.json. La build de frontend debe generarse dentro de la imagen." >&2; exit 1)
 
 RUN mkdir -p storage/framework/cache/data \
     storage/framework/sessions \

@@ -3,6 +3,8 @@ set -e
 
 cd /var/www/html
 
+rm -f public/hot
+
 mkdir -p storage/framework/cache/data
 mkdir -p storage/framework/sessions
 mkdir -p storage/framework/views
