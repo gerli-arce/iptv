@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
+import Hls from "hls.js";
 import "../css/app.css";
 
 const csrf = document.querySelector('meta[name="csrf-token"]')?.content;
@@ -17,6 +18,18 @@ async function api(path, opts = {}) {
 const TMDB_IMG_BASE = "https://image.tmdb.org/t/p/w500";
 const SERIES_TEMP_DISABLED = false;
 const SERIES_DEGRADED_MODE = false;
+const HLS_CONFIG = {
+  enableWorker: true,
+  lowLatencyMode: true,
+  liveSyncDurationCount: 1,
+  liveMaxLatencyDurationCount: 2,
+  maxBufferLength: 10,
+  maxMaxBufferLength: 20,
+  backBufferLength: 10,
+  manifestLoadingTimeOut: 10000,
+  levelLoadingTimeOut: 10000,
+  fragLoadingTimeOut: 20000,
+};
 
 function normalizeTitle(value = "") {
   return String(value)
@@ -24,6 +37,10 @@ function normalizeTitle(value = "") {
     .replace(/[._-]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function logHls(message, payload) {
+  console.debug(`[HLS] ${message}`, payload || "");
 }
 
 const quickAccess = [
@@ -535,10 +552,16 @@ function LiveLayout({ data, query, setQuery }) {
   const categories = data?.categories || [];
   const videoRef = useRef(null);
   const hlsRef = useRef(null);
+  const volumeRef = useRef(0.85);
   const retryRef = useRef(0);
   const [volume, setVolume] = useState(0.85);
   const [playError, setPlayError] = useState("");
   const [candidateIndex, setCandidateIndex] = useState(0);
+  const candidateSources = useMemo(() => {
+    const list = data?.streamCandidates?.length ? data.streamCandidates : [data?.streamUrl];
+    return list.filter(Boolean);
+  }, [data?.streamCandidates, data?.streamUrl]);
+  const candidateKey = useMemo(() => candidateSources.join("|"), [candidateSources]);
 
   const toggleFullscreen = () => {
     const video = videoRef.current;
@@ -550,29 +573,58 @@ function LiveLayout({ data, query, setQuery }) {
     video.requestFullscreen?.();
   };
 
-  useEffect(() => {
-    const video = videoRef.current;
-    const candidates = (data?.streamCandidates && data.streamCandidates.length ? data.streamCandidates : [data?.streamUrl]).filter(Boolean);
-    const src = candidates[candidateIndex] || candidates[0];
-    if (!video) return;
-
+  const stopCurrentStream = (video) => {
     if (hlsRef.current) {
       hlsRef.current.destroy();
       hlsRef.current = null;
     }
 
+    if (!video) return;
+
     video.pause();
     video.removeAttribute("src");
     video.load();
+  };
 
-    if (!src) return;
+  const startPlayback = async (video, src, mode) => {
+    if (!video) return;
+
+    video.muted = true;
+    video.playsInline = true;
+    video.preload = "auto";
+
+    try {
+      const playPromise = video.play();
+      if (playPromise && typeof playPromise.then === "function") {
+        await playPromise;
+      }
+      logHls(`playback started (${mode})`, { src });
+      video.muted = false;
+      video.volume = volumeRef.current;
+    } catch (error) {
+      if (error?.name === "NotAllowedError") {
+        logHls("autoplay blocked", { mode, src, error: error?.message || String(error) });
+      } else {
+        logHls("playback error", { mode, src, error: error?.message || String(error) });
+      }
+    }
+  };
+
+  useEffect(() => {
+    const video = videoRef.current;
+    const src = candidateSources[candidateIndex] || candidateSources[0];
+    if (!video) return;
+
+    stopCurrentStream(video);
     setPlayError("");
     retryRef.current = 0;
 
+    if (!src) return;
+
     const canPlayNativeHls = video.canPlayType("application/vnd.apple.mpegurl");
-    const shouldUseHlsJs = src.includes(".m3u8") && window.Hls && Hls.isSupported();
+    const shouldUseHlsJs = src.includes(".m3u8") && Hls.isSupported();
     const tryNextCandidate = () => {
-      if (candidateIndex + 1 < candidates.length) {
+      if (candidateIndex + 1 < candidateSources.length) {
         setCandidateIndex((n) => n + 1);
       } else {
         setPlayError("Este canal no pudo reproducirse en el navegador. Prueba otro canal o vuelve a intentar.");
@@ -580,12 +632,23 @@ function LiveLayout({ data, query, setQuery }) {
     };
 
     if (shouldUseHlsJs) {
-      const hls = new Hls({ enableWorker: true, lowLatencyMode: true });
+      const hls = new Hls(HLS_CONFIG);
       hlsRef.current = hls;
-      hls.loadSource(src);
-      hls.attachMedia(video);
-      hls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(() => {}));
+      logHls("loading manifest", { src, candidateIndex });
+
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        logHls("manifest loaded", { src });
+        startPlayback(video, src, "hls.js");
+      });
+
       hls.on(Hls.Events.ERROR, (_, event) => {
+        logHls("error", {
+          src,
+          fatal: Boolean(event?.fatal),
+          type: event?.type,
+          details: event?.details,
+          response: event?.response?.code,
+        });
         if (!event?.fatal) return;
         if (retryRef.current < 2) {
           retryRef.current += 1;
@@ -610,28 +673,42 @@ function LiveLayout({ data, query, setQuery }) {
         }
         tryNextCandidate();
       });
+
+      hls.attachMedia(video);
+      hls.loadSource(src);
       return () => {
-        if (hlsRef.current) {
-          hlsRef.current.destroy();
+        if (hlsRef.current === hls) {
+          hls.destroy();
           hlsRef.current = null;
         }
       };
     }
 
     if (src.includes(".m3u8") && canPlayNativeHls) {
+      logHls("using native HLS fallback", { src });
+      video.preload = "auto";
+      video.muted = true;
       video.src = src;
-      video.play().catch(() => {});
-      return;
+      video.load();
+      startPlayback(video, src, "native-hls");
+      return () => {
+        stopCurrentStream(video);
+      };
     }
 
+    logHls("using direct stream fallback", { src });
     video.src = src;
-    video.play().catch(() => {});
+    video.preload = "auto";
+    video.muted = true;
+    video.load();
+    startPlayback(video, src, "direct");
     const onVideoError = () => tryNextCandidate();
     video.addEventListener("error", onVideoError);
     return () => {
       video.removeEventListener("error", onVideoError);
+      stopCurrentStream(video);
     };
-  }, [data?.streamUrl, JSON.stringify(data?.streamCandidates || []), candidateIndex]);
+  }, [candidateIndex, candidateKey, data?.streamUrl]);
 
   useEffect(() => {
     setCandidateIndex(0);
@@ -641,6 +718,10 @@ function LiveLayout({ data, query, setQuery }) {
   useEffect(() => {
     if (!videoRef.current) return;
     videoRef.current.volume = volume;
+    volumeRef.current = volume;
+    if (volume > 0 && videoRef.current.muted) {
+      videoRef.current.muted = false;
+    }
   }, [volume]);
 
   return (
@@ -674,7 +755,7 @@ function LiveLayout({ data, query, setQuery }) {
         </div>
       </div>
       <div className="relative rounded-3xl border border-white/10 bg-black overflow-hidden h-full min-h-0">
-        {data?.streamUrl ? <video ref={videoRef} autoPlay playsInline onDoubleClick={toggleFullscreen} className="w-full h-[calc(100%-56px)] object-contain" /> : <div className="h-full grid place-items-center text-slate-300">Selecciona un canal</div>}
+        {data?.streamUrl ? <video ref={videoRef} autoPlay muted preload="auto" playsInline onDoubleClick={toggleFullscreen} className="w-full h-[calc(100%-56px)] object-contain" /> : <div className="h-full grid place-items-center text-slate-300">Selecciona un canal</div>}
         {playError ? (
           <div className="absolute inset-x-0 top-4 mx-auto w-[92%] max-w-2xl rounded-xl border border-rose-300/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-100 backdrop-blur">
             <div className="flex items-center justify-between gap-3">
