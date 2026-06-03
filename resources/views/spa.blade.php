@@ -6,6 +6,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Fastnet Player</title>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    @viteReactRefresh
     @vite(['resources/css/app.css', 'resources/js/spa.jsx'])
 </head>
 <body>
