@@ -522,7 +522,7 @@ function HomeBannerCard({ banner, featured = false, compact = false }) {
       href={href || "#"}
       target={external ? "_blank" : undefined}
       rel={external ? "noreferrer" : undefined}
-      className={`group relative overflow-hidden rounded-[28px] border border-white/10 bg-slate-900/60 shadow-fp-soft transition duration-300 hover:-translate-y-1 hover:border-sky-300/30 ${featured ? "min-h-[260px] md:min-h-[340px]" : compact ? "min-h-[150px] md:min-h-[170px]" : "min-h-[180px]"}`}
+      className={`group relative block w-full overflow-hidden rounded-[28px] border border-white/10 bg-slate-900/60 shadow-fp-soft transition duration-300 hover:-translate-y-1 hover:border-sky-300/30 ${featured ? "min-h-[260px] md:min-h-[340px]" : compact ? "min-h-[150px] md:min-h-[170px]" : "min-h-[180px]"}`}
     >
       {image ? <img src={image} alt={title} className="absolute inset-0 h-full w-full object-cover opacity-75 transition duration-300 group-hover:scale-[1.03]" /> : null}
       <div className="absolute inset-0 bg-gradient-to-r from-[#04101f] via-[#04101f]/80 to-transparent" />
@@ -729,8 +729,6 @@ function HomeLike({ home, isLoading, error, onRetry }) {
   );
   const appName = settings.app_name || "FastPlayer";
   const playerDefault = settings.player_default || "auto";
-  const featuredBanner = banners[0] || null;
-  const bannerRail = banners.slice(1);
   const showSkeleton = isLoading && !home;
 
   if (error && !home) {
@@ -762,14 +760,15 @@ function HomeLike({ home, isLoading, error, onRetry }) {
         <>
           {banners.length ? (
             <section className="space-y-4">
-              <HomeBannerCard banner={featuredBanner} featured />
-              {bannerRail.length ? (
-                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                  {bannerRail.map((banner) => (
-                    <HomeBannerCard key={banner.id || banner.title} banner={banner} compact />
+              {banners.length === 1 ? (
+                <HomeBannerCard banner={banners[0]} featured />
+              ) : (
+                <div className="grid gap-4 md:grid-cols-2">
+                  {banners.map((banner) => (
+                    <HomeBannerCard key={banner.id || banner.title} banner={banner} featured />
                   ))}
                 </div>
-              ) : null}
+              )}
             </section>
           ) : null}
 
