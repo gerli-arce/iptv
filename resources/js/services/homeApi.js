@@ -1,4 +1,4 @@
-const DEFAULT_HOME_API_URL = "http://127.0.0.1:8000/api/home";
+const DEFAULT_HOME_API_URL = "/api/home";
 
 export function getHomeApiUrl() {
   return import.meta.env.VITE_HOME_API_URL || DEFAULT_HOME_API_URL;
