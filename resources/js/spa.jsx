@@ -100,6 +100,102 @@ const quickAccess = [
 
 const WEB_PAGES = new Set(["home", "movies", "series"]);
 
+const PAGE_META = {
+  home: { title: "Inicio", subtitle: "Portada curada, estrenos y recomendaciones premium." },
+  movies: { title: "Peliculas", subtitle: "Explora el catalogo con una interfaz cinematografica." },
+  series: { title: "Series", subtitle: "Temporadas, episodios y favoritos en un solo lugar." },
+};
+
+const NAV_ITEMS = [
+  { key: "home", label: "Inicio", icon: "home" },
+  { key: "movies", label: "Peliculas", icon: "movies" },
+  { key: "series", label: "Series", icon: "series" },
+  { key: "list", label: "Mi lista", icon: "bookmark" },
+];
+
+function Icon({ name, className = "size-5" }) {
+  const stroke = "currentColor";
+  switch (name) {
+    case "home":
+      return (
+        <svg viewBox="0 0 24 24" fill="none" className={className} stroke={stroke} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M3 11.2 12 4l9 7.2" />
+          <path d="M6.5 10.5V20h11V10.5" />
+        </svg>
+      );
+    case "movies":
+      return (
+        <svg viewBox="0 0 24 24" fill="none" className={className} stroke={stroke} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3.5" y="5" width="17" height="14" rx="3" />
+          <path d="M8 5v14M16 5v14" />
+          <path d="M3.5 9h17M3.5 15h17" />
+        </svg>
+      );
+    case "series":
+      return (
+        <svg viewBox="0 0 24 24" fill="none" className={className} stroke={stroke} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M4 6h16v12H4z" />
+          <path d="M8 6 6 3M16 6l2-3" />
+          <path d="M9 10l5 2-5 2z" />
+        </svg>
+      );
+    case "bookmark":
+      return (
+        <svg viewBox="0 0 24 24" fill="none" className={className} stroke={stroke} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M7 4.5h10a1 1 0 0 1 1 1V20l-6-3.2L6 20V5.5a1 1 0 0 1 1-1z" />
+        </svg>
+      );
+    case "search":
+      return (
+        <svg viewBox="0 0 24 24" fill="none" className={className} stroke={stroke} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="11" cy="11" r="6.5" />
+          <path d="m16.2 16.2 4.3 4.3" />
+        </svg>
+      );
+    case "bell":
+      return (
+        <svg viewBox="0 0 24 24" fill="none" className={className} stroke={stroke} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M6 8a6 6 0 1 1 12 0c0 6 2 7 2 9H4c0-2 2-3 2-9z" />
+          <path d="M9.5 20a2.5 2.5 0 0 0 5 0" />
+        </svg>
+      );
+    case "collapse":
+      return (
+        <svg viewBox="0 0 24 24" fill="none" className={className} stroke={stroke} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M15 6 9 12l6 6" />
+        </svg>
+      );
+    case "expand":
+      return (
+        <svg viewBox="0 0 24 24" fill="none" className={className} stroke={stroke} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="m9 6 6 6-6 6" />
+        </svg>
+      );
+    case "play":
+      return (
+        <svg viewBox="0 0 24 24" fill="none" className={className} stroke={stroke} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="m8 5 11 7-11 7z" />
+        </svg>
+      );
+    case "plus":
+      return (
+        <svg viewBox="0 0 24 24" fill="none" className={className} stroke={stroke} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 5v14M5 12h14" />
+        </svg>
+      );
+    case "info":
+      return (
+        <svg viewBox="0 0 24 24" fill="none" className={className} stroke={stroke} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="8.5" />
+          <path d="M12 10.5v6" />
+          <path d="M12 7.5h.01" />
+        </svg>
+      );
+    default:
+      return null;
+  }
+}
+
 function Login({ onDone }) {
   const [form, setForm] = useState({ server_url: "http://iptv.fastnetperu.com.pe:80", username: "", password: "" });
   const [error, setError] = useState("");
@@ -149,45 +245,110 @@ function Login({ onDone }) {
   );
 }
 
-function Side({ page, setPage, onLogout, user, desktopMode, playerMode }) {
+function Side({ page, setPage, onLogout, user, desktopMode, playerMode, collapsed, setCollapsed }) {
   const links = [
-    ["home", "Inicio"],
-    ["movies", "Peliculas"],
-    ["series", "Series"],
-    ["list", "Mi lista"],
-    ...(desktopMode ? [["settings", "Ajustes"]] : []),
+    { key: "home", label: "Inicio", icon: "home" },
+    { key: "movies", label: "Peliculas", icon: "movies" },
+    { key: "series", label: "Series", icon: "series" },
+    { key: "list", label: "Mi lista", icon: "bookmark" },
+    ...(desktopMode ? [{ key: "settings", label: "Ajustes", icon: "info" }] : []),
   ];
 
+  const displayName = user?.name || user?.username || "Usuario";
+  const subscription = user?.status || "Activo";
+  const expiry = user?.exp_date || user?.expiry || user?.exp || "";
+
   return (
-    <aside className="hidden xl:flex w-72 shrink-0 flex-col rounded-3xl border border-white/10 bg-slate-900/40 backdrop-blur-xl p-5 shadow-fp-soft h-[calc(100vh-2rem)] sticky top-4 overflow-y-auto fp-no-scrollbar">
-      <div className="mb-6 rounded-2xl border border-white/10 bg-white/[0.03] p-3">
-        <img
-          src="/logo fast_tv.png"
-          alt="Fastnet Player"
-          className="w-full h-auto rounded-xl object-cover"
-        />
-      </div>
-      <nav className="space-y-2">
-        {links.map(([key, label]) => (
+    <aside
+      className={`hidden xl:flex shrink-0 flex-col rounded-[28px] border border-white/10 bg-white/[0.04] backdrop-blur-2xl shadow-fp-soft h-[calc(100vh-2rem)] sticky top-4 overflow-hidden transition-all duration-300 ${
+        collapsed ? "w-[92px] p-3" : "w-[300px] p-4"
+      }`}
+    >
+      <div className="rounded-[24px] border border-white/10 bg-gradient-to-br from-white/[0.07] to-white/[0.02] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
+        <div className="flex items-start justify-between gap-3">
+          <div className={`rounded-2xl border border-white/10 bg-black/20 ${collapsed ? "p-2" : "p-3"} overflow-hidden`}>
+            <img
+              src="/logo fast_tv.png"
+              alt="Fastnet Player"
+              className={`${collapsed ? "w-16" : "w-full"} h-auto rounded-xl object-cover`}
+            />
+          </div>
           <button
-            key={key}
-            onClick={() => setPage(key)}
-            className={`w-full text-left px-4 py-3 rounded-xl transition duration-300 ${page === key ? "bg-fp-accent text-white shadow-fp-button" : "text-slate-200 hover:bg-white/10"}`}
+            onClick={() => setCollapsed?.(!collapsed)}
+            className="mt-1 inline-flex size-9 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-slate-100 transition duration-300 hover:border-sky-300/40 hover:bg-sky-400/10 hover:text-white"
+            aria-label={collapsed ? "Expandir sidebar" : "Colapsar sidebar"}
           >
-            {label}
+            <Icon name={collapsed ? "expand" : "collapse"} className="size-4" />
           </button>
-        ))}
-      </nav>
-      <div className="mt-auto rounded-2xl border border-white/10 bg-white/5 p-4">
-        <p className="text-white font-semibold">{user?.username || "Usuario"}</p>
-        <p className="text-emerald-300 text-sm">Activo</p>
-        {desktopMode ? (
-          <p className="mt-2 text-xs text-slate-300">
-            Reproductor: {playerMode === "vlc" ? "VLC externo" : "Interno"}
-          </p>
-        ) : null}
+        </div>
       </div>
-      <button className="mt-3 mb-1 rounded-xl border border-white/15 py-3 text-white hover:bg-white/10 transition duration-300" onClick={onLogout}>Cerrar sesion</button>
+
+      <div className="mt-4 rounded-[24px] border border-sky-300/15 bg-gradient-to-br from-sky-500/10 via-white/[0.03] to-transparent p-4">
+        <p className="text-[10px] uppercase tracking-[0.28em] text-sky-200/80">Perfil</p>
+        <div className="mt-3 flex items-center gap-3">
+          <div className="grid size-12 place-items-center rounded-2xl bg-gradient-to-br from-sky-400 to-blue-700 text-sm font-black text-white shadow-[0_0_25px_rgba(37,99,235,0.4)]">
+            {(displayName || "U").slice(0, 1).toUpperCase()}
+          </div>
+          {!collapsed ? (
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-white">{displayName}</p>
+              <p className="text-xs text-emerald-300">Suscripcion {subscription}</p>
+              {expiry ? <p className="text-[11px] text-slate-400">Expira: {expiry}</p> : null}
+            </div>
+          ) : null}
+        </div>
+      </div>
+
+      <nav className="mt-5 space-y-2">
+        {links.map((item) => {
+          const active = page === item.key;
+          return (
+            <button
+              key={item.key}
+              onClick={() => setPage(item.key)}
+              className={`group flex w-full items-center gap-3 rounded-2xl border px-4 py-3 text-left transition duration-300 ${
+                active
+                  ? "border-sky-300/35 bg-sky-400/12 text-white shadow-[0_0_35px_rgba(37,99,235,0.15)]"
+                  : "border-transparent text-slate-200 hover:border-sky-300/20 hover:bg-white/[0.05] hover:text-white"
+              }`}
+            >
+              <span
+                className={`grid size-10 shrink-0 place-items-center rounded-xl transition duration-300 ${
+                  active ? "bg-sky-400/15 text-sky-200 shadow-[0_0_24px_rgba(37,99,235,0.25)]" : "bg-white/[0.04] text-slate-300 group-hover:bg-sky-400/10 group-hover:text-sky-100"
+                }`}
+              >
+                <Icon name={item.icon} className="size-5" />
+              </span>
+              {!collapsed ? (
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-semibold">{item.label}</p>
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-slate-400">
+                    {active ? "Activo" : "Abrir"}
+                  </p>
+                </div>
+              ) : null}
+            </button>
+          );
+        })}
+      </nav>
+
+      <div className="mt-auto space-y-3">
+        {desktopMode && !collapsed ? (
+          <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-4">
+            <p className="text-[10px] uppercase tracking-[0.28em] text-slate-400">Reproductor</p>
+            <p className="mt-2 text-sm font-semibold text-white">
+              {playerMode === "vlc" ? "VLC externo" : "Interno"}
+            </p>
+          </div>
+        ) : null}
+        <button
+          className={`flex w-full items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] py-3 text-white transition duration-300 hover:border-rose-300/30 hover:bg-rose-500/10 ${collapsed ? "px-3" : "px-4"}`}
+          onClick={onLogout}
+        >
+          <Icon name="plus" className="size-4 rotate-45" />
+          {!collapsed ? <span>Cerrar sesion</span> : null}
+        </button>
+      </div>
     </aside>
   );
 }
@@ -233,6 +394,70 @@ function SettingsPanel({ desktopMode, playerMode, setPlayerMode, hasVlc }) {
         </button>
       </div>
     </section>
+  );
+}
+
+function TopHeader({ page, searchQuery, setSearchQuery, user, now, notifications = 0 }) {
+  const meta = PAGE_META[page] || PAGE_META.home;
+  const timestamp = now
+    ? now.toLocaleString("es-PE", {
+        weekday: "short",
+        day: "2-digit",
+        month: "short",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : "";
+
+  return (
+    <header className="sticky top-4 z-20 rounded-[28px] border border-white/10 bg-white/[0.05] px-4 py-4 shadow-[0_20px_70px_rgba(0,0,0,0.28)] backdrop-blur-2xl md:px-5">
+      <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+        <div className="min-w-0">
+          <div className="flex items-center gap-3 text-xs uppercase tracking-[0.24em] text-slate-400">
+            <span>FastPlayer</span>
+            <span className="rounded-full border border-sky-300/20 bg-sky-400/10 px-3 py-1 text-sky-100">Premium OTT</span>
+          </div>
+          <h1 className="mt-2 text-2xl md:text-3xl font-black text-white">{meta.title}</h1>
+          <p className="mt-1 max-w-2xl text-sm text-slate-300">{meta.subtitle}</p>
+        </div>
+
+        <div className="flex flex-1 flex-col gap-3 xl:max-w-[920px] xl:flex-row xl:items-center xl:justify-end">
+          <label className="group flex flex-1 items-center gap-3 rounded-2xl border border-white/10 bg-black/20 px-4 py-3 transition duration-300 focus-within:border-sky-300/35 focus-within:bg-sky-500/8">
+            <Icon name="search" className="size-5 text-slate-400 group-focus-within:text-sky-200" />
+            <input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Buscar peliculas, series, banners..."
+              className="w-full bg-transparent text-sm text-white outline-none placeholder:text-slate-500"
+            />
+          </label>
+
+          <div className="flex items-center gap-3">
+            <div className="hidden lg:flex flex-col items-end rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-right">
+              <span className="text-[10px] uppercase tracking-[0.24em] text-slate-400">Hora</span>
+              <span className="text-sm font-semibold text-white">{timestamp}</span>
+            </div>
+
+            <button className="relative grid size-12 place-items-center rounded-2xl border border-white/10 bg-white/[0.04] text-slate-200 transition duration-300 hover:border-sky-300/35 hover:bg-sky-500/10 hover:text-white">
+              <Icon name="bell" className="size-5" />
+              {notifications > 0 ? (
+                <span className="absolute right-2 top-2 size-2 rounded-full bg-sky-400 shadow-[0_0_10px_rgba(96,165,250,0.8)]" />
+              ) : null}
+            </button>
+
+            <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2">
+              <div className="grid size-10 place-items-center rounded-xl bg-gradient-to-br from-sky-400 to-blue-700 font-black text-white">
+                {(user?.name || user?.username || "U").slice(0, 1).toUpperCase()}
+              </div>
+              <div className="hidden sm:block">
+                <p className="text-sm font-semibold text-white">{user?.name || user?.username || "Usuario"}</p>
+                <p className="text-[11px] text-emerald-300">Activo</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
   );
 }
 
@@ -341,26 +566,38 @@ function HoverCards({ title, items = [], type = "movie", limit = 10, hideTitle =
   return (
     <section>
       {!hideTitle && <h3 className="fp-section-title">{title}</h3>}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
         {items.slice(0, limit).map((it, i) => {
           const id = it.stream_id || it.series_id || it.id;
           const href = type === "series" ? `/play/series/${id}` : `/play/movie/${id}`;
           const img = imageOverrides[id] || it.stream_icon || it.cover;
           const meta = metaOverrides[id] || {};
           const synopsis = meta.overview || it.plot || it.description || `Disfruta ${it.name || "este contenido"} en FastnetPlayer.`;
+          const year = (meta.release_date || it.release_date || it.first_air_date || "").slice(0, 4);
+          const rating = meta.vote_average ? Number(meta.vote_average).toFixed(1) : "";
           return (
-            <a key={`${id}-${i}`} href={href} className="group relative rounded-xl overflow-hidden border border-white/10 bg-slate-900/40 aspect-[2/3]">
+            <a
+              key={`${id}-${i}`}
+              href={href}
+              className="group relative overflow-hidden rounded-[22px] border border-white/10 bg-slate-900/40 aspect-[2/3] shadow-fp-card transition duration-300 hover:-translate-y-1 hover:border-sky-300/30"
+            >
               {img ? (
-                <div className="h-full w-full p-1 bg-slate-950/70">
-                  <img src={img} alt="" className="h-full w-full object-contain transition duration-300 group-hover:scale-105" />
+                <div className="h-full w-full bg-slate-950/70">
+                  <img src={img} alt="" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
                 </div>
               ) : null}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-transparent opacity-0 group-hover:opacity-100 transition duration-300 p-4 flex flex-col justify-end">
-                <p className="text-white font-semibold line-clamp-1">{it.name}</p>
-                <p className="text-xs text-slate-300 line-clamp-2">{synopsis}</p>
-                <div className="mt-2 flex gap-2 text-xs">
-                  <span className="rounded-md bg-fp-accent px-2 py-1">Reproducir</span>
-                  <span className="rounded-md border border-white/30 px-2 py-1">Favorito</span>
+              <div className="absolute inset-0 bg-gradient-to-t from-[#030814]/95 via-[#030814]/35 to-transparent" />
+              <div className="absolute inset-x-0 bottom-0 p-4">
+                <div className="flex flex-wrap gap-2 text-[10px] uppercase tracking-[0.16em] text-slate-100/90">
+                  {rating ? <span className="rounded-full border border-sky-300/20 bg-sky-400/10 px-2.5 py-1">★ {rating}</span> : null}
+                  {year ? <span className="rounded-full border border-white/15 bg-white/[0.08] px-2.5 py-1">{year}</span> : null}
+                  <span className="rounded-full border border-white/15 bg-white/[0.08] px-2.5 py-1">{type}</span>
+                </div>
+                <p className="mt-3 text-lg font-black leading-[0.96] text-white line-clamp-2">{it.name}</p>
+                <p className="mt-2 text-xs leading-5 text-slate-200/85 line-clamp-2">{synopsis}</p>
+                <div className="mt-3 flex gap-2 text-xs">
+                  <span className="rounded-xl bg-fp-accent px-3 py-2 font-semibold text-white">Reproducir</span>
+                  <span className="rounded-xl border border-white/20 bg-white/[0.06] px-3 py-2 text-slate-100">Detalles</span>
                 </div>
               </div>
             </a>
@@ -371,14 +608,36 @@ function HoverCards({ title, items = [], type = "movie", limit = 10, hideTitle =
   );
 }
 
-function CatalogSection({ title, items = [], categories = [], type = "movie" }) {
+function CatalogSection({ title, items = [], categories = [], type = "movie", searchQuery = "" }) {
   const [categoryId, setCategoryId] = useState("all");
   const [imageOverrides, setImageOverrides] = useState({});
   const [metaOverrides, setMetaOverrides] = useState({});
+  const q = searchQuery.trim().toLowerCase();
   const filteredItems = useMemo(() => {
-    if (categoryId === "all") return items;
-    return items.filter((it) => String(it.category_id ?? "") === String(categoryId));
-  }, [items, categoryId]);
+    let list = items;
+
+    if (q) {
+      list = list.filter((it) => {
+        const text = [
+          it.name,
+          it.plot,
+          it.description,
+          it.genre,
+          it.genre_name,
+          it.year,
+          it.release_date,
+          it.category_name,
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        return text.includes(q);
+      });
+    }
+
+    if (categoryId === "all") return list;
+    return list.filter((it) => String(it.category_id ?? "") === String(categoryId));
+  }, [items, categoryId, q]);
 
   useEffect(() => {
     let cancelled = false;
@@ -431,12 +690,19 @@ function CatalogSection({ title, items = [], categories = [], type = "movie" }) 
   }, [items, type]);
 
   return (
-    <section className="space-y-4">
-      <h3 className="fp-section-title">{title}</h3>
+    <section className="space-y-5">
+      <div className="flex items-end justify-between gap-4">
+        <div>
+          <h3 className="fp-section-title">{title}</h3>
+          <p className="text-xs uppercase tracking-[0.22em] text-slate-400">
+            {filteredItems.length} resultados
+          </p>
+        </div>
+      </div>
       <div className="flex gap-2 overflow-x-auto fp-no-scrollbar pb-1">
         <button
           onClick={() => setCategoryId("all")}
-          className={`px-4 py-2 rounded-xl border text-sm whitespace-nowrap transition duration-300 ${
+          className={`px-4 py-2 rounded-xl border text-sm whitespace-nowrap transition duration-300 backdrop-blur ${
             categoryId === "all" ? "bg-sky-500/25 border-sky-300/40 text-white" : "border-white/10 text-slate-300 hover:bg-white/10"
           }`}
         >
@@ -446,7 +712,7 @@ function CatalogSection({ title, items = [], categories = [], type = "movie" }) 
           <button
             key={cat.category_id}
             onClick={() => setCategoryId(cat.category_id)}
-            className={`px-4 py-2 rounded-xl border text-sm whitespace-nowrap transition duration-300 ${
+            className={`px-4 py-2 rounded-xl border text-sm whitespace-nowrap transition duration-300 backdrop-blur ${
               String(categoryId) === String(cat.category_id) ? "bg-sky-500/25 border-sky-300/40 text-white" : "border-white/10 text-slate-300 hover:bg-white/10"
             }`}
           >
@@ -522,29 +788,60 @@ function HomeBannerCard({ banner, featured = false, compact = false }) {
       href={href || "#"}
       target={external ? "_blank" : undefined}
       rel={external ? "noreferrer" : undefined}
-      className={`group relative block w-full overflow-hidden rounded-[28px] border border-white/10 bg-slate-900/60 shadow-fp-soft transition duration-300 hover:-translate-y-1 hover:border-sky-300/30 ${featured ? "min-h-[260px] md:min-h-[340px]" : compact ? "min-h-[150px] md:min-h-[170px]" : "min-h-[180px]"}`}
+      className={`group relative block w-full overflow-hidden rounded-[26px] border border-white/10 bg-slate-900/60 shadow-fp-soft transition duration-300 hover:-translate-y-1 hover:border-sky-300/30 ${featured ? "min-h-[220px] md:min-h-[270px]" : compact ? "min-h-[150px] md:min-h-[170px]" : "min-h-[180px]"}`}
     >
       {image ? <img src={image} alt={title} className="absolute inset-0 h-full w-full object-cover opacity-75 transition duration-300 group-hover:scale-[1.03]" /> : null}
-      <div className="absolute inset-0 bg-gradient-to-r from-[#04101f] via-[#04101f]/80 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-r from-[#04101f]/96 via-[#04101f]/72 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-t from-[#030814]/65 via-transparent to-transparent" />
       <div className={`relative z-10 flex h-full flex-col justify-end ${featured ? "p-5 md:p-7" : "p-4 md:p-5"}`}>
         <div className="mb-3 flex flex-wrap gap-2">
-          <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-slate-100">
+          <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-slate-100">
             {banner.content_type}
           </span>
           {banner.position !== undefined ? (
-            <span className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-cyan-100">
+            <span className="rounded-full border border-sky-300/20 bg-sky-400/10 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-sky-100">
               Pos {banner.position}
             </span>
           ) : null}
         </div>
-        <h3 className={`${featured ? "text-3xl md:text-5xl" : compact ? "text-xl md:text-2xl" : "text-2xl md:text-3xl"} font-black leading-[0.95] text-white`}>
+        <h3 className={`${featured ? "text-3xl md:text-5xl" : compact ? "text-xl md:text-2xl" : "text-2xl md:text-3xl"} max-w-3xl font-black leading-[0.94] text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.55)]`}>
           {title}
         </h3>
-        {subtitle ? <p className={`${featured ? "mt-3 max-w-2xl" : "mt-2"} text-sm text-slate-200/90`}>{subtitle}</p> : null}
-        <div className={`${featured ? "mt-5" : "mt-4"} inline-flex items-center gap-2 text-sm font-semibold text-cyan-100`}>
-          <span className="rounded-xl bg-sky-500/20 px-4 py-2 border border-sky-300/20">Abrir banner</span>
-          <span className="text-xs uppercase tracking-[0.18em] text-slate-300">referencia externa</span>
-        </div>
+        {subtitle ? <p className={`${featured ? "mt-3 max-w-2xl" : "mt-2"} text-sm text-slate-200/90 line-clamp-2`}>{subtitle}</p> : null}
+        {featured ? (
+          <div className="mt-5 flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (!href) return;
+                if (external) {
+                  window.open(href, "_blank", "noreferrer");
+                  return;
+                }
+                window.location.href = href;
+              }}
+              className="inline-flex items-center gap-2 rounded-xl bg-fp-accent px-5 py-3 text-sm font-semibold text-white transition duration-300 hover:shadow-fp-button"
+            >
+              <Icon name="play" className="size-4" />
+              Ver ahora
+            </button>
+            <button className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/[0.06] px-5 py-3 text-sm font-semibold text-white transition duration-300 hover:border-sky-300/35 hover:bg-sky-500/10">
+              <Icon name="plus" className="size-4" />
+              Mi lista
+            </button>
+            <button className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/[0.06] px-5 py-3 text-sm font-semibold text-white transition duration-300 hover:border-sky-300/35 hover:bg-sky-500/10">
+              <Icon name="info" className="size-4" />
+              Mas informacion
+            </button>
+          </div>
+        ) : (
+          <div className={`${featured ? "mt-4" : "mt-3"} inline-flex items-center gap-2 text-sm font-semibold text-cyan-100`}>
+            <span className="rounded-xl bg-sky-500/20 px-4 py-2 border border-sky-300/20">Reproducir</span>
+            <span className="text-xs uppercase tracking-[0.18em] text-slate-300">catalogo premium</span>
+          </div>
+        )}
       </div>
     </a>
   );
@@ -721,14 +1018,42 @@ function HomeSectionBlock({ section }) {
   );
 }
 
-function HomeLike({ home, isLoading, error, onRetry }) {
-  const banners = home?.banners || [];
-  const sections = (home?.sections || []).filter((section) => Array.isArray(section.items) && section.items.length > 0);
+function HomeLike({ home, isLoading, error, onRetry, searchQuery = "" }) {
+  const q = searchQuery.trim().toLowerCase();
+  const banners = (home?.banners || []).filter((banner) => {
+    if (!q) return true;
+    return [banner.title, banner.subtitle, banner.content_type, banner.external_id]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase()
+      .includes(q);
+  });
+  const sections = (home?.sections || [])
+    .map((section) => {
+      const items = Array.isArray(section.items) ? section.items.filter(Boolean) : [];
+      const filteredItems = q
+        ? items.filter((item) => {
+            const text = [
+              item.custom_title,
+              item.title,
+              item.name,
+              item.badge,
+              item.external_id,
+              item.content_type,
+            ]
+              .filter(Boolean)
+              .join(" ")
+              .toLowerCase();
+            return text.includes(q) || String(section.title || "").toLowerCase().includes(q);
+          })
+        : items;
+      return { ...section, items: filteredItems };
+    })
+    .filter((section) => Array.isArray(section.items) && section.items.length > 0);
   const settings = Object.fromEntries(
     Object.entries(home?.settings || {}).filter(([key]) => key && String(key).trim().length > 0),
   );
   const appName = settings.app_name || "FastPlayer";
-  const playerDefault = settings.player_default || "auto";
   const showSkeleton = isLoading && !home;
 
   if (error && !home) {
@@ -744,9 +1069,9 @@ function HomeLike({ home, isLoading, error, onRetry }) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {showSkeleton ? (
-        <section className="rounded-[28px] border border-white/10 min-h-[420px] p-8 md:p-12 space-y-5 bg-slate-900/40">
+        <section className="rounded-[32px] border border-white/10 min-h-[420px] p-8 md:p-12 space-y-5 bg-slate-900/40">
           <div className="fp-skeleton h-8 w-36 rounded-full" />
           <div className="fp-skeleton h-14 w-[60%] rounded-xl" />
           <div className="fp-skeleton h-5 w-[45%] rounded-lg" />
@@ -763,42 +1088,47 @@ function HomeLike({ home, isLoading, error, onRetry }) {
               {banners.length === 1 ? (
                 <HomeBannerCard banner={banners[0]} featured />
               ) : (
-                <div className="grid gap-4 md:grid-cols-2">
-                  {banners.map((banner) => (
-                    <HomeBannerCard key={banner.id || banner.title} banner={banner} featured />
-                  ))}
+                <div className="grid gap-4 xl:grid-cols-[1.35fr_0.95fr]">
+                  <HomeBannerCard banner={banners[0]} featured />
+                  <div className="grid gap-4">
+                    {banners.slice(1, 3).map((banner) => (
+                      <HomeBannerCard key={banner.id || banner.title} banner={banner} compact />
+                    ))}
+                  </div>
                 </div>
               )}
+              {banners.length > 3 ? (
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                  {banners.slice(3, 6).map((banner) => (
+                    <HomeBannerCard key={banner.id || banner.title} banner={banner} compact />
+                  ))}
+                </div>
+              ) : null}
             </section>
           ) : null}
 
-          <section className="space-y-4">
-            <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.22em] text-slate-400">
-              <span>{appName}</span>
-              <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs text-slate-200 normal-case tracking-normal">
-                banners: {banners.length}
-              </span>
-              <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs text-slate-200 normal-case tracking-normal">
-                secciones: {sections.length}
-              </span>
-              <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs text-slate-200 normal-case tracking-normal">
-                player: {playerDefault}
-              </span>
-            </div>
-            <div className="space-y-4">
-              {sections.length ? (
-                <div className="space-y-6">
-                  {sections.map((section) => (
-                    <HomeSectionBlock key={section.id || section.slug} section={section} />
-                  ))}
+          {sections.length ? (
+            <section className="space-y-6">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2 text-xs uppercase tracking-[0.22em] text-slate-400">
+                    <span>{appName}</span>
+                    <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-white/90">Coleccion premium</span>
+                  </div>
+                  <h3 className="mt-2 text-2xl md:text-3xl font-black text-white">Secciones destacadas</h3>
                 </div>
-              ) : (
-                <section className="rounded-3xl border border-dashed border-white/10 bg-white/[0.03] p-8 text-slate-300">
-                  No hay secciones activas con items por ahora.
-                </section>
-              )}
-            </div>
-          </section>
+              </div>
+              <div className="space-y-8">
+                {sections.map((section) => (
+                  <HomeSectionBlock key={section.id || section.slug} section={section} />
+                ))}
+              </div>
+            </section>
+          ) : (
+            <section className="rounded-[28px] border border-dashed border-white/10 bg-white/[0.03] p-8 text-slate-300">
+              No hay secciones activas con items por ahora.
+            </section>
+          )}
 
         </>
       )}
@@ -1135,6 +1465,9 @@ function App() {
     const saved = localStorage.getItem("fastnet:lastPage");
     return WEB_PAGES.has(saved) ? saved : "home";
   });
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => localStorage.getItem("fastnet:sidebarCollapsed") === "1");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [now, setNow] = useState(() => new Date());
   const [data, setData] = useState({
     home: null,
     homeLoading: false,
@@ -1156,9 +1489,18 @@ function App() {
   }, [page]);
 
   useEffect(() => {
+    localStorage.setItem("fastnet:sidebarCollapsed", sidebarCollapsed ? "1" : "0");
+  }, [sidebarCollapsed]);
+
+  useEffect(() => {
     if (WEB_PAGES.has(page)) return;
     setPage("home");
   }, [page]);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(new Date()), 60000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     if (!desktopMode) return;
@@ -1221,40 +1563,92 @@ function App() {
   if (!auth.ok) return <Login onDone={() => { window.location.href = "/app"; }} />;
 
   return (
-    <div className="h-screen bg-fp-night text-white p-4 md:p-6 overflow-hidden">
-      <div className="max-w-[1700px] mx-auto flex gap-6 min-w-0 h-full">
-        <Side page={page} setPage={setPage} onLogout={onLogout} user={auth.user} desktopMode={desktopMode} playerMode={playerMode} />
-        <main className="flex-1 space-y-6 min-w-0 h-[calc(100vh-2rem)] overflow-y-auto overflow-x-hidden pr-1 fp-no-scrollbar">
-          {page === "home" && (
-            <HomeLike
-              home={data.home}
-              isLoading={data.homeLoading}
-              error={data.homeError}
-              onRetry={() => {
-                setData((state) => ({
-                  ...state,
-                  home: null,
-                  homeLoading: false,
-                  homeError: null,
-                }));
-              }}
-            />
-          )}
-          {page === "movies" && <CatalogSection title="Peliculas" items={data.movies || []} categories={data.movieCategories || []} type="movie" />}
-          {page === "series" && (
-            SERIES_DEGRADED_MODE ? (
-              <section className="space-y-4">
-                <div className="rounded-2xl border border-amber-300/30 bg-amber-500/10 p-4 text-amber-100 text-sm">
-                  Modo beta: algunas series pueden cargar mal o incompletas temporalmente.
-                </div>
-                <CatalogSection title="Series" items={(data.series || []).slice(0, 2)} categories={data.seriesCategories || []} type="series" />
-              </section>
-            ) : (
-              <CatalogSection title="Series" items={data.series || []} categories={data.seriesCategories || []} type="series" />
-            )
-          )}
-          {page === "settings" && <SettingsPanel desktopMode={desktopMode} playerMode={playerMode} setPlayerMode={setPlayerMode} hasVlc={hasVlc} />}
-        </main>
+    <div className="relative h-screen overflow-hidden bg-fp-night text-white">
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute -left-24 top-0 size-[28rem] rounded-full bg-sky-500/14 blur-[120px]" />
+        <div className="absolute right-0 top-10 size-[24rem] rounded-full bg-blue-600/12 blur-[120px]" />
+        <div className="absolute bottom-0 left-1/2 size-[30rem] -translate-x-1/2 rounded-full bg-cyan-500/8 blur-[140px]" />
+      </div>
+      <div className="relative z-10 mx-auto flex h-full max-w-[1880px] gap-5 p-4 md:p-6 min-w-0">
+        <Side
+          page={page}
+          setPage={setPage}
+          onLogout={onLogout}
+          user={auth.user}
+          desktopMode={desktopMode}
+          playerMode={playerMode}
+          collapsed={sidebarCollapsed}
+          setCollapsed={setSidebarCollapsed}
+        />
+        <div className="flex min-w-0 flex-1 flex-col gap-5">
+          <TopHeader
+            page={page}
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            user={auth.user}
+            now={now}
+            notifications={(data.home?.banners?.length || 0) + (data.home?.sections?.length || 0)}
+          />
+          <main className="min-h-0 flex-1 space-y-6 overflow-y-auto overflow-x-hidden pr-1 fp-no-scrollbar">
+            {page === "home" && (
+              <HomeLike
+                home={data.home}
+                isLoading={data.homeLoading}
+                error={data.homeError}
+                searchQuery={searchQuery}
+                onRetry={() => {
+                  setData((state) => ({
+                    ...state,
+                    home: null,
+                    homeLoading: false,
+                    homeError: null,
+                  }));
+                }}
+              />
+            )}
+            {page === "movies" && (
+              <CatalogSection
+                title="Peliculas"
+                items={data.movies || []}
+                categories={data.movieCategories || []}
+                type="movie"
+                searchQuery={searchQuery}
+              />
+            )}
+            {page === "series" && (
+              SERIES_DEGRADED_MODE ? (
+                <section className="space-y-4">
+                  <div className="rounded-2xl border border-amber-300/30 bg-amber-500/10 p-4 text-amber-100 text-sm">
+                    Modo beta: algunas series pueden cargar mal o incompletas temporalmente.
+                  </div>
+                  <CatalogSection
+                    title="Series"
+                    items={(data.series || []).slice(0, 2)}
+                    categories={data.seriesCategories || []}
+                    type="series"
+                    searchQuery={searchQuery}
+                  />
+                </section>
+              ) : (
+                <CatalogSection
+                  title="Series"
+                  items={data.series || []}
+                  categories={data.seriesCategories || []}
+                  type="series"
+                  searchQuery={searchQuery}
+                />
+              )
+            )}
+            {page === "settings" && (
+              <SettingsPanel
+                desktopMode={desktopMode}
+                playerMode={playerMode}
+                setPlayerMode={setPlayerMode}
+                hasVlc={hasVlc}
+              />
+            )}
+          </main>
+        </div>
       </div>
     </div>
   );
