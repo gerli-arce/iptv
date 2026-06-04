@@ -24,6 +24,7 @@ Homestead.yaml
 Thumbs.db
 
 # Build artifacts (web / desktop / mobile)
+/build
 /dist
 /release
 /android/app/build
@@ -34,3 +35,4 @@ Thumbs.db
 *.asar
 *.apk
 *.aab
+*.spec

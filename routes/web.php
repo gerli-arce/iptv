@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Web\PortalController;
+use App\Http\Controllers\Web\ImageProxyController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [PortalController::class, 'landing'])->name('landing');
@@ -29,3 +30,4 @@ Route::get('/play/series/{seriesId}/{episodeId?}', [PortalController::class, 'pl
 Route::get('/play/{type}/{id}', [PortalController::class, 'play'])
     ->whereIn('type', ['channel', 'movie'])
     ->name('portal.play');
+Route::get('/image-proxy', [ImageProxyController::class, 'show'])->name('image.proxy');

@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import Hls from "hls.js";
 import "../css/app.css";
+import { fetchHomeData } from "./services/homeApi";
 
 const csrf = document.querySelector('meta[name="csrf-token"]')?.content;
 
@@ -36,6 +37,12 @@ const HLS_CONFIG = {
   fragLoadingMaxRetry: 5,
 };
 
+function proxiedImageUrl(url) {
+  if (!url) return "";
+  if (/^\/|^data:|^blob:/i.test(String(url))) return url;
+  return `/image-proxy?url=${encodeURIComponent(url)}`;
+}
+
 function normalizeTitle(value = "") {
   return String(value)
     .replace(/\b(HD|FHD|4K|LATINO|SUBTITULADO|ESPANOL)\b/gi, "")
@@ -48,12 +55,50 @@ function logHls(message, payload) {
   console.debug(`[HLS] ${message}`, payload || "");
 }
 
+function hasDesktopBridge() {
+  return typeof window !== "undefined" && Boolean(window.desktopBridge?.openNativeStream);
+}
+
+const DESKTOP_PLAYER_MODE_KEY = "fastnet:desktop:player-mode";
+
+function getDesktopPlayerMode() {
+  if (typeof window === "undefined" || !window.localStorage) return "internal";
+  const saved = window.localStorage.getItem(DESKTOP_PLAYER_MODE_KEY);
+  return saved === "vlc" ? "vlc" : "internal";
+}
+
+function setDesktopPlayerMode(mode) {
+  if (typeof window === "undefined" || !window.localStorage) return;
+  window.localStorage.setItem(DESKTOP_PLAYER_MODE_KEY, mode === "vlc" ? "vlc" : "internal");
+}
+
+function getSectionItemHref(item = {}) {
+  const contentType = item.content_type;
+  const externalId = item.external_id;
+  const actionUrl = item.action_url;
+
+  if (contentType === "url") {
+    return actionUrl || "#";
+  }
+
+  if (!contentType || !externalId) {
+    return "#";
+  }
+
+  return `/play/${contentType}/${externalId}`;
+}
+
+function getSectionItemTitle(item = {}) {
+  return item.custom_title || item.title || item.name || item.external_id || "Contenido";
+}
+
 const quickAccess = [
-  { key: "live", label: "TV en vivo", icon: "📺", detail: "Canales activos", metric: "1.2K" },
   { key: "movies", label: "Peliculas", icon: "🎬", detail: "Catalogo premium", metric: "8.4K" },
   { key: "series", label: "Series", icon: "📚", detail: "Temporadas", metric: "3.1K" },
   { key: "continue", label: "Continuar viendo", icon: "🕒", detail: "En progreso", metric: "17" },
 ];
+
+const WEB_PAGES = new Set(["home", "movies", "series"]);
 
 function Login({ onDone }) {
   const [form, setForm] = useState({ server_url: "http://iptv.fastnetperu.com.pe:80", username: "", password: "" });
@@ -104,13 +149,13 @@ function Login({ onDone }) {
   );
 }
 
-function Side({ page, setPage, onLogout, user }) {
+function Side({ page, setPage, onLogout, user, desktopMode, playerMode }) {
   const links = [
     ["home", "Inicio"],
-    ["live", "TV en vivo"],
     ["movies", "Peliculas"],
     ["series", "Series"],
     ["list", "Mi lista"],
+    ...(desktopMode ? [["settings", "Ajustes"]] : []),
   ];
 
   return (
@@ -136,9 +181,58 @@ function Side({ page, setPage, onLogout, user }) {
       <div className="mt-auto rounded-2xl border border-white/10 bg-white/5 p-4">
         <p className="text-white font-semibold">{user?.username || "Usuario"}</p>
         <p className="text-emerald-300 text-sm">Activo</p>
+        {desktopMode ? (
+          <p className="mt-2 text-xs text-slate-300">
+            Reproductor: {playerMode === "vlc" ? "VLC externo" : "Interno"}
+          </p>
+        ) : null}
       </div>
       <button className="mt-3 mb-1 rounded-xl border border-white/15 py-3 text-white hover:bg-white/10 transition duration-300" onClick={onLogout}>Cerrar sesion</button>
     </aside>
+  );
+}
+
+function SettingsPanel({ desktopMode, playerMode, setPlayerMode, hasVlc }) {
+  if (!desktopMode) {
+    return (
+      <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-6 text-slate-200">
+        Los ajustes de reproductor externo solo estan disponibles en la app de escritorio.
+      </section>
+    );
+  }
+
+  return (
+    <section className="space-y-6">
+      <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
+        <h2 className="text-3xl font-black text-white">Ajustes del reproductor</h2>
+        <p className="mt-2 text-sm text-slate-300">
+          Por defecto la app usa el reproductor interno, igual que la web o la APK. Si prefieres VLC, puedes activarlo aqui.
+        </p>
+      </div>
+      <div className="grid gap-4 lg:grid-cols-2">
+        <button
+          onClick={() => setPlayerMode("internal")}
+          className={`rounded-3xl border p-6 text-left transition duration-300 ${playerMode === "internal" ? "border-sky-300/50 bg-sky-400/10 shadow-fp-card" : "border-white/10 bg-white/[0.03] hover:bg-white/[0.06]"}`}
+        >
+          <p className="text-xl font-bold text-white">Reproductor interno</p>
+          <p className="mt-2 text-sm text-slate-300">
+            Recomendado. Usa el video embebido dentro de la app y no requiere instalar nada extra.
+          </p>
+        </button>
+        <button
+          onClick={() => setPlayerMode("vlc")}
+          className={`rounded-3xl border p-6 text-left transition duration-300 ${playerMode === "vlc" ? "border-emerald-300/50 bg-emerald-400/10 shadow-fp-card" : "border-white/10 bg-white/[0.03] hover:bg-white/[0.06]"}`}
+        >
+          <p className="text-xl font-bold text-white">Abrir con VLC</p>
+          <p className="mt-2 text-sm text-slate-300">
+            Usa la app de VLC instalada en la PC para abrir el canal fuera de Fastnet Player.
+          </p>
+          <p className={`mt-4 text-xs font-semibold ${hasVlc ? "text-emerald-300" : "text-amber-300"}`}>
+            {hasVlc ? "VLC detectado" : "VLC no detectado. Instalalo para usar este modo."}
+          </p>
+        </button>
+      </div>
+    </section>
   );
 }
 
@@ -409,157 +503,324 @@ function StatsPanel({ home }) {
   );
 }
 
-function HomeLike({ home, setPage }) {
-  const channels = home?.channels || [];
-  const movies = home?.movies || [];
-  const series = home?.series || [];
-  const hero = movies[0] || channels[0] || series[0];
-  const isLoadingHome = !home || (!home?.channels?.length && !home?.movies?.length && !home?.series?.length);
-  const [tmdbHeroFallback, setTmdbHeroFallback] = useState(null);
-  const tmdbHero = home?.heroTmdb || tmdbHeroFallback || null;
+function HomeBannerCard({ banner, featured = false, compact = false }) {
+  if (!banner) return null;
 
-  useEffect(() => {
-    let cancelled = false;
-    if (home?.heroTmdb || !hero?.name) return;
+  const href = banner.content_type === "url"
+    ? banner.action_url
+    : banner.external_id
+      ? `/play/${banner.content_type}/${banner.external_id}`
+      : banner.action_url;
 
-    (async () => {
-      try {
-        const q = normalizeTitle(hero.name);
-        const searchRes = await fetch(`/api/imdb/search?q=${encodeURIComponent(q)}&language=es-MX`, { credentials: "same-origin" });
-        if (!searchRes.ok) return;
-        const search = await searchRes.json();
-        const results = search?.data?.results || [];
-        const firstMovie = results.find((r) => r?.media_type === "movie") || results[0];
-        if (!firstMovie?.id) return;
-        const detailsRes = await fetch(`/api/imdb/movie/${firstMovie.id}?language=es-MX`, { credentials: "same-origin" });
-        if (!detailsRes.ok) return;
-        const details = await detailsRes.json();
-        if (!cancelled) setTmdbHeroFallback(details?.data || firstMovie || null);
-      } catch {
-        if (!cancelled) setTmdbHeroFallback(null);
+  const image = proxiedImageUrl(banner.image_url || banner.mobile_image_url);
+  const title = banner.title || "Banner";
+  const subtitle = banner.subtitle || "";
+  const external = Boolean(href && /^https?:\/\//i.test(href));
+
+  return (
+    <a
+      href={href || "#"}
+      target={external ? "_blank" : undefined}
+      rel={external ? "noreferrer" : undefined}
+      className={`group relative overflow-hidden rounded-[28px] border border-white/10 bg-slate-900/60 shadow-fp-soft transition duration-300 hover:-translate-y-1 hover:border-sky-300/30 ${featured ? "min-h-[260px] md:min-h-[340px]" : compact ? "min-h-[150px] md:min-h-[170px]" : "min-h-[180px]"}`}
+    >
+      {image ? <img src={image} alt={title} className="absolute inset-0 h-full w-full object-cover opacity-75 transition duration-300 group-hover:scale-[1.03]" /> : null}
+      <div className="absolute inset-0 bg-gradient-to-r from-[#04101f] via-[#04101f]/80 to-transparent" />
+      <div className={`relative z-10 flex h-full flex-col justify-end ${featured ? "p-5 md:p-7" : "p-4 md:p-5"}`}>
+        <div className="mb-3 flex flex-wrap gap-2">
+          <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-slate-100">
+            {banner.content_type}
+          </span>
+          {banner.position !== undefined ? (
+            <span className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-cyan-100">
+              Pos {banner.position}
+            </span>
+          ) : null}
+        </div>
+        <h3 className={`${featured ? "text-3xl md:text-5xl" : compact ? "text-xl md:text-2xl" : "text-2xl md:text-3xl"} font-black leading-[0.95] text-white`}>
+          {title}
+        </h3>
+        {subtitle ? <p className={`${featured ? "mt-3 max-w-2xl" : "mt-2"} text-sm text-slate-200/90`}>{subtitle}</p> : null}
+        <div className={`${featured ? "mt-5" : "mt-4"} inline-flex items-center gap-2 text-sm font-semibold text-cyan-100`}>
+          <span className="rounded-xl bg-sky-500/20 px-4 py-2 border border-sky-300/20">Abrir banner</span>
+          <span className="text-xs uppercase tracking-[0.18em] text-slate-300">referencia externa</span>
+        </div>
+      </div>
+    </a>
+  );
+}
+
+function HomeSectionItemCard({ item, variant = "default" }) {
+  const title = getSectionItemTitle(item);
+  const href = getSectionItemHref(item);
+  const external = Boolean(href && /^https?:\/\//i.test(href));
+  const image = proxiedImageUrl(item.custom_image);
+  const description =
+    item.overview ||
+    item.description ||
+    item.plot ||
+    item.synopsis ||
+    item.summary ||
+    `Disfruta ${title} desde FastPlayer.`;
+  const isFeature = variant === "feature";
+  const isCompact = variant === "compact";
+
+  return (
+    <a
+      href={href || "#"}
+      target={external ? "_blank" : undefined}
+      rel={external ? "noreferrer" : undefined}
+      className={`group overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] transition duration-300 hover:-translate-y-1 hover:border-sky-300/30 hover:shadow-fp-card ${isFeature ? "relative block w-full min-h-[160px] md:min-h-[210px]" : ""}`}
+    >
+      {isFeature ? (
+        <>
+          {image ? (
+            <img
+              src={image}
+              alt={title}
+              loading="eager"
+              decoding="async"
+              className="absolute inset-0 h-full w-full object-cover object-center transition duration-500 group-hover:scale-[1.03]"
+            />
+          ) : (
+            <div className="absolute inset-0 grid place-items-center bg-gradient-to-br from-slate-900 to-slate-800 p-4 text-center">
+              <div>
+                <p className="text-2xl font-black text-sky-200">{String(item.content_type || "").toUpperCase()}</p>
+                <p className="mt-2 text-xs text-slate-400 break-all">{item.external_id}</p>
+              </div>
+            </div>
+          )}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#04101f]/35 via-[#04101f]/12 to-[#04101f]/35" />
+          <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#030814]/60 via-[#030814]/18 to-transparent" />
+          <div className="relative z-10 flex h-full min-h-[160px] flex-col justify-between p-4 md:min-h-[210px] md:p-6">
+            <div className="space-y-2 md:max-w-[68%]">
+              <div className="flex flex-wrap gap-2">
+                {item.badge ? (
+                  <span className="rounded-full bg-sky-500/90 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.15em] text-white shadow-lg">
+                    {item.badge}
+                  </span>
+                ) : null}
+                <span className="rounded-full border border-white/15 bg-black/20 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-slate-100">
+                  {item.content_type}
+                </span>
+              </div>
+              <p className="text-lg font-black leading-[0.95] text-white md:text-3xl">{title}</p>
+            </div>
+            <div className="space-y-2 md:max-w-[60%]">
+              <p className="line-clamp-2 text-xs leading-5 text-slate-100/90 md:text-sm">
+                {description}
+              </p>
+              <p className="text-[10px] uppercase tracking-[0.18em] text-slate-300">
+                {item.content_type} · {item.external_id}
+              </p>
+            </div>
+          </div>
+        </>
+      ) : (
+        <>
+          <div className={`relative bg-slate-900/70 ${isCompact ? "aspect-[16/10]" : "aspect-[2/3]"}`}>
+            {image ? (
+              <img src={image} alt={title} className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]" />
+            ) : (
+              <div className="grid h-full w-full place-items-center bg-gradient-to-br from-slate-900 to-slate-800 p-4 text-center">
+                <div>
+                  <p className="text-2xl font-black text-sky-200">{String(item.content_type || "").toUpperCase()}</p>
+                  <p className="mt-2 text-xs text-slate-400 break-all">{item.external_id}</p>
+                </div>
+              </div>
+            )}
+            {item.badge ? (
+              <span className="absolute left-3 top-3 rounded-full bg-sky-500/85 px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.15em] text-white shadow-lg">
+                {item.badge}
+              </span>
+            ) : null}
+          </div>
+          <div className="space-y-1 p-4">
+            <p className="line-clamp-1 font-black text-white">{title}</p>
+            <p className="text-[11px] uppercase tracking-[0.18em] text-slate-400">
+              {item.content_type} · {item.external_id}
+            </p>
+          </div>
+        </>
+      )}
+    </a>
+  );
+}
+
+function HomeSectionBlock({ section }) {
+  const items = Array.isArray(section?.items) ? section.items.filter(Boolean) : [];
+  if (!items.length) return null;
+
+  const layout = section.layout || "carousel";
+
+  const renderItems = () => {
+    if (layout === "grid") {
+      return (
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+          {items.map((item) => (
+            <HomeSectionItemCard key={item.id || item.external_id} item={item} variant="compact" />
+          ))}
+        </div>
+      );
+    }
+
+    if (items.length === 2) {
+      return (
+        <div className="grid gap-4 md:grid-cols-2">
+          {items.map((item) => (
+            <HomeSectionItemCard key={item.id || item.external_id} item={item} variant="feature" />
+          ))}
+        </div>
+      );
+    }
+
+    if (layout === "hero" || items.length === 1) {
+      const [lead, ...rest] = items;
+      if (items.length === 1) {
+        return <HomeSectionItemCard item={lead} variant="feature" />;
       }
-    })();
 
-    return () => {
-      cancelled = true;
-    };
-  }, [home?.heroTmdb, hero?.name]);
+      return (
+        <div className="space-y-4">
+          <HomeSectionItemCard item={lead} variant="feature" />
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {rest.slice(0, 6).map((item) => (
+              <HomeSectionItemCard key={item.id || item.external_id} item={item} variant="compact" />
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="grid auto-cols-[180px] grid-flow-col gap-3 overflow-x-auto pb-2 fp-no-scrollbar">
+        {items.map((item) => (
+          <div key={item.id || item.external_id} className="w-[180px]">
+            <HomeSectionItemCard item={item} variant="compact" />
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  return (
+    <section className="space-y-4">
+      <div className="flex items-end justify-between gap-4">
+        <div>
+          <h3 className="fp-section-title">{section.title}</h3>
+          <p className="text-xs uppercase tracking-[0.22em] text-slate-400">
+            {section.content_type} · {items.length} items
+          </p>
+        </div>
+        <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-slate-300">
+          {layout}
+        </span>
+      </div>
+      {renderItems()}
+    </section>
+  );
+}
+
+function HomeLike({ home, isLoading, error, onRetry }) {
+  const banners = home?.banners || [];
+  const sections = (home?.sections || []).filter((section) => Array.isArray(section.items) && section.items.length > 0);
+  const settings = Object.fromEntries(
+    Object.entries(home?.settings || {}).filter(([key]) => key && String(key).trim().length > 0),
+  );
+  const appName = settings.app_name || "FastPlayer";
+  const playerDefault = settings.player_default || "auto";
+  const featuredBanner = banners[0] || null;
+  const bannerRail = banners.slice(1);
+  const showSkeleton = isLoading && !home;
+
+  if (error && !home) {
+    return (
+      <section className="rounded-[28px] border border-rose-300/20 bg-rose-500/10 p-8 text-white">
+        <p className="text-xl font-black">No se pudo cargar el home</p>
+        <p className="mt-2 text-sm text-rose-100/90">{error}</p>
+        <button onClick={onRetry} className="mt-5 rounded-xl bg-fp-accent px-5 py-3 font-semibold text-white transition hover:shadow-fp-button">
+          Reintentar
+        </button>
+      </section>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      {isLoadingHome ? (
-        <>
-          <section className="rounded-[28px] border border-white/10 min-h-[420px] p-8 md:p-12 space-y-5 bg-slate-900/40">
-            <div className="fp-skeleton h-8 w-36 rounded-full" />
-            <div className="fp-skeleton h-14 w-[60%] rounded-xl" />
-            <div className="fp-skeleton h-5 w-[45%] rounded-lg" />
-            <div className="flex gap-3 pt-2">
-              <div className="fp-skeleton h-12 w-32 rounded-xl" />
-              <div className="fp-skeleton h-12 w-40 rounded-xl" />
-              <div className="fp-skeleton h-12 w-48 rounded-xl" />
-            </div>
-          </section>
-
-          <section>
-            <div className="fp-skeleton h-10 w-64 rounded-xl mb-4" />
-            <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-4">
-              {Array.from({ length: 4 }).map((_, i) => <div key={`cw-${i}`} className="fp-skeleton h-64 rounded-2xl border border-white/10" />)}
-            </div>
-          </section>
-
-          <section>
-            <div className="fp-skeleton h-10 w-56 rounded-xl mb-4" />
-            <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-4">
-              {Array.from({ length: 8 }).map((_, i) => <div key={`live-${i}`} className="fp-skeleton h-44 rounded-2xl border border-white/10" />)}
-            </div>
-          </section>
-        </>
-      ) : (
-        <>
-          <HeroSection hero={hero} tmdbHero={tmdbHero} />
-          <ContinueWatching items={movies} />
-          <LiveNow channels={channels} />
-        </>
-      )}
-      <div className="grid xl:grid-cols-[1fr_340px] gap-6 items-start">
-        <div className="space-y-6">
-          {isLoadingHome ? (
-            <>
-              <div>
-                <div className="fp-skeleton h-10 w-72 rounded-xl mb-4" />
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
-                  {Array.from({ length: 12 }).map((_, i) => <div key={`mv-${i}`} className="fp-skeleton aspect-[2/3] rounded-xl border border-white/10" />)}
-                </div>
-              </div>
-              <div>
-                <div className="fp-skeleton h-10 w-72 rounded-xl mb-4" />
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
-                  {Array.from({ length: 12 }).map((_, i) => <div key={`sr-${i}`} className="fp-skeleton aspect-[2/3] rounded-xl border border-white/10" />)}
-                </div>
-              </div>
-            </>
-          ) : (
-            <>
-              <HoverCards title="Peliculas destacadas" items={movies} type="movie" />
-              {SERIES_TEMP_DISABLED ? (
-                <section>
-                  <h3 className="fp-section-title">Series recomendadas</h3>
-                  <p className="text-sm text-amber-200/90 mb-3">Servicio temporalmente en mantenimiento.</p>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
-                    {series.slice(0, 2).map((it, i) => (
-                      <div key={`series-preview-${i}`} className="relative rounded-xl overflow-hidden border border-amber-300/30 bg-slate-900/40 aspect-[2/3] opacity-75">
-                        {(it.cover || it.stream_icon) ? <img src={it.cover || it.stream_icon} alt="" className="h-full w-full object-contain p-1" /> : null}
-                        <div className="absolute inset-0 bg-black/45 grid place-items-center text-xs font-semibold text-amber-100 px-2 text-center">
-                          Temporalmente no disponible
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-              ) : (
-                <HoverCards title="Series recomendadas" items={series} type="series" />
-              )}
-            </>
-          )}
-          <section className="rounded-3xl border border-sky-300/20 bg-gradient-to-r from-sky-500/15 via-indigo-500/10 to-transparent p-6">
-            <h3 className="fp-section-title mt-0">Tendencias</h3>
-            <p className="text-slate-200">Colecciones destacadas, nuevas franquicias y recomendaciones de temporada en una capa editorial separada.</p>
-          </section>
-        </div>
-        {isLoadingHome ? (
-          <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-5">
-            <div className="fp-skeleton h-10 w-48 rounded-xl mb-3" />
-            <div className="space-y-2">
-              {Array.from({ length: 10 }).map((_, i) => <div key={`top-${i}`} className="fp-skeleton h-10 rounded-xl" />)}
-            </div>
-          </section>
-        ) : (
-          <TopTen items={movies} />
-        )}
-      </div>
-      {isLoadingHome ? (
-        <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {Array.from({ length: 4 }).map((_, i) => <div key={`st-${i}`} className="fp-skeleton h-28 rounded-2xl border border-white/10" />)}
+      {showSkeleton ? (
+        <section className="rounded-[28px] border border-white/10 min-h-[420px] p-8 md:p-12 space-y-5 bg-slate-900/40">
+          <div className="fp-skeleton h-8 w-36 rounded-full" />
+          <div className="fp-skeleton h-14 w-[60%] rounded-xl" />
+          <div className="fp-skeleton h-5 w-[45%] rounded-lg" />
+          <div className="flex gap-3 pt-2">
+            <div className="fp-skeleton h-12 w-32 rounded-xl" />
+            <div className="fp-skeleton h-12 w-40 rounded-xl" />
+            <div className="fp-skeleton h-12 w-48 rounded-xl" />
+          </div>
         </section>
       ) : (
-        <StatsPanel home={home} />
+        <>
+          {banners.length ? (
+            <section className="space-y-4">
+              <HomeBannerCard banner={featuredBanner} featured />
+              {bannerRail.length ? (
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                  {bannerRail.map((banner) => (
+                    <HomeBannerCard key={banner.id || banner.title} banner={banner} compact />
+                  ))}
+                </div>
+              ) : null}
+            </section>
+          ) : null}
+
+          <section className="space-y-4">
+            <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.22em] text-slate-400">
+              <span>{appName}</span>
+              <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs text-slate-200 normal-case tracking-normal">
+                banners: {banners.length}
+              </span>
+              <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs text-slate-200 normal-case tracking-normal">
+                secciones: {sections.length}
+              </span>
+              <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs text-slate-200 normal-case tracking-normal">
+                player: {playerDefault}
+              </span>
+            </div>
+            <div className="space-y-4">
+              {sections.length ? (
+                <div className="space-y-6">
+                  {sections.map((section) => (
+                    <HomeSectionBlock key={section.id || section.slug} section={section} />
+                  ))}
+                </div>
+              ) : (
+                <section className="rounded-3xl border border-dashed border-white/10 bg-white/[0.03] p-8 text-slate-300">
+                  No hay secciones activas con items por ahora.
+                </section>
+              )}
+            </div>
+          </section>
+
+        </>
       )}
       <footer className="rounded-2xl border border-white/10 bg-white/[0.02] px-6 py-5 text-sm text-slate-300 flex flex-wrap items-center justify-between">
-        <p>FastnetPlayer Premium Experience</p>
-        <p>Streaming profesional - Tecnologia de baja latencia - Entretenimiento exclusivo</p>
+        <p>FastPlayer Premium Experience</p>
+        <p>Peliculas y series premium - Catalogo dinamico - Entretenimiento exclusivo</p>
       </footer>
     </div>
   );
 }
 
-function LiveLayout({ data, query, setQuery }) {
+function LiveLayout({ data, query, setQuery, playerMode }) {
   const channels = data?.channels || [];
   const categories = data?.categories || [];
+  const desktopMode = hasDesktopBridge();
   const videoRef = useRef(null);
   const hlsRef = useRef(null);
   const volumeRef = useRef(0.85);
   const retryRef = useRef(0);
   const selectionStartRef = useRef(0);
+  const launchedDesktopStreamRef = useRef("");
   const [volume, setVolume] = useState(0.85);
   const [playError, setPlayError] = useState("");
   const [candidateIndex, setCandidateIndex] = useState(0);
@@ -618,6 +879,16 @@ function LiveLayout({ data, query, setQuery }) {
   };
 
   useEffect(() => {
+    if (desktopMode && playerMode === "vlc") {
+      const desktopStream = candidateSources[0] || data?.streamUrl;
+      if (!desktopStream) return;
+      if (launchedDesktopStreamRef.current === desktopStream) return;
+
+      launchedDesktopStreamRef.current = desktopStream;
+      window.desktopBridge.openVlcStream?.(desktopStream);
+      return;
+    }
+
     const video = videoRef.current;
     const src = candidateSources[candidateIndex] || candidateSources[0];
     if (!video) return;
@@ -728,7 +999,7 @@ function LiveLayout({ data, query, setQuery }) {
       video.removeEventListener("error", onVideoError);
       stopCurrentStream(video);
     };
-  }, [candidateIndex, candidateKey, data?.streamUrl]);
+  }, [candidateIndex, candidateKey, data?.streamUrl, desktopMode, playerMode]);
 
   useEffect(() => {
     setCandidateIndex(0);
@@ -789,7 +1060,34 @@ function LiveLayout({ data, query, setQuery }) {
         </div>
       </div>
       <div className="relative rounded-3xl border border-white/10 bg-black overflow-hidden h-full min-h-0">
-        {data?.streamUrl ? <video ref={videoRef} autoPlay muted preload="auto" playsInline onDoubleClick={toggleFullscreen} className="w-full h-[calc(100%-56px)] object-contain" /> : <div className="h-full grid place-items-center text-slate-300">Selecciona un canal</div>}
+        {desktopMode && playerMode === "vlc" ? (
+          <div className="h-[calc(100%-56px)] grid place-items-center p-6 text-center">
+            <div className="max-w-md space-y-3">
+              <p className="text-2xl font-black text-white">Modo VLC activado</p>
+              <p className="text-sm text-slate-300">
+                El canal se abrira en la aplicacion VLC instalada en tu PC. Si prefieres reproducir dentro de Fastnet Player, cambia el modo en Ajustes.
+              </p>
+              <button
+                onClick={() => {
+                  const desktopStream = candidateSources[0] || data?.streamUrl;
+                  if (!desktopStream) return;
+                  launchedDesktopStreamRef.current = desktopStream;
+                  window.desktopBridge.openVlcStream?.(desktopStream);
+                }}
+                className="rounded-xl bg-fp-accent px-5 py-3 font-semibold text-white transition hover:shadow-fp-button"
+              >
+                Abrir en VLC
+              </button>
+              <p className="text-xs text-slate-400">
+                Si no se abre nada, instala VLC y vuelve a intentar.
+              </p>
+            </div>
+          </div>
+        ) : data?.streamUrl ? (
+          <video ref={videoRef} autoPlay muted preload="auto" playsInline onDoubleClick={toggleFullscreen} className="w-full h-[calc(100%-56px)] object-contain" />
+        ) : (
+          <div className="h-full grid place-items-center text-slate-300">Selecciona un canal</div>
+        )}
         {playError ? (
           <div className="absolute inset-x-0 top-4 mx-auto w-[92%] max-w-2xl rounded-xl border border-rose-300/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-100 backdrop-blur">
             <div className="flex items-center justify-between gap-3">
@@ -832,13 +1130,23 @@ function LiveLayout({ data, query, setQuery }) {
 }
 
 function App() {
+  const desktopMode = hasDesktopBridge();
   const [auth, setAuth] = useState({ ready: false, ok: false, user: null });
   const [page, setPage] = useState(() => {
     const saved = localStorage.getItem("fastnet:lastPage");
-    return saved || "home";
+    return WEB_PAGES.has(saved) ? saved : "home";
   });
-  const [data, setData] = useState({ home: null, live: null, movies: null, movieCategories: [], series: null, seriesCategories: [] });
-  const [liveQuery, setLiveQuery] = useState({ category_id: "all", ch: null });
+  const [data, setData] = useState({
+    home: null,
+    homeLoading: false,
+    homeError: null,
+    movies: null,
+    movieCategories: [],
+    series: null,
+    seriesCategories: [],
+  });
+  const [playerMode, setPlayerModeState] = useState(() => (desktopMode ? getDesktopPlayerMode() : "internal"));
+  const [hasVlc, setHasVlc] = useState(false);
 
   useEffect(() => {
     api("/me").then((m) => setAuth({ ready: true, ok: true, user: m.user })).catch(() => setAuth({ ready: true, ok: false, user: null }));
@@ -849,19 +1157,61 @@ function App() {
   }, [page]);
 
   useEffect(() => {
+    if (WEB_PAGES.has(page)) return;
+    setPage("home");
+  }, [page]);
+
+  useEffect(() => {
+    if (!desktopMode) return;
+    window.desktopBridge.hasVlc?.().then((value) => setHasVlc(Boolean(value))).catch(() => setHasVlc(false));
+  }, [desktopMode]);
+
+  useEffect(() => {
+    if (!auth.ok || page !== "home" || data.home || data.homeLoading) return;
+
+    let cancelled = false;
+
+    setData((state) => ({
+      ...state,
+      homeLoading: true,
+      homeError: null,
+    }));
+
+    fetchHomeData()
+      .then((result) => {
+        if (cancelled) return;
+        setData((state) => ({
+          ...state,
+          home: result,
+          homeLoading: false,
+          homeError: null,
+        }));
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        setData((state) => ({
+          ...state,
+          homeLoading: false,
+          homeError: error?.message || "No se pudo cargar el home",
+        }));
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [auth.ok, page, data.home]);
+
+  const setPlayerMode = (mode) => {
+    const nextMode = mode === "vlc" ? "vlc" : "internal";
+    setPlayerModeState(nextMode);
+    setDesktopPlayerMode(nextMode);
+  };
+
+  useEffect(() => {
     if (!auth.ok) return;
-    if (page === "home" && !data.home) api("/home").then((d) => setData((s) => ({ ...s, home: d })));
     if (page === "movies" && !data.movies) api("/movies").then((d) => setData((s) => ({ ...s, movies: d.items || [], movieCategories: d.categories || [] })));
     if (page === "series" && !data.series) api("/series").then((d) => setData((s) => ({ ...s, series: d.items || [], seriesCategories: d.categories || [] })));
   }, [auth.ok, page]);
-
-  useEffect(() => {
-    if (!auth.ok || page !== "live") return;
-    const q = new URLSearchParams();
-    if (liveQuery.category_id) q.set("category_id", liveQuery.category_id);
-    if (liveQuery.ch) q.set("ch", liveQuery.ch);
-    api(`/live?${q.toString()}`).then((d) => setData((s) => ({ ...s, live: d })));
-  }, [auth.ok, page, liveQuery.category_id, liveQuery.ch]);
 
   const onLogout = async () => {
     await api("/logout", { method: "POST" });
@@ -874,10 +1224,23 @@ function App() {
   return (
     <div className="h-screen bg-fp-night text-white p-4 md:p-6 overflow-hidden">
       <div className="max-w-[1700px] mx-auto flex gap-6 min-w-0 h-full">
-        <Side page={page} setPage={setPage} onLogout={onLogout} user={auth.user} />
+        <Side page={page} setPage={setPage} onLogout={onLogout} user={auth.user} desktopMode={desktopMode} playerMode={playerMode} />
         <main className="flex-1 space-y-6 min-w-0 h-[calc(100vh-2rem)] overflow-y-auto overflow-x-hidden pr-1 fp-no-scrollbar">
-          {page === "home" && <HomeLike home={data.home || { channels: [], movies: [], series: [] }} setPage={setPage} />}
-          {page === "live" && <LiveLayout data={data.live} query={liveQuery} setQuery={setLiveQuery} />}
+          {page === "home" && (
+            <HomeLike
+              home={data.home}
+              isLoading={data.homeLoading}
+              error={data.homeError}
+              onRetry={() => {
+                setData((state) => ({
+                  ...state,
+                  home: null,
+                  homeLoading: false,
+                  homeError: null,
+                }));
+              }}
+            />
+          )}
           {page === "movies" && <CatalogSection title="Peliculas" items={data.movies || []} categories={data.movieCategories || []} type="movie" />}
           {page === "series" && (
             SERIES_DEGRADED_MODE ? (
@@ -891,6 +1254,7 @@ function App() {
               <CatalogSection title="Series" items={data.series || []} categories={data.seriesCategories || []} type="series" />
             )
           )}
+          {page === "settings" && <SettingsPanel desktopMode={desktopMode} playerMode={playerMode} setPlayerMode={setPlayerMode} hasVlc={hasVlc} />}
         </main>
       </div>
     </div>

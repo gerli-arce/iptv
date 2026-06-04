@@ -17,10 +17,13 @@ return new class extends Migration
             $table->string("subtitle")->nullable();
             $table->string("image_url");
             $table->string("mobile_image_url")->nullable();
-            $table->string("action_type")->default("none");
-            $table->json("action_payload")->nullable();
+            $table->enum("content_type", ["live", "movie", "series", "url"])->default("url");
+            $table->string("external_id")->nullable();
+            $table->string("action_url")->nullable();
             $table->unsignedInteger("position")->default(0);
             $table->boolean("active")->default(true);
+            $table->timestamp("starts_at")->nullable();
+            $table->timestamp("ends_at")->nullable();
             $table->timestamps();
 
             $table->index(["active", "position"]);

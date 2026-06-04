@@ -12,6 +12,7 @@ class BannerController extends Controller
     public function index(): JsonResponse
     {
         $banners = Banner::orderBy("position")->get();
+
         return response()->json($banners);
     }
 
@@ -22,13 +23,17 @@ class BannerController extends Controller
             "subtitle" => ["nullable", "string", "max:255"],
             "image_url" => ["required", "string", "max:2048"],
             "mobile_image_url" => ["nullable", "string", "max:2048"],
-            "action_type" => ["nullable", "in:none,content,url"],
-            "action_payload" => ["nullable", "array"],
+            "content_type" => ["required", "in:live,movie,series,url"],
+            "external_id" => ["nullable", "string", "max:255"],
+            "action_url" => ["nullable", "string", "max:2048"],
             "position" => ["nullable", "integer", "min:0"],
             "active" => ["nullable", "boolean"],
+            "starts_at" => ["nullable", "date"],
+            "ends_at" => ["nullable", "date", "after_or_equal:starts_at"],
         ]);
 
         $banner = Banner::create($data);
+
         return response()->json($banner, 201);
     }
 
@@ -44,13 +49,17 @@ class BannerController extends Controller
             "subtitle" => ["nullable", "string", "max:255"],
             "image_url" => ["sometimes", "string", "max:2048"],
             "mobile_image_url" => ["nullable", "string", "max:2048"],
-            "action_type" => ["sometimes", "in:none,content,url"],
-            "action_payload" => ["nullable", "array"],
+            "content_type" => ["sometimes", "in:live,movie,series,url"],
+            "external_id" => ["nullable", "string", "max:255"],
+            "action_url" => ["nullable", "string", "max:2048"],
             "position" => ["sometimes", "integer", "min:0"],
             "active" => ["sometimes", "boolean"],
+            "starts_at" => ["nullable", "date"],
+            "ends_at" => ["nullable", "date", "after_or_equal:starts_at"],
         ]);
 
         $banner->update($data);
+
         return response()->json($banner);
     }
 

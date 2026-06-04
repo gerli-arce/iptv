@@ -3,31 +3,41 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\AppSetting;
 use App\Models\Banner;
-use App\Models\Section;
+use App\Models\HomeSection;
 use Illuminate\Http\JsonResponse;
 
 class HomeController extends Controller
 {
     public function index(): JsonResponse
     {
+        $moment = now();
+
         $banners = Banner::query()
-            ->where("active", true)
+            ->visible($moment)
             ->orderBy("position")
             ->get();
 
-        $sections = Section::query()
+        $sections = HomeSection::query()
             ->where("active", true)
             ->orderBy("position")
             ->with([
-                "items" => fn ($q) => $q->where("active", true)->orderBy("position"),
+                "items" => fn ($query) => $query->visible($moment)->orderBy("position"),
             ])
             ->get();
+
+        $settings = AppSetting::query()
+            ->orderBy("key")
+            ->get()
+            ->mapWithKeys(fn (AppSetting $setting) => [
+                $setting->key => $setting->typedValue(),
+            ]);
 
         return response()->json([
             "banners" => $banners,
             "sections" => $sections,
-            "generated_at" => now()->toISOString(),
+            "settings" => $settings,
         ]);
     }
 }

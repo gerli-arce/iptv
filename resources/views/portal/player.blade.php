@@ -38,6 +38,8 @@
     <script>
         const video = document.getElementById('video');
         const candidates = @json($candidates ?? [$url]);
+        const desktopBridge = window.desktopBridge;
+        const desktopMode = Boolean(desktopBridge && typeof desktopBridge.openNativeStream === 'function');
         let currentIndex = 0;
         let hls = null;
 
@@ -54,6 +56,12 @@
             }
             currentIndex = index;
             const src = candidates[index];
+
+            if (desktopMode) {
+                desktopBridge.openNativeStream(src, @json($title));
+                return;
+            }
+
             cleanupHls();
             video.removeAttribute('src');
             video.load();

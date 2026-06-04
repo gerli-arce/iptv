@@ -20,11 +20,13 @@ Route::prefix("admin")->group(function () {
         Route::post("/logout", [AuthController::class, "logout"]);
 
         Route::apiResource("banners", BannerController::class);
-        Route::apiResource("sections", SectionController::class);
+        Route::apiResource("home-sections", SectionController::class)->parameters([
+            "home-sections" => "section",
+        ]);
 
-        Route::get("sections/{section}/items", [SectionItemController::class, "indexBySection"]);
-        Route::post("sections/{section}/items", [SectionItemController::class, "store"]);
-        Route::put("sections/{section}/items/{item}", [SectionItemController::class, "update"]);
-        Route::delete("sections/{section}/items/{item}", [SectionItemController::class, "destroy"]);
+        Route::get("home-sections/{section}/items", [SectionItemController::class, "indexBySection"]);
+        Route::post("home-sections/{section}/items", [SectionItemController::class, "store"]);
+        Route::put("home-sections/{section}/items/{item}", [SectionItemController::class, "update"]);
+        Route::delete("home-sections/{section}/items/{item}", [SectionItemController::class, "destroy"]);
     });
 });

@@ -3,34 +3,40 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Section;
-use App\Models\SectionItem;
+use App\Models\HomeSection;
+use App\Models\HomeSectionItem;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class SectionItemController extends Controller
 {
-    public function indexBySection(Section $section): JsonResponse
+    public function indexBySection(HomeSection $section): JsonResponse
     {
         return response()->json(
             $section->items()->orderBy("position")->get()
         );
     }
 
-    public function store(Request $request, Section $section): JsonResponse
+    public function store(Request $request, HomeSection $section): JsonResponse
     {
         $data = $request->validate([
             "content_type" => ["required", "in:movie,series,live"],
-            "external_id" => ["required", "string", "max:80"],
+            "external_id" => ["required", "string", "max:255"],
+            "custom_title" => ["nullable", "string", "max:255"],
+            "custom_image" => ["nullable", "string", "max:2048"],
+            "badge" => ["nullable", "string", "max:255"],
             "position" => ["nullable", "integer", "min:0"],
             "active" => ["nullable", "boolean"],
+            "starts_at" => ["nullable", "date"],
+            "ends_at" => ["nullable", "date", "after_or_equal:starts_at"],
         ]);
 
         $item = $section->items()->create($data);
+
         return response()->json($item, 201);
     }
 
-    public function update(Request $request, Section $section, SectionItem $item): JsonResponse
+    public function update(Request $request, HomeSection $section, HomeSectionItem $item): JsonResponse
     {
         if ($item->section_id !== $section->id) {
             return response()->json([
@@ -40,16 +46,22 @@ class SectionItemController extends Controller
 
         $data = $request->validate([
             "content_type" => ["sometimes", "in:movie,series,live"],
-            "external_id" => ["sometimes", "string", "max:80"],
+            "external_id" => ["sometimes", "string", "max:255"],
+            "custom_title" => ["nullable", "string", "max:255"],
+            "custom_image" => ["nullable", "string", "max:2048"],
+            "badge" => ["nullable", "string", "max:255"],
             "position" => ["sometimes", "integer", "min:0"],
             "active" => ["sometimes", "boolean"],
+            "starts_at" => ["nullable", "date"],
+            "ends_at" => ["nullable", "date", "after_or_equal:starts_at"],
         ]);
 
         $item->update($data);
+
         return response()->json($item);
     }
 
-    public function destroy(Section $section, SectionItem $item): JsonResponse
+    public function destroy(HomeSection $section, HomeSectionItem $item): JsonResponse
     {
         if ($item->section_id !== $section->id) {
             return response()->json([

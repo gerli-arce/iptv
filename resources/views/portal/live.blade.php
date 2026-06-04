@@ -74,8 +74,12 @@
 <script>
     const src = @json($streamUrl);
     const video = document.getElementById('video');
+    const desktopBridge = window.desktopBridge;
+    const desktopMode = Boolean(desktopBridge && typeof desktopBridge.openNativeStream === 'function');
     if (src) {
-        if (window.Hls && Hls.isSupported()) {
+        if (desktopMode) {
+            desktopBridge.openNativeStream(src, @json($currentChannel['name'] ?? 'TV en vivo'));
+        } else if (window.Hls && Hls.isSupported()) {
             const hls = new Hls();
             hls.loadSource(src);
             hls.attachMedia(video);
@@ -86,4 +90,3 @@
 </script>
 </body>
 </html>
-

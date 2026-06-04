@@ -61,6 +61,57 @@ Notas:
 - `compose.yaml` corre migraciones automaticamente con `RUN_MIGRATIONS=true`.
 - Si quieres usar otras credenciales, ajusta `compose.yaml` o tu `.env`.
 
+## Desktop
+
+Tambien puedes convertir el reproductor en una app instalable para PC con Electron.
+
+### Ejecutar en desarrollo
+
+```bash
+npm install
+npm run desktop:dev
+```
+
+### Crear instalador de Windows
+
+```bash
+npm run desktop:build
+```
+
+Notas:
+
+- La app de escritorio abre `https://fastv.fastnetperu.com.pe/app` por defecto.
+- Para reproducir en modo nativo, Electron intentara usar VLC o MPV instalado en la PC.
+- Si no detecta un reproductor nativo, creara una playlist temporal `.m3u8` para abrirla con la asociacion de Windows.
+
+## Desktop libVLC embebido
+
+Si quieres una app de escritorio mas cercana a la version movil, tambien agregue una base nueva con `python-vlc` en:
+
+- [`desktop-vlc/app.py`](/d:/VSCODE/fastplayer/desktop-vlc/app.py)
+
+Esta version:
+- usa libVLC embebido dentro de la ventana
+- se conecta al backend Laravel existente
+- permite reproducir canales y peliculas dentro de la app
+
+Requisitos:
+- Python 3.11
+- VLC instalado en Windows con la misma arquitectura que Python
+
+Comandos:
+
+```bash
+python -m pip install -r desktop-vlc/requirements.txt
+python desktop-vlc/app.py
+```
+
+Para generar instalable:
+
+```bash
+powershell -ExecutionPolicy Bypass -File desktop-vlc/build.ps1
+```
+
 ## Estructura relevante
 
 - `resources/js/landing/`: landing IPTV integrada
