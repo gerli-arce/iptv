@@ -1,12 +1,12 @@
 # Fastplayer Platform
 
-Proyecto Laravel unico para FASTNET:
+Proyecto Laravel del reproductor IPTV para FASTNET:
 
 - `/` muestra la landing IPTV de ventas
 - `/login` muestra el acceso al reproductor
 - `/app` carga el reproductor IPTV
-- `/admin` queda reservado para el panel administrativo
-- `/api` expone la API general y `/api/player` la API web del reproductor con sesion
+- `/api/player` expone la API web del reproductor con sesion
+- `APP_TARGET=player` activa solo la parte del reproductor
 
 ## Stack
 
@@ -42,7 +42,7 @@ npm run build
 
 ## Docker
 
-Construir y levantar el stack:
+Construir y levantar el stack del reproductor:
 
 ```bash
 docker compose up --build
@@ -60,6 +60,10 @@ Notas:
 - Si haces despliegue manual fuera de Docker, ejecuta `npm install && npm run build` y sube el contenido de `public/build`.
 - `compose.yaml` corre migraciones automaticamente con `RUN_MIGRATIONS=true`.
 - Si quieres usar otras credenciales, ajusta `compose.yaml` o tu `.env`.
+
+### Panel admin
+
+El panel administrativo quedó en la carpeta hermana `../iptv-admin`.
 
 ## Desktop
 
@@ -125,4 +129,5 @@ powershell -ExecutionPolicy Bypass -File desktop-vlc/build.ps1
 
 - Solo existe un `package.json` activo
 - La landing de IPTV se integra dentro del mismo frontend Laravel/Vite
+- El panel admin vive en `../iptv-admin`
 - Se conserva un alias legacy en `/portal-api` para no romper integraciones internas durante la transicion

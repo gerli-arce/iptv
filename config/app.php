@@ -56,6 +56,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Runtime Home API URL
+    |--------------------------------------------------------------------------
+    |
+    | The player web uses this URL at runtime to fetch banners and sections
+    | from the admin backend. This is injected into the Blade view so the
+    | frontend does not depend only on build-time Vite env values.
+    |
+    */
+
+    'home_api_url' => env('HOME_API_URL', env('VITE_HOME_API_URL', '')),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |

@@ -9,27 +9,31 @@ use App\Http\Controllers\Api\HomeController;
 use App\Http\Controllers\Api\ImdbController;
 use Illuminate\Support\Facades\Route;
 
+if (env('APP_TARGET', 'player') === 'admin') {
+    Route::prefix("admin")->group(function () {
+        Route::post("/login", [AuthController::class, "login"]);
+
+        Route::middleware("auth:sanctum")->group(function () {
+            Route::post("/logout", [AuthController::class, "logout"]);
+
+            Route::apiResource("banners", BannerController::class);
+            Route::apiResource("home-sections", SectionController::class)->parameters([
+                "home-sections" => "section",
+            ]);
+
+            Route::get("home-sections/{section}/items", [SectionItemController::class, "indexBySection"]);
+            Route::post("home-sections/{section}/items", [SectionItemController::class, "store"]);
+            Route::put("home-sections/{section}/items/{item}", [SectionItemController::class, "update"]);
+            Route::delete("home-sections/{section}/items/{item}", [SectionItemController::class, "destroy"]);
+        });
+    });
+
+    return;
+}
+
 Route::post('/device-tokens', [DeviceTokenController::class, 'store']);
 
 Route::get("/home", [HomeController::class, "index"]);
 Route::get("/imdb/search", [ImdbController::class, "search"]);
 Route::get("/imdb/movie/{id}", [ImdbController::class, "movie"]);
 Route::get("/imdb/series/{id}", [ImdbController::class, "series"]);
-
-Route::prefix("admin")->group(function () {
-    Route::post("/login", [AuthController::class, "login"]);
-
-    Route::middleware("auth:sanctum")->group(function () {
-        Route::post("/logout", [AuthController::class, "logout"]);
-
-        Route::apiResource("banners", BannerController::class);
-        Route::apiResource("home-sections", SectionController::class)->parameters([
-            "home-sections" => "section",
-        ]);
-
-        Route::get("home-sections/{section}/items", [SectionItemController::class, "indexBySection"]);
-        Route::post("home-sections/{section}/items", [SectionItemController::class, "store"]);
-        Route::put("home-sections/{section}/items/{item}", [SectionItemController::class, "update"]);
-        Route::delete("home-sections/{section}/items/{item}", [SectionItemController::class, "destroy"]);
-    });
-});

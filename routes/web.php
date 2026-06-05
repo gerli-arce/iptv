@@ -4,6 +4,19 @@ use App\Http\Controllers\Web\PortalController;
 use App\Http\Controllers\Web\ImageProxyController;
 use Illuminate\Support\Facades\Route;
 
+if (env('APP_TARGET', 'player') === 'admin') {
+    Route::redirect('/', '/admin');
+    Route::redirect('/login', '/admin/login')->name('login');
+    Route::redirect('/app', '/admin')->name('app');
+    Route::redirect('/panel', '/admin')->name('portal.dashboard');
+    Route::redirect('/panel/live', '/admin')->name('portal.live');
+    Route::redirect('/panel/movies', '/admin')->name('portal.movies');
+    Route::redirect('/panel/series', '/admin')->name('portal.series');
+    Route::redirect('/panel/{any?}', '/admin')->where('any', '.*');
+
+    return;
+}
+
 Route::get('/', [PortalController::class, 'landing'])->name('landing');
 Route::get('/login', [PortalController::class, 'showLogin'])->name('login');
 Route::get('/app', [PortalController::class, 'showApp'])->name('app');

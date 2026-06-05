@@ -1,16 +1,20 @@
-const DEFAULT_HOME_API_URL = "/api/home";
-
 export function getHomeApiUrl() {
-  return import.meta.env.VITE_HOME_API_URL || DEFAULT_HOME_API_URL;
+  return window.__FASTPLAYER_CONFIG__?.homeApiUrl || import.meta.env.VITE_HOME_API_URL || "";
 }
 
 export async function fetchHomeData() {
   const url = getHomeApiUrl();
+
+  if (!url) {
+    throw new Error("VITE_HOME_API_URL no esta configurada");
+  }
+
   console.log("HOME_API_LOADING", { url });
 
   try {
     const response = await fetch(url, {
-      credentials: "same-origin",
+      mode: "cors",
+      credentials: "omit",
       headers: {
         Accept: "application/json",
       },
