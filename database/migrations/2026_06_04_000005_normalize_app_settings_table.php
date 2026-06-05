@@ -24,7 +24,10 @@ return new class extends Migration
             }
         });
 
-        if (Schema::hasColumn('app_settings', 'key')) {
+        if (
+            Schema::hasColumn('app_settings', 'key')
+            && ! Schema::hasIndex('app_settings', 'app_settings_key_unique', 'unique')
+        ) {
             Schema::table('app_settings', function (Blueprint $table) {
                 $table->unique('key', 'app_settings_key_unique');
             });
@@ -43,7 +46,9 @@ return new class extends Migration
             }
 
             if (Schema::hasColumn('app_settings', 'key')) {
-                $table->dropUnique('app_settings_key_unique');
+                if (Schema::hasIndex('app_settings', 'app_settings_key_unique', 'unique')) {
+                    $table->dropUnique('app_settings_key_unique');
+                }
                 $table->dropColumn('key');
             }
         });

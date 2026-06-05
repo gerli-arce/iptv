@@ -4,9 +4,12 @@ use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\SectionController;
 use App\Http\Controllers\Admin\SectionItemController;
+use App\Http\Controllers\Api\DeviceTokenController;
 use App\Http\Controllers\Api\HomeController;
 use App\Http\Controllers\Api\ImdbController;
 use Illuminate\Support\Facades\Route;
+
+Route::post('/device-tokens', [DeviceTokenController::class, 'store']);
 
 Route::get("/home", [HomeController::class, "index"]);
 Route::get("/imdb/search", [ImdbController::class, "search"]);
