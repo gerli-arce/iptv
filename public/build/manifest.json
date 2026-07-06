@@ -4,7 +4,7 @@
     "name": "index"
   },
   "resources/css/app.css": {
-    "file": "assets/app-47vTbJuI.css",
+    "file": "assets/app-BCKAisnz.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "name": "app",
@@ -13,7 +13,7 @@
     ]
   },
   "resources/js/landing.jsx": {
-    "file": "assets/landing-wudOwsqT.js",
+    "file": "assets/landing-BxMBibLI.js",
     "name": "landing",
     "src": "resources/js/landing.jsx",
     "isEntry": true,
@@ -21,11 +21,11 @@
       "_index-Kg3Hig6q.js"
     ],
     "css": [
-      "assets/app-47vTbJuI.css"
+      "assets/app-BCKAisnz.css"
     ]
   },
   "resources/js/spa.jsx": {
-    "file": "assets/spa-CVL0M8cV.js",
+    "file": "assets/spa-BJaE50Hd.js",
     "name": "spa",
     "src": "resources/js/spa.jsx",
     "isEntry": true,
@@ -33,7 +33,7 @@
       "_index-Kg3Hig6q.js"
     ],
     "css": [
-      "assets/app-47vTbJuI.css"
+      "assets/app-BCKAisnz.css"
     ]
   }
 }

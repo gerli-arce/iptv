@@ -98,20 +98,36 @@ const quickAccess = [
   { key: "continue", label: "Continuar viendo", icon: "🕒", detail: "En progreso", metric: "17" },
 ];
 
-const WEB_PAGES = new Set(["home", "movies", "series"]);
+const WEB_PAGES = new Set(["home", "movies", "series", "settings"]);
 
 const PAGE_META = {
-  home: { title: "Inicio", subtitle: "Portada curada, estrenos y recomendaciones premium." },
-  movies: { title: "Peliculas", subtitle: "Explora el catalogo con una interfaz cinematografica." },
-  series: { title: "Series", subtitle: "Temporadas, episodios y favoritos en un solo lugar." },
+  home: { title: "Inicio", subtitle: "Estrenos, destacadas y acceso rapido a tu catalogo de peliculas." },
+  movies: { title: "Peliculas", subtitle: "Explora el catalogo completo con una portada mas limpia y enfocada en cine." },
+  series: { title: "Series", subtitle: "Encuentra temporadas y series destacadas en una vista dedicada." },
+  settings: { title: "Ajustes", subtitle: "Cuenta, sesion y preferencias del reproductor." },
 };
 
 const NAV_ITEMS = [
   { key: "home", label: "Inicio", icon: "home" },
   { key: "movies", label: "Peliculas", icon: "movies" },
   { key: "series", label: "Series", icon: "series" },
-  { key: "list", label: "Mi lista", icon: "bookmark" },
+  { key: "settings", label: "Ajustes", icon: "settings" },
 ];
+
+const MOVIE_ONLY_TYPES = new Set(["movie", "movies", "vod", "url"]);
+
+function isMovieOnlyContent(type) {
+  if (!type) return true;
+  return MOVIE_ONLY_TYPES.has(String(type).toLowerCase());
+}
+
+function getContentLabel(type) {
+  const value = String(type || "").toLowerCase();
+  if (value === "movie" || value === "movies" || value === "vod") return "Pelicula";
+  if (value === "url") return "Coleccion";
+  if (value === "mixed") return "Seleccion";
+  return "Contenido";
+}
 
 function Icon({ name, className = "size-5" }) {
   const stroke = "currentColor";
@@ -129,6 +145,15 @@ function Icon({ name, className = "size-5" }) {
           <rect x="3.5" y="5" width="17" height="14" rx="3" />
           <path d="M8 5v14M16 5v14" />
           <path d="M3.5 9h17M3.5 15h17" />
+        </svg>
+      );
+    case "grid":
+      return (
+        <svg viewBox="0 0 24 24" fill="none" className={className} stroke={stroke} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="4" y="4" width="6.5" height="6.5" rx="1.5" />
+          <rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5" />
+          <rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5" />
+          <rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5" />
         </svg>
       );
     case "series":
@@ -191,6 +216,13 @@ function Icon({ name, className = "size-5" }) {
           <path d="M12 7.5h.01" />
         </svg>
       );
+    case "settings":
+      return (
+        <svg viewBox="0 0 24 24" fill="none" className={className} stroke={stroke} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M10.1 4.2a1 1 0 0 1 1-.7h1.8a1 1 0 0 1 1 .7l.4 1.4a7.8 7.8 0 0 1 1.4.8l1.3-.5a1 1 0 0 1 1.1.3l1.3 1.3a1 1 0 0 1 .3 1.1l-.5 1.3c.3.4.5.9.8 1.4l1.4.4a1 1 0 0 1 .7 1v1.8a1 1 0 0 1-.7 1l-1.4.4a7.8 7.8 0 0 1-.8 1.4l.5 1.3a1 1 0 0 1-.3 1.1l-1.3 1.3a1 1 0 0 1-1.1.3l-1.3-.5a7.8 7.8 0 0 1-1.4.8l-.4 1.4a1 1 0 0 1-1 .7h-1.8a1 1 0 0 1-1-.7l-.4-1.4a7.8 7.8 0 0 1-1.4-.8l-1.3.5a1 1 0 0 1-1.1-.3L4.6 18a1 1 0 0 1-.3-1.1l.5-1.3a7.8 7.8 0 0 1-.8-1.4l-1.4-.4a1 1 0 0 1-.7-1v-1.8a1 1 0 0 1 .7-1l1.4-.4c.2-.5.5-1 .8-1.4l-.5-1.3a1 1 0 0 1 .3-1.1L5.9 6a1 1 0 0 1 1.1-.3l1.3.5c.4-.3.9-.5 1.4-.8z" />
+          <circle cx="12" cy="12" r="3.1" />
+        </svg>
+      );
     default:
       return null;
   }
@@ -246,13 +278,7 @@ function Login({ onDone }) {
 }
 
 function Side({ page, setPage, onLogout, user, desktopMode, playerMode, collapsed, setCollapsed }) {
-  const links = [
-    { key: "home", label: "Inicio", icon: "home" },
-    { key: "movies", label: "Peliculas", icon: "movies" },
-    { key: "series", label: "Series", icon: "series" },
-    { key: "list", label: "Mi lista", icon: "bookmark" },
-    ...(desktopMode ? [{ key: "settings", label: "Ajustes", icon: "info" }] : []),
-  ];
+  const links = NAV_ITEMS;
 
   const displayName = user?.name || user?.username || "Usuario";
   const subscription = user?.status || "Activo";
@@ -353,46 +379,63 @@ function Side({ page, setPage, onLogout, user, desktopMode, playerMode, collapse
   );
 }
 
-function SettingsPanel({ desktopMode, playerMode, setPlayerMode, hasVlc }) {
-  if (!desktopMode) {
-    return (
-      <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-6 text-slate-200">
-        Los ajustes de reproductor externo solo estan disponibles en la app de escritorio.
-      </section>
-    );
-  }
+function SettingsPanel({ desktopMode, playerMode, setPlayerMode, hasVlc, user, onLogout }) {
+  const displayName = user?.name || user?.username || "Usuario";
+  const subscription = user?.status || "Activo";
+  const expiry = user?.exp_date || user?.expiry || user?.exp || "Sin fecha visible";
 
   return (
-    <section className="space-y-6">
-      <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
-        <h2 className="text-3xl font-black text-white">Ajustes del reproductor</h2>
+    <section className="space-y-5">
+      <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-5 md:p-6">
+        <div className="flex items-center gap-4">
+          <div className="grid size-14 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-sky-400 to-blue-700 text-lg font-black text-white shadow-[0_0_25px_rgba(37,99,235,0.35)]">
+            {displayName.slice(0, 1).toUpperCase()}
+          </div>
+          <div className="min-w-0">
+            <p className="truncate text-lg font-black text-white">{displayName}</p>
+            <p className="text-sm text-emerald-300">Suscripcion {subscription}</p>
+            <p className="text-xs text-slate-400">Expira: {expiry}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-[28px] border border-white/10 bg-white/[0.03] p-5 md:p-6">
+        <h2 className="text-2xl font-black text-white">Preferencias de reproduccion</h2>
         <p className="mt-2 text-sm text-slate-300">
-          Por defecto la app usa el reproductor interno, igual que la web o la APK. Si prefieres VLC, puedes activarlo aqui.
+          Esta app esta enfocada en peliculas. Puedes mantener el reproductor interno o usar VLC cuando estes en escritorio.
         </p>
       </div>
+
       <div className="grid gap-4 lg:grid-cols-2">
         <button
           onClick={() => setPlayerMode("internal")}
-          className={`rounded-3xl border p-6 text-left transition duration-300 ${playerMode === "internal" ? "border-sky-300/50 bg-sky-400/10 shadow-fp-card" : "border-white/10 bg-white/[0.03] hover:bg-white/[0.06]"}`}
+          className={`rounded-3xl border p-5 text-left transition duration-300 ${playerMode === "internal" ? "border-sky-300/50 bg-sky-400/10 shadow-fp-card" : "border-white/10 bg-white/[0.03] hover:bg-white/[0.06]"}`}
         >
-          <p className="text-xl font-bold text-white">Reproductor interno</p>
+          <p className="text-lg font-bold text-white">Reproductor interno</p>
           <p className="mt-2 text-sm text-slate-300">
-            Recomendado. Usa el video embebido dentro de la app y no requiere instalar nada extra.
+            Recomendado para celular y web. Todo se reproduce dentro de Fastnet Player.
           </p>
         </button>
         <button
           onClick={() => setPlayerMode("vlc")}
-          className={`rounded-3xl border p-6 text-left transition duration-300 ${playerMode === "vlc" ? "border-emerald-300/50 bg-emerald-400/10 shadow-fp-card" : "border-white/10 bg-white/[0.03] hover:bg-white/[0.06]"}`}
+          className={`rounded-3xl border p-5 text-left transition duration-300 ${playerMode === "vlc" ? "border-emerald-300/50 bg-emerald-400/10 shadow-fp-card" : "border-white/10 bg-white/[0.03] hover:bg-white/[0.06]"}`}
         >
-          <p className="text-xl font-bold text-white">Abrir con VLC</p>
+          <p className="text-lg font-bold text-white">Abrir con VLC</p>
           <p className="mt-2 text-sm text-slate-300">
-            Usa la app de VLC instalada en la PC para abrir el canal fuera de Fastnet Player.
+            Disponible para escritorio. Si estas en telefono, sigue usando el reproductor interno.
           </p>
-          <p className={`mt-4 text-xs font-semibold ${hasVlc ? "text-emerald-300" : "text-amber-300"}`}>
-            {hasVlc ? "VLC detectado" : "VLC no detectado. Instalalo para usar este modo."}
+          <p className={`mt-4 text-xs font-semibold ${desktopMode && hasVlc ? "text-emerald-300" : "text-amber-300"}`}>
+            {desktopMode ? (hasVlc ? "VLC detectado" : "VLC no detectado") : "Modo externo solo en escritorio"}
           </p>
         </button>
       </div>
+
+      <button
+        onClick={onLogout}
+        className="w-full rounded-2xl border border-rose-300/25 bg-rose-500/10 px-5 py-4 text-sm font-semibold text-white transition duration-300 hover:border-rose-300/40 hover:bg-rose-500/15"
+      >
+        Cerrar sesion
+      </button>
     </section>
   );
 }
@@ -408,56 +451,80 @@ function TopHeader({ page, searchQuery, setSearchQuery, user, now, notifications
         minute: "2-digit",
       })
     : "";
+  const displayName = user?.name || user?.username || "Usuario";
 
   return (
-    <header className="sticky top-4 z-20 rounded-[28px] border border-white/10 bg-white/[0.05] px-4 py-4 shadow-[0_20px_70px_rgba(0,0,0,0.28)] backdrop-blur-2xl md:px-5">
-      <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-        <div className="min-w-0">
-          <div className="flex items-center gap-3 text-xs uppercase tracking-[0.24em] text-slate-400">
-            <span>FastPlayer</span>
-            <span className="rounded-full border border-sky-300/20 bg-sky-400/10 px-3 py-1 text-sky-100">Premium OTT</span>
-          </div>
-          <h1 className="mt-2 text-2xl md:text-3xl font-black text-white">{meta.title}</h1>
-          <p className="mt-1 max-w-2xl text-sm text-slate-300">{meta.subtitle}</p>
-        </div>
-
-        <div className="flex flex-1 flex-col gap-3 xl:max-w-[920px] xl:flex-row xl:items-center xl:justify-end">
-          <label className="group flex flex-1 items-center gap-3 rounded-2xl border border-white/10 bg-black/20 px-4 py-3 transition duration-300 focus-within:border-sky-300/35 focus-within:bg-sky-500/8">
-            <Icon name="search" className="size-5 text-slate-400 group-focus-within:text-sky-200" />
-            <input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Buscar peliculas, series, banners..."
-              className="w-full bg-transparent text-sm text-white outline-none placeholder:text-slate-500"
-            />
-          </label>
-
-          <div className="flex items-center gap-3">
-            <div className="hidden lg:flex flex-col items-end rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-right">
-              <span className="text-[10px] uppercase tracking-[0.24em] text-slate-400">Hora</span>
-              <span className="text-sm font-semibold text-white">{timestamp}</span>
+    <header className="sticky top-3 z-20 rounded-[24px] border border-white/10 bg-white/[0.05] px-3 py-3 shadow-[0_18px_50px_rgba(0,0,0,0.24)] backdrop-blur-2xl md:top-4 md:rounded-[28px] md:px-5 md:py-4">
+      <div className="space-y-3">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-[0.18em] text-slate-400 sm:text-xs sm:tracking-[0.24em]">
+              <span>FastPlayer</span>
+              <span className="rounded-full border border-sky-300/20 bg-sky-400/10 px-2.5 py-1 text-sky-100">Solo peliculas</span>
             </div>
+            <h1 className="mt-1.5 text-xl font-black text-white md:mt-2 md:text-3xl">{meta.title}</h1>
+            <p className="mt-1 max-w-xl text-xs text-slate-300 md:text-sm">{meta.subtitle}</p>
+          </div>
 
-            <button className="relative grid size-12 place-items-center rounded-2xl border border-white/10 bg-white/[0.04] text-slate-200 transition duration-300 hover:border-sky-300/35 hover:bg-sky-500/10 hover:text-white">
-              <Icon name="bell" className="size-5" />
+          <div className="flex shrink-0 items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-2.5 py-2 md:px-3">
+            <button className="relative grid size-10 place-items-center rounded-xl border border-white/10 bg-white/[0.04] text-slate-200 transition duration-300 hover:border-sky-300/35 hover:bg-sky-500/10 hover:text-white">
+              <Icon name="bell" className="size-4.5 md:size-5" />
               {notifications > 0 ? (
-                <span className="absolute right-2 top-2 size-2 rounded-full bg-sky-400 shadow-[0_0_10px_rgba(96,165,250,0.8)]" />
+                <span className="absolute right-1.5 top-1.5 size-2 rounded-full bg-sky-400 shadow-[0_0_10px_rgba(96,165,250,0.8)]" />
               ) : null}
             </button>
 
-            <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2">
-              <div className="grid size-10 place-items-center rounded-xl bg-gradient-to-br from-sky-400 to-blue-700 font-black text-white">
-                {(user?.name || user?.username || "U").slice(0, 1).toUpperCase()}
-              </div>
-              <div className="hidden sm:block">
-                <p className="text-sm font-semibold text-white">{user?.name || user?.username || "Usuario"}</p>
+            <div className="grid size-10 place-items-center rounded-xl bg-gradient-to-br from-sky-400 to-blue-700 text-sm font-black text-white">
+              {displayName.slice(0, 1).toUpperCase()}
+            </div>
+
+            <div className="hidden min-w-0 sm:block">
+              <p className="truncate text-sm font-semibold text-white">{displayName}</p>
+              <div className="flex items-center gap-2">
                 <p className="text-[11px] text-emerald-300">Activo</p>
+                <span className="hidden text-[10px] uppercase tracking-[0.18em] text-slate-500 lg:inline">{timestamp}</span>
               </div>
             </div>
           </div>
         </div>
+
+        <div className="flex items-center gap-3">
+          <label className="group flex min-w-0 flex-1 items-center gap-3 rounded-2xl border border-white/10 bg-black/20 px-3 py-2.5 transition duration-300 focus-within:border-sky-300/35 focus-within:bg-sky-500/8 md:px-4 md:py-3">
+            <Icon name="search" className="size-4.5 text-slate-400 group-focus-within:text-sky-200 md:size-5" />
+            <input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Buscar peliculas o series..."
+              className="w-full bg-transparent text-xs text-white outline-none placeholder:text-slate-500 md:text-sm"
+            />
+          </label>
+        </div>
       </div>
     </header>
+  );
+}
+
+function MobileBottomNav({ page, setPage }) {
+  return (
+    <nav className="fixed inset-x-3 bottom-3 z-30 xl:hidden">
+      <div className="grid grid-cols-4 gap-2 rounded-[26px] border border-white/10 bg-slate-950/90 p-2 shadow-[0_20px_60px_rgba(0,0,0,0.42)] backdrop-blur-2xl">
+        {NAV_ITEMS.map((item) => {
+          const active = page === item.key;
+          return (
+            <button
+              key={item.key}
+              onClick={() => setPage(item.key)}
+              className={`flex flex-col items-center justify-center gap-1 rounded-2xl px-2 py-3 text-[11px] font-semibold transition duration-300 ${
+                active ? "bg-sky-400/14 text-white" : "text-slate-400"
+              }`}
+            >
+              <Icon name={item.icon} className="size-5" />
+              <span>{item.label}</span>
+            </button>
+          );
+        })}
+      </div>
+    </nav>
   );
 }
 
@@ -496,18 +563,28 @@ function HeroSection({ hero, tmdbHero }) {
 }
 
 function QuickAccess({ setPage }) {
+  const items = [
+    { key: "movies", label: "Peliculas", icon: "movies", detail: "Catalogo premium", metric: "Estrenos" },
+    { key: "series", label: "Series", icon: "series", detail: "Temporadas y episodios", metric: "Explorar" },
+    { key: "settings", label: "Ajustes", icon: "settings", detail: "Cuenta y sesion", metric: "Perfil" },
+  ];
+
   return (
-    <section className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
-      {quickAccess.map((item) => (
+    <section className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      {items.map((item) => (
         <button
           key={item.key}
-          onClick={() => setPage(item.key === "continue" ? "home" : item.key)}
-          className="group rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-left transition duration-300 hover:-translate-y-1 hover:border-sky-300/40 hover:shadow-fp-card"
+          onClick={() => setPage(item.key)}
+          className="group flex items-center gap-4 rounded-[24px] border border-white/10 bg-white/[0.04] p-4 text-left transition duration-300 hover:-translate-y-1 hover:border-sky-300/40 hover:shadow-fp-card"
         >
-          <div className="text-2xl mb-3">{item.icon}</div>
-          <p className="font-semibold text-white">{item.label}</p>
-          <p className="text-xs text-slate-300">{item.detail}</p>
-          <p className="mt-3 text-sky-300 font-semibold">{item.metric}</p>
+          <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-sky-400/12 text-sky-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
+            <Icon name={item.icon} className="size-5" />
+          </span>
+          <div className="min-w-0">
+            <p className="font-semibold text-white">{item.label}</p>
+            <p className="text-xs text-slate-300">{item.detail}</p>
+            <p className="mt-2 text-xs font-semibold uppercase tracking-[0.18em] text-sky-300">{item.metric}</p>
+          </div>
         </button>
       ))}
     </section>
@@ -689,6 +766,14 @@ function CatalogSection({ title, items = [], categories = [], type = "movie", se
     };
   }, [items, type]);
 
+  useEffect(() => {
+    if (categoryId === "all") return;
+    const exists = categories.some((cat) => String(cat.category_id) === String(categoryId));
+    if (!exists) {
+      setCategoryId("all");
+    }
+  }, [categories, categoryId]);
+
   return (
     <section className="space-y-5">
       <div className="flex items-end justify-between gap-4">
@@ -720,6 +805,11 @@ function CatalogSection({ title, items = [], categories = [], type = "movie", se
           </button>
         ))}
       </div>
+      {!filteredItems.length ? (
+        <div className="rounded-[24px] border border-dashed border-white/10 bg-white/[0.03] px-5 py-8 text-sm text-slate-300">
+          No encontramos {type === "series" ? "series" : "peliculas"} para esta vista.
+        </div>
+      ) : null}
       <HoverCards
         title={`${title} (${filteredItems.length})`}
         items={filteredItems}
@@ -728,6 +818,80 @@ function CatalogSection({ title, items = [], categories = [], type = "movie", se
         hideTitle
         imageOverrides={imageOverrides}
         metaOverrides={metaOverrides}
+      />
+    </section>
+  );
+}
+
+function CategoriesHub({ items = [], categories = [], searchQuery = "" }) {
+  const [categoryId, setCategoryId] = useState(() => categories[0]?.category_id || "all");
+  const q = searchQuery.trim().toLowerCase();
+
+  useEffect(() => {
+    if (categoryId === "all") return;
+    const exists = categories.some((cat) => String(cat.category_id) === String(categoryId));
+    if (!exists) {
+      setCategoryId(categories[0]?.category_id || "all");
+    }
+  }, [categories, categoryId]);
+
+  const filteredItems = useMemo(() => {
+    let list = items;
+    if (categoryId !== "all") {
+      list = list.filter((it) => String(it.category_id ?? "") === String(categoryId));
+    }
+    if (!q) return list;
+    return list.filter((it) =>
+      [it.name, it.plot, it.description, it.genre, it.category_name]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase()
+        .includes(q),
+    );
+  }, [items, categoryId, q]);
+
+  const selectedCategory = categories.find((cat) => String(cat.category_id) === String(categoryId));
+
+  return (
+    <section className="space-y-5">
+      <div className="rounded-[28px] border border-white/10 bg-gradient-to-br from-sky-500/12 via-white/[0.04] to-transparent p-5 md:p-6">
+        <p className="text-[11px] uppercase tracking-[0.24em] text-sky-200/80">Explorar por genero</p>
+        <h2 className="mt-2 text-2xl font-black text-white">
+          {selectedCategory?.category_name || "Todas las categorias"}
+        </h2>
+        <p className="mt-2 text-sm text-slate-300">
+          {filteredItems.length} peliculas listas para reproducir en esta seccion.
+        </p>
+      </div>
+
+      <div className="flex gap-2 overflow-x-auto pb-1 fp-no-scrollbar">
+        <button
+          onClick={() => setCategoryId("all")}
+          className={`rounded-xl border px-4 py-2 text-sm whitespace-nowrap transition duration-300 ${
+            categoryId === "all" ? "border-sky-300/40 bg-sky-500/25 text-white" : "border-white/10 text-slate-300 hover:bg-white/10"
+          }`}
+        >
+          Todas
+        </button>
+        {categories.map((cat) => (
+          <button
+            key={cat.category_id}
+            onClick={() => setCategoryId(cat.category_id)}
+            className={`rounded-xl border px-4 py-2 text-sm whitespace-nowrap transition duration-300 ${
+              String(categoryId) === String(cat.category_id) ? "border-sky-300/40 bg-sky-500/25 text-white" : "border-white/10 text-slate-300 hover:bg-white/10"
+            }`}
+          >
+            {cat.category_name}
+          </button>
+        ))}
+      </div>
+
+      <HoverCards
+        title="Categorias"
+        items={filteredItems}
+        type="movie"
+        limit={Math.min(filteredItems.length, 18)}
+        hideTitle
       />
     </section>
   );
@@ -796,7 +960,7 @@ function HomeBannerCard({ banner, featured = false, compact = false }) {
       <div className={`relative z-10 flex h-full flex-col justify-end ${featured ? "p-5 md:p-7" : "p-4 md:p-5"}`}>
         <div className="mb-3 flex flex-wrap gap-2">
           <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-slate-100">
-            {banner.content_type}
+            {getContentLabel(banner.content_type)}
           </span>
           {banner.position !== undefined ? (
             <span className="rounded-full border border-sky-300/20 bg-sky-400/10 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-sky-100">
@@ -882,7 +1046,7 @@ function HomeSectionItemCard({ item, variant = "default" }) {
           ) : (
             <div className="absolute inset-0 grid place-items-center bg-gradient-to-br from-slate-900 to-slate-800 p-4 text-center">
               <div>
-                <p className="text-2xl font-black text-sky-200">{String(item.content_type || "").toUpperCase()}</p>
+                <p className="text-2xl font-black text-sky-200">{getContentLabel(item.content_type)}</p>
                 <p className="mt-2 text-xs text-slate-400 break-all">{item.external_id}</p>
               </div>
             </div>
@@ -898,7 +1062,7 @@ function HomeSectionItemCard({ item, variant = "default" }) {
                   </span>
                 ) : null}
                 <span className="rounded-full border border-white/15 bg-black/20 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-slate-100">
-                  {item.content_type}
+                  {getContentLabel(item.content_type)}
                 </span>
               </div>
               <p className="text-lg font-black leading-[0.95] text-white md:text-3xl">{title}</p>
@@ -921,7 +1085,7 @@ function HomeSectionItemCard({ item, variant = "default" }) {
             ) : (
               <div className="grid h-full w-full place-items-center bg-gradient-to-br from-slate-900 to-slate-800 p-4 text-center">
                 <div>
-                  <p className="text-2xl font-black text-sky-200">{String(item.content_type || "").toUpperCase()}</p>
+                  <p className="text-2xl font-black text-sky-200">{getContentLabel(item.content_type)}</p>
                   <p className="mt-2 text-xs text-slate-400 break-all">{item.external_id}</p>
                 </div>
               </div>
@@ -963,9 +1127,9 @@ function HomeSectionBlock({ section }) {
 
     if (items.length === 2) {
       return (
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-2 gap-3 md:gap-4">
           {items.map((item) => (
-            <HomeSectionItemCard key={item.id || item.external_id} item={item} variant="feature" />
+            <HomeSectionItemCard key={item.id || item.external_id} item={item} variant="compact" />
           ))}
         </div>
       );
@@ -979,8 +1143,15 @@ function HomeSectionBlock({ section }) {
 
       return (
         <div className="space-y-4">
-          <HomeSectionItemCard item={lead} variant="feature" />
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="grid grid-cols-2 gap-3 md:hidden">
+            {[lead, ...rest].slice(0, 6).map((item) => (
+              <HomeSectionItemCard key={item.id || item.external_id} item={item} variant="compact" />
+            ))}
+          </div>
+          <div className="hidden md:block">
+            <HomeSectionItemCard item={lead} variant="feature" />
+          </div>
+          <div className="hidden gap-4 md:grid sm:grid-cols-2 xl:grid-cols-3">
             {rest.slice(0, 6).map((item) => (
               <HomeSectionItemCard key={item.id || item.external_id} item={item} variant="compact" />
             ))}
@@ -1018,9 +1189,10 @@ function HomeSectionBlock({ section }) {
   );
 }
 
-function HomeLike({ home, isLoading, error, onRetry, searchQuery = "" }) {
+function HomeLike({ home, isLoading, error, onRetry, searchQuery = "", setPage, movieCategories = [] }) {
   const q = searchQuery.trim().toLowerCase();
   const banners = (home?.banners || []).filter((banner) => {
+    if (!isMovieOnlyContent(banner.content_type)) return false;
     if (!q) return true;
     return [banner.title, banner.subtitle, banner.content_type, banner.external_id]
       .filter(Boolean)
@@ -1029,8 +1201,11 @@ function HomeLike({ home, isLoading, error, onRetry, searchQuery = "" }) {
       .includes(q);
   });
   const sections = (home?.sections || [])
+    .filter((section) => isMovieOnlyContent(section?.content_type))
     .map((section) => {
-      const items = Array.isArray(section.items) ? section.items.filter(Boolean) : [];
+      const items = Array.isArray(section.items)
+        ? section.items.filter((item) => item && isMovieOnlyContent(item.content_type))
+        : [];
       const filteredItems = q
         ? items.filter((item) => {
             const text = [
@@ -1050,10 +1225,16 @@ function HomeLike({ home, isLoading, error, onRetry, searchQuery = "" }) {
       return { ...section, items: filteredItems };
     })
     .filter((section) => Array.isArray(section.items) && section.items.length > 0);
-  const settings = Object.fromEntries(
-    Object.entries(home?.settings || {}).filter(([key]) => key && String(key).trim().length > 0),
-  );
-  const appName = settings.app_name || "FastPlayer";
+  const featuredMovies = (home?.movies || [])
+    .filter(Boolean)
+    .filter((item) => {
+      if (!q) return true;
+      return [item.name, item.plot, item.genre, item.year, item.category_name]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase()
+        .includes(q);
+    });
   const showSkeleton = isLoading && !home;
 
   if (error && !home) {
@@ -1083,6 +1264,8 @@ function HomeLike({ home, isLoading, error, onRetry, searchQuery = "" }) {
         </section>
       ) : (
         <>
+          <QuickAccess setPage={setPage} />
+
           {banners.length ? (
             <section className="space-y-4">
               {banners.length === 1 ? (
@@ -1105,39 +1288,63 @@ function HomeLike({ home, isLoading, error, onRetry, searchQuery = "" }) {
                 </div>
               ) : null}
             </section>
+          ) : featuredMovies.length ? (
+            <section className="space-y-4">
+              <HeroSection hero={featuredMovies[0]} />
+            </section>
           ) : null}
 
           {sections.length ? (
             <section className="space-y-6">
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <div className="flex items-center gap-2 text-xs uppercase tracking-[0.22em] text-slate-400">
-                    <span>{appName}</span>
-                    <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-white/90">Coleccion premium</span>
-                  </div>
-                  <h3 className="mt-2 text-2xl md:text-3xl font-black text-white">Secciones destacadas</h3>
-                </div>
-              </div>
               <div className="space-y-8">
                 {sections.map((section) => (
                   <HomeSectionBlock key={section.id || section.slug} section={section} />
                 ))}
               </div>
             </section>
+          ) : featuredMovies.length ? (
+            <section className="space-y-6">
+              <CatalogSection
+                title="Peliculas recomendadas"
+                items={featuredMovies}
+                categories={movieCategories}
+                type="movie"
+                searchQuery={searchQuery}
+              />
+            </section>
           ) : (
             <section className="rounded-[28px] border border-dashed border-white/10 bg-white/[0.03] p-8 text-slate-300">
-              No hay secciones activas con items por ahora.
+              No hay peliculas destacadas por ahora.
             </section>
           )}
 
         </>
       )}
-      <footer className="rounded-2xl border border-white/10 bg-white/[0.02] px-6 py-5 text-sm text-slate-300 flex flex-wrap items-center justify-between">
-        <p>FastPlayer Premium Experience</p>
-        <p>Peliculas y series premium - Catalogo dinamico - Entretenimiento exclusivo</p>
-      </footer>
     </div>
   );
+}
+
+function extractFallbackCatalogItems(home, desiredType) {
+  const normalizedType = desiredType === "series" ? "series" : "movie";
+  const directItems = normalizedType === "series" ? home?.series : home?.movies;
+  const safeDirectItems = Array.isArray(directItems) ? directItems.filter(Boolean) : [];
+
+  if (safeDirectItems.length) {
+    return safeDirectItems;
+  }
+
+  const sectionItems = Array.isArray(home?.sections)
+    ? home.sections.flatMap((section) => (Array.isArray(section?.items) ? section.items : []))
+    : [];
+
+  return sectionItems.filter((item) => {
+    if (!item) return false;
+    const type = String(item.content_type || "").toLowerCase();
+    if (normalizedType === "series") {
+      return type === "series";
+    }
+    return type === "movie" || type === "movies" || type === "vod";
+  });
 }
 
 function LiveLayout({ data, query, setQuery, playerMode }) {
@@ -1468,6 +1675,7 @@ function App() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => localStorage.getItem("fastnet:sidebarCollapsed") === "1");
   const [searchQuery, setSearchQuery] = useState("");
   const [now, setNow] = useState(() => new Date());
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const [data, setData] = useState({
     home: null,
     homeLoading: false,
@@ -1479,6 +1687,8 @@ function App() {
   });
   const [playerMode, setPlayerModeState] = useState(() => (desktopMode ? getDesktopPlayerMode() : "internal"));
   const [hasVlc, setHasVlc] = useState(false);
+  const mainScrollRef = useRef(null);
+  const lastScrollTopRef = useRef(0);
 
   useEffect(() => {
     api("/me").then((m) => setAuth({ ready: true, ok: true, user: m.user })).catch(() => setAuth({ ready: true, ok: false, user: null }));
@@ -1486,6 +1696,14 @@ function App() {
 
   useEffect(() => {
     localStorage.setItem("fastnet:lastPage", page);
+  }, [page]);
+
+  useEffect(() => {
+    setIsHeaderVisible(true);
+    lastScrollTopRef.current = 0;
+    if (mainScrollRef.current) {
+      mainScrollRef.current.scrollTop = 0;
+    }
   }, [page]);
 
   useEffect(() => {
@@ -1552,7 +1770,7 @@ function App() {
     if (!auth.ok) return;
     if (page === "movies" && !data.movies) api("/movies").then((d) => setData((s) => ({ ...s, movies: d.items || [], movieCategories: d.categories || [] })));
     if (page === "series" && !data.series) api("/series").then((d) => setData((s) => ({ ...s, series: d.items || [], seriesCategories: d.categories || [] })));
-  }, [auth.ok, page]);
+  }, [auth.ok, page, data.movies, data.series]);
 
   const onLogout = async () => {
     await api("/logout", { method: "POST" });
@@ -1562,6 +1780,29 @@ function App() {
   if (!auth.ready) return <div className="min-h-screen grid place-items-center text-white bg-fp-night">Cargando...</div>;
   if (!auth.ok) return <Login onDone={() => { window.location.href = "/app"; }} />;
 
+  const handleMainScroll = (event) => {
+    const currentTop = event.currentTarget.scrollTop;
+    const lastTop = lastScrollTopRef.current;
+    const delta = currentTop - lastTop;
+
+    if (currentTop <= 24) {
+      setIsHeaderVisible(true);
+    } else if (delta > 6) {
+      setIsHeaderVisible(false);
+    } else if (delta < -6) {
+      setIsHeaderVisible(true);
+    }
+
+    lastScrollTopRef.current = currentTop;
+  };
+
+  const movieCatalogItems = (data.movies && data.movies.length)
+    ? data.movies
+    : extractFallbackCatalogItems(data.home, "movie");
+  const seriesCatalogItems = (data.series && data.series.length)
+    ? data.series
+    : extractFallbackCatalogItems(data.home, "series");
+
   return (
     <div className="relative h-screen overflow-hidden bg-fp-night text-white">
       <div className="pointer-events-none absolute inset-0">
@@ -1569,7 +1810,7 @@ function App() {
         <div className="absolute right-0 top-10 size-[24rem] rounded-full bg-blue-600/12 blur-[120px]" />
         <div className="absolute bottom-0 left-1/2 size-[30rem] -translate-x-1/2 rounded-full bg-cyan-500/8 blur-[140px]" />
       </div>
-      <div className="relative z-10 mx-auto flex h-full max-w-[1880px] gap-5 p-4 md:p-6 min-w-0">
+      <div className="relative z-10 mx-auto flex h-full max-w-[1880px] gap-5 p-3 pb-24 md:p-6 md:pb-6 min-w-0">
         <Side
           page={page}
           setPage={setPage}
@@ -1580,22 +1821,34 @@ function App() {
           collapsed={sidebarCollapsed}
           setCollapsed={setSidebarCollapsed}
         />
-        <div className="flex min-w-0 flex-1 flex-col gap-5">
-          <TopHeader
-            page={page}
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            user={auth.user}
-            now={now}
-            notifications={(data.home?.banners?.length || 0) + (data.home?.sections?.length || 0)}
-          />
-          <main className="min-h-0 flex-1 space-y-6 overflow-y-auto overflow-x-hidden pr-1 fp-no-scrollbar">
+        <div className="flex min-w-0 flex-1 flex-col gap-3 md:gap-5">
+          <div
+            className={`overflow-hidden transition-all duration-300 ${
+              isHeaderVisible ? "max-h-64 translate-y-0 opacity-100" : "pointer-events-none max-h-0 -translate-y-3 opacity-0"
+            }`}
+          >
+            <TopHeader
+              page={page}
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              user={auth.user}
+              now={now}
+              notifications={(data.home?.banners?.length || 0) + (data.home?.sections?.length || 0)}
+            />
+          </div>
+          <main
+            ref={mainScrollRef}
+            onScroll={handleMainScroll}
+            className="min-h-0 flex-1 space-y-6 overflow-y-auto overflow-x-hidden pr-1 fp-no-scrollbar"
+          >
             {page === "home" && (
               <HomeLike
                 home={data.home}
                 isLoading={data.homeLoading}
                 error={data.homeError}
                 searchQuery={searchQuery}
+                setPage={setPage}
+                movieCategories={data.movieCategories || []}
                 onRetry={() => {
                   setData((state) => ({
                     ...state,
@@ -1609,35 +1862,20 @@ function App() {
             {page === "movies" && (
               <CatalogSection
                 title="Peliculas"
-                items={data.movies || []}
+                items={movieCatalogItems}
                 categories={data.movieCategories || []}
                 type="movie"
                 searchQuery={searchQuery}
               />
             )}
             {page === "series" && (
-              SERIES_DEGRADED_MODE ? (
-                <section className="space-y-4">
-                  <div className="rounded-2xl border border-amber-300/30 bg-amber-500/10 p-4 text-amber-100 text-sm">
-                    Modo beta: algunas series pueden cargar mal o incompletas temporalmente.
-                  </div>
-                  <CatalogSection
-                    title="Series"
-                    items={(data.series || []).slice(0, 2)}
-                    categories={data.seriesCategories || []}
-                    type="series"
-                    searchQuery={searchQuery}
-                  />
-                </section>
-              ) : (
-                <CatalogSection
-                  title="Series"
-                  items={data.series || []}
-                  categories={data.seriesCategories || []}
-                  type="series"
-                  searchQuery={searchQuery}
-                />
-              )
+              <CatalogSection
+                title="Series"
+                items={seriesCatalogItems}
+                categories={data.seriesCategories || []}
+                type="series"
+                searchQuery={searchQuery}
+              />
             )}
             {page === "settings" && (
               <SettingsPanel
@@ -1645,11 +1883,14 @@ function App() {
                 playerMode={playerMode}
                 setPlayerMode={setPlayerMode}
                 hasVlc={hasVlc}
+                user={auth.user}
+                onLogout={onLogout}
               />
             )}
           </main>
         </div>
       </div>
+      <MobileBottomNav page={page} setPage={setPage} />
     </div>
   );
 }

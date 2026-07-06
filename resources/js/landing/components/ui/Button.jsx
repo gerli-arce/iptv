@@ -1,5 +1,5 @@
 const baseClasses =
-  "inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold uppercase tracking-wide transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950";
+  "inline-flex max-w-full items-center justify-center gap-2 rounded-full px-5 py-2.5 text-center text-sm font-semibold uppercase tracking-wide transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950";
 
 const variants = {
   primary:

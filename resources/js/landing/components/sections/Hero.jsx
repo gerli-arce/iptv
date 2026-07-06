@@ -12,7 +12,7 @@ const Hero = () => {
   return (
     <section
       id="hero"
-      className="relative overflow-hidden pb-16 pt-48"
+      className="relative overflow-hidden pb-14 pt-32 sm:pb-16 sm:pt-48"
     >
       <div className="mx-auto grid w-full max-w-7xl items-center gap-10 px-4 sm:px-6 lg:grid-cols-[1.1fr_0.9fr]">
         <motion.div
@@ -20,10 +20,10 @@ const Hero = () => {
           initial="hidden"
           animate="show"
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-          className="space-y-6"
+          className="min-w-0 space-y-6"
         >
-          <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-400/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.35em] text-cyan-200">
-            <Sparkles className="h-4 w-4" />
+          <div className="inline-flex max-w-full items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-400/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-cyan-200 sm:px-4 sm:text-xs sm:tracking-[0.35em]">
+            <Sparkles className="h-4 w-4 shrink-0" />
             <span>{HERO.kicker}</span>
           </div>
           <div className="space-y-4">
@@ -35,12 +35,12 @@ const Hero = () => {
             </p>
             <p className="text-sm text-slate-400">{HERO.description}</p>
           </div>
-          <div className="flex flex-wrap items-center gap-4">
-            <Button as="a" href="#pricing" variant="primary" size="lg">
+          <div className="flex flex-col items-stretch gap-3 min-[380px]:flex-row min-[380px]:flex-wrap sm:items-center sm:gap-4">
+            <Button as="a" href="#pricing" variant="primary" size="lg" className="px-5 text-sm sm:px-6 sm:text-base">
               {HERO.primaryCta}
               <ArrowUpRight className="h-4 w-4" />
             </Button>
-            <Button as="a" href="#features" variant="outline" size="lg">
+            <Button as="a" href="#features" variant="outline" size="lg" className="px-5 text-sm sm:px-6 sm:text-base">
               <Play className="h-4 w-4" />
               {HERO.secondaryCta}
             </Button>

@@ -17,18 +17,18 @@ const Downloads = () => {
                     whileInView="show"
                     viewport={{ once: true, amount: 0.3 }}
                     transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                    className="relative overflow-hidden rounded-3xl border border-emerald-400/30 bg-gradient-to-br from-emerald-500/10 via-slate-900/70 to-cyan-500/10 p-10 backdrop-blur"
+                    className="relative overflow-hidden rounded-2xl border border-emerald-400/30 bg-gradient-to-br from-emerald-500/10 via-slate-900/70 to-cyan-500/10 p-5 backdrop-blur sm:rounded-3xl sm:p-10"
                 >
                     <div className="absolute -left-20 -top-20 h-60 w-60 rounded-full bg-emerald-500/20 blur-3xl" />
                     <div className="absolute -bottom-20 -right-20 h-60 w-60 rounded-full bg-cyan-500/20 blur-3xl" />
 
                     <div className="relative space-y-6 text-center">
-                        <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.3em] text-emerald-200">
-                            <Download className="h-4 w-4" />
+                        <div className="inline-flex max-w-full items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-200 sm:px-4 sm:text-xs sm:tracking-[0.3em]">
+                            <Download className="h-4 w-4 shrink-0" />
                             <span>Descarga gratuita</span>
                         </div>
 
-                        <h2 className="font-display text-3xl uppercase tracking-[0.2em] text-white sm:text-4xl">
+                        <h2 className="font-display text-2xl uppercase tracking-[0.12em] text-white sm:text-4xl sm:tracking-[0.2em]">
                             Descarga Nuestras Apps
                         </h2>
 
@@ -50,7 +50,7 @@ const Downloads = () => {
                                     download
                                     variant="primary"
                                     size="lg"
-                                    className="min-w-[240px]"
+                                    className="w-full px-5 text-sm sm:min-w-[240px] sm:text-base"
                                 >
                                     <Smartphone className="h-5 w-5" />
                                     Descargar para Celular
@@ -70,7 +70,7 @@ const Downloads = () => {
                                     download
                                     variant="secondary"
                                     size="lg"
-                                    className="min-w-[240px]"
+                                    className="w-full px-5 text-sm sm:min-w-[240px] sm:text-base"
                                 >
                                     <Tv className="h-5 w-5" />
                                     Descargar para Android TV
