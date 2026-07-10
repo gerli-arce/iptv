@@ -4,6 +4,8 @@ use App\Http\Controllers\Web\PortalController;
 use App\Http\Controllers\Web\ImageProxyController;
 use Illuminate\Support\Facades\Route;
 
+Route::view('/privacy-policy', 'privacy-policy')->name('privacy-policy');
+
 if (env('APP_TARGET', 'player') === 'admin') {
     Route::redirect('/', '/admin');
     Route::redirect('/login', '/admin/login')->name('login');
