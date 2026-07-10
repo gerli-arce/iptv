@@ -109,7 +109,7 @@
                         <p class="mt-3 text-base leading-8 text-slate-300">
                             El usuario puede solicitar soporte, información o eliminación de datos comunicándose con:
                         </p>
-                        <a class="mt-3 inline-flex text-base font-bold text-sky-200 hover:text-sky-100" href="mailto:soporte@fastnetperu.com.pe">soporte@fastnetperu.com.pe</a>
+                        <a class="mt-3 inline-flex text-base font-bold text-sky-200 hover:text-sky-100" href="mailto:fastnetperu.developer@gmail.com">fastnetperu.developer@gmail.com</a>
                     </div>
 
                     <div>
@@ -123,7 +123,7 @@
                         <h3 class="text-xl font-bold text-white">Contacto</h3>
                         <p class="mt-3 text-base leading-8 text-slate-300">
                             Fastnet Player<br>
-                            Correo: <a class="font-bold text-sky-200 hover:text-sky-100" href="mailto:soporte@fastnetperu.com.pe">soporte@fastnetperu.com.pe</a>
+                            Correo: <a class="font-bold text-sky-200 hover:text-sky-100" href="mailto:fastnetperu.developer@gmail.com">fastnetperu.developer@gmail.com</a>
                         </p>
                     </div>
                 </section>
