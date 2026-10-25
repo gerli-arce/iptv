@@ -3,6 +3,9 @@ import { createRoot } from "react-dom/client";
 import Hls from "hls.js";
 import "../css/app.css";
 import { fetchHomeData } from "./services/homeApi";
+import { getContentLabel, getSectionItemHref, getSectionItemTitle, isMovieOnlyContent, isTmdbImage, proxiedImageUrl, tmdbSize } from "./spa/helpers";
+import { MobileNav, Navbar } from "./spa/Navbar";
+import { Billboard, LandscapeCard, PosterCard, Row } from "./spa/Browse";
 
 const csrf = document.querySelector('meta[name="csrf-token"]')?.content;
 
@@ -37,12 +40,6 @@ const HLS_CONFIG = {
   fragLoadingMaxRetry: 5,
 };
 
-function proxiedImageUrl(url) {
-  if (!url) return "";
-  if (/^\/|^data:|^blob:/i.test(String(url))) return url;
-  return `/image-proxy?url=${encodeURIComponent(url)}`;
-}
-
 function normalizeTitle(value = "") {
   return String(value)
     .replace(/\b(HD|FHD|4K|LATINO|SUBTITULADO|ESPANOL)\b/gi, "")
@@ -72,62 +69,7 @@ function setDesktopPlayerMode(mode) {
   window.localStorage.setItem(DESKTOP_PLAYER_MODE_KEY, mode === "vlc" ? "vlc" : "internal");
 }
 
-function getSectionItemHref(item = {}) {
-  const contentType = item.content_type;
-  const externalId = item.external_id;
-  const actionUrl = item.action_url;
-
-  if (contentType === "url") {
-    return actionUrl || "#";
-  }
-
-  if (!contentType || !externalId) {
-    return "#";
-  }
-
-  return `/play/${contentType}/${externalId}`;
-}
-
-function getSectionItemTitle(item = {}) {
-  return item.custom_title || item.title || item.name || item.external_id || "Contenido";
-}
-
-const quickAccess = [
-  { key: "movies", label: "Peliculas", icon: "🎬", detail: "Catalogo premium", metric: "8.4K" },
-  { key: "series", label: "Series", icon: "📚", detail: "Temporadas", metric: "3.1K" },
-  { key: "continue", label: "Continuar viendo", icon: "🕒", detail: "En progreso", metric: "17" },
-];
-
 const WEB_PAGES = new Set(["home", "movies", "series", "settings"]);
-
-const PAGE_META = {
-  home: { title: "Inicio", subtitle: "Estrenos, destacadas y acceso rapido a tu catalogo de peliculas." },
-  movies: { title: "Peliculas", subtitle: "Explora el catalogo completo con una portada mas limpia y enfocada en cine." },
-  series: { title: "Series", subtitle: "Encuentra temporadas y series destacadas en una vista dedicada." },
-  settings: { title: "Ajustes", subtitle: "Cuenta, sesion y preferencias del reproductor." },
-};
-
-const NAV_ITEMS = [
-  { key: "home", label: "Inicio", icon: "home" },
-  { key: "movies", label: "Peliculas", icon: "movies" },
-  { key: "series", label: "Series", icon: "series" },
-  { key: "settings", label: "Ajustes", icon: "settings" },
-];
-
-const MOVIE_ONLY_TYPES = new Set(["movie", "movies", "vod", "url"]);
-
-function isMovieOnlyContent(type) {
-  if (!type) return true;
-  return MOVIE_ONLY_TYPES.has(String(type).toLowerCase());
-}
-
-function getContentLabel(type) {
-  const value = String(type || "").toLowerCase();
-  if (value === "movie" || value === "movies" || value === "vod") return "Pelicula";
-  if (value === "url") return "Coleccion";
-  if (value === "mixed") return "Seleccion";
-  return "Contenido";
-}
 
 function Icon({ name, className = "size-5" }) {
   const stroke = "currentColor";
@@ -245,137 +187,50 @@ function Login({ onDone }) {
   };
 
   return (
-    <div
-      className="min-h-screen grid place-items-center p-6 text-white bg-cover bg-center bg-no-repeat relative"
-      style={{ backgroundImage: "url('/bg-iptv-futuristic.png')" }}
-    >
-      <div className="absolute inset-0 bg-[#020617]/70" />
-      <form onSubmit={submit} className="relative z-10 w-full max-w-md rounded-3xl border border-white/15 bg-white/5 backdrop-blur-xl p-8 space-y-4 shadow-fp-glow">
-        <h2 className="text-4xl font-black tracking-tight">FastnetPlayer</h2>
-        <input className="fp-input" value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} placeholder="Usuario" />
-        <input className="fp-input" type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="Contrasena" />
-        {error && <p className="text-rose-300 text-sm">{error}</p>}
-        <button className="w-full rounded-xl bg-fp-accent py-3 font-bold transition duration-300 hover:scale-[1.01] hover:shadow-fp-button">Entrar</button>
-        <a
-          href={salesUrl}
-          target="_blank"
-          rel="noreferrer"
-          className="block w-full text-center text-sm text-cyan-200/90 hover:text-cyan-100 transition duration-300"
-        >
-          Aun no tienes una cuenta de la mejor senal IPTV?
+    <div className="relative grid min-h-screen place-items-center overflow-hidden bg-ink p-6 text-white">
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute inset-x-0 top-0 h-[560px] bg-[radial-gradient(ellipse_60%_60%_at_50%_-10%,rgba(255,99,99,0.28),transparent_70%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.07)_1px,transparent_1px)] bg-[size:28px_28px] [mask-image:radial-gradient(ellipse_70%_55%_at_50%_30%,black,transparent_75%)]" />
+      </div>
+
+      <div className="relative z-10 w-full max-w-md">
+        <a href={salesUrl} className="mx-auto mb-8 flex w-fit items-center gap-3">
+          <img src="/logo-fastnet-player.png" alt="Fastnet Player" className="size-12 rounded-xl shadow-[0_0_30px_rgba(255,60,60,0.4)]" />
+          <span className="text-lg font-bold tracking-tight">FastnetPlayer</span>
         </a>
-        <a
-          href={salesUrl}
-          target="_blank"
-          rel="noreferrer"
-          className="block w-full text-center rounded-xl border border-white/20 bg-white/5 py-3 text-sm font-semibold text-white transition duration-300 hover:bg-white/10"
-        >
-          Contrata aqui o consigue aqui una cuenta
-        </a>
-      </form>
-    </div>
-  );
-}
 
-function Side({ page, setPage, onLogout, user, desktopMode, playerMode, collapsed, setCollapsed }) {
-  const links = NAV_ITEMS;
-
-  const displayName = user?.name || user?.username || "Usuario";
-  const subscription = user?.status || "Activo";
-  const expiry = user?.exp_date || user?.expiry || user?.exp || "";
-
-  return (
-    <aside
-      className={`hidden xl:flex shrink-0 flex-col rounded-[28px] border border-white/10 bg-white/[0.04] backdrop-blur-2xl shadow-fp-soft h-[calc(100vh-2rem)] sticky top-4 overflow-hidden transition-all duration-300 ${
-        collapsed ? "w-[92px] p-3" : "w-[300px] p-4"
-      }`}
-    >
-      <div className="rounded-[24px] border border-white/10 bg-gradient-to-br from-white/[0.07] to-white/[0.02] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
-        <div className="flex items-start justify-between gap-3">
-          <div className={`rounded-2xl border border-white/10 bg-black/20 ${collapsed ? "p-2" : "p-3"} overflow-hidden`}>
-            <img
-              src="/logo fast_tv.png"
-              alt="Fastnet Player"
-              className={`${collapsed ? "w-16" : "w-full"} h-auto rounded-xl object-cover`}
-            />
+        <form onSubmit={submit} className="space-y-5 rounded-2xl border border-white/10 bg-[#0d0d11]/85 p-7 shadow-[0_1px_0_rgba(255,255,255,0.06)_inset,0_30px_90px_rgba(0,0,0,0.6)] backdrop-blur-xl sm:p-8">
+          <div className="space-y-1.5">
+            <h2 className="text-3xl font-extrabold tracking-[-0.03em]">Iniciar sesion</h2>
+            <p className="text-sm text-zinc-400">Ingresa con el usuario y la contrasena de tu servicio.</p>
           </div>
-          <button
-            onClick={() => setCollapsed?.(!collapsed)}
-            className="mt-1 inline-flex size-9 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-slate-100 transition duration-300 hover:border-sky-300/40 hover:bg-sky-400/10 hover:text-white"
-            aria-label={collapsed ? "Expandir sidebar" : "Colapsar sidebar"}
+
+          <div className="space-y-3">
+            <input className="fp-input" autoComplete="username" value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} placeholder="Usuario" />
+            <input className="fp-input" type="password" autoComplete="current-password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="Contrasena" />
+          </div>
+          {error && <p className="rounded-lg border border-rose-400/25 bg-rose-500/10 px-3 py-2 text-sm text-rose-300">{error}</p>}
+
+          <button className="w-full rounded-lg bg-coral py-3 font-semibold text-white shadow-[0_1px_0_rgba(255,255,255,0.35)_inset,0_8px_28px_rgba(255,99,99,0.35)] transition duration-200 hover:-translate-y-0.5 hover:bg-coral-soft hover:shadow-[0_1px_0_rgba(255,255,255,0.35)_inset,0_12px_36px_rgba(255,99,99,0.5)]">Entrar</button>
+
+          <div className="flex items-center gap-3 text-[11px] uppercase tracking-[0.16em] text-zinc-600">
+            <span className="h-px flex-1 bg-white/10" />
+            <span className="font-mono">Nuevo aqui</span>
+            <span className="h-px flex-1 bg-white/10" />
+          </div>
+
+          <p className="text-center text-sm text-zinc-400">Aun no tienes una cuenta de la mejor senal IPTV?</p>
+          <a
+            href={salesUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="block w-full rounded-lg border border-white/10 bg-white/[0.06] py-3 text-center text-sm font-semibold text-zinc-100 shadow-[0_1px_0_rgba(255,255,255,0.06)_inset] transition duration-200 hover:bg-white/10"
           >
-            <Icon name={collapsed ? "expand" : "collapse"} className="size-4" />
-          </button>
-        </div>
+            Contrata aqui o consigue aqui una cuenta
+          </a>
+        </form>
       </div>
-
-      <div className="mt-4 rounded-[24px] border border-sky-300/15 bg-gradient-to-br from-sky-500/10 via-white/[0.03] to-transparent p-4">
-        <p className="text-[10px] uppercase tracking-[0.28em] text-sky-200/80">Perfil</p>
-        <div className="mt-3 flex items-center gap-3">
-          <div className="grid size-12 place-items-center rounded-2xl bg-gradient-to-br from-sky-400 to-blue-700 text-sm font-black text-white shadow-[0_0_25px_rgba(37,99,235,0.4)]">
-            {(displayName || "U").slice(0, 1).toUpperCase()}
-          </div>
-          {!collapsed ? (
-            <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-white">{displayName}</p>
-              <p className="text-xs text-emerald-300">Suscripcion {subscription}</p>
-              {expiry ? <p className="text-[11px] text-slate-400">Expira: {expiry}</p> : null}
-            </div>
-          ) : null}
-        </div>
-      </div>
-
-      <nav className="mt-5 space-y-2">
-        {links.map((item) => {
-          const active = page === item.key;
-          return (
-            <button
-              key={item.key}
-              onClick={() => setPage(item.key)}
-              className={`group flex w-full items-center gap-3 rounded-2xl border px-4 py-3 text-left transition duration-300 ${
-                active
-                  ? "border-sky-300/35 bg-sky-400/12 text-white shadow-[0_0_35px_rgba(37,99,235,0.15)]"
-                  : "border-transparent text-slate-200 hover:border-sky-300/20 hover:bg-white/[0.05] hover:text-white"
-              }`}
-            >
-              <span
-                className={`grid size-10 shrink-0 place-items-center rounded-xl transition duration-300 ${
-                  active ? "bg-sky-400/15 text-sky-200 shadow-[0_0_24px_rgba(37,99,235,0.25)]" : "bg-white/[0.04] text-slate-300 group-hover:bg-sky-400/10 group-hover:text-sky-100"
-                }`}
-              >
-                <Icon name={item.icon} className="size-5" />
-              </span>
-              {!collapsed ? (
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-semibold">{item.label}</p>
-                  <p className="text-[11px] uppercase tracking-[0.18em] text-slate-400">
-                    {active ? "Activo" : "Abrir"}
-                  </p>
-                </div>
-              ) : null}
-            </button>
-          );
-        })}
-      </nav>
-
-      <div className="mt-auto space-y-3">
-        {desktopMode && !collapsed ? (
-          <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-4">
-            <p className="text-[10px] uppercase tracking-[0.28em] text-slate-400">Reproductor</p>
-            <p className="mt-2 text-sm font-semibold text-white">
-              {playerMode === "vlc" ? "VLC externo" : "Interno"}
-            </p>
-          </div>
-        ) : null}
-        <button
-          className={`flex w-full items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] py-3 text-white transition duration-300 hover:border-rose-300/30 hover:bg-rose-500/10 ${collapsed ? "px-3" : "px-4"}`}
-          onClick={onLogout}
-        >
-          <Icon name="plus" className="size-4 rotate-45" />
-          {!collapsed ? <span>Cerrar sesion</span> : null}
-        </button>
-      </div>
-    </aside>
+    </div>
   );
 }
 
@@ -388,7 +243,7 @@ function SettingsPanel({ desktopMode, playerMode, setPlayerMode, hasVlc, user, o
     <section className="space-y-5">
       <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-5 md:p-6">
         <div className="flex items-center gap-4">
-          <div className="grid size-14 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-sky-400 to-blue-700 text-lg font-black text-white shadow-[0_0_25px_rgba(37,99,235,0.35)]">
+          <div className="grid size-14 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-sky-400 to-blue-700 text-lg font-black text-white shadow-[0_0_25px_rgba(255,99,99,0.35)]">
             {displayName.slice(0, 1).toUpperCase()}
           </div>
           <div className="min-w-0">
@@ -436,157 +291,6 @@ function SettingsPanel({ desktopMode, playerMode, setPlayerMode, hasVlc, user, o
       >
         Cerrar sesion
       </button>
-    </section>
-  );
-}
-
-function TopHeader({ page, searchQuery, setSearchQuery, user, now, notifications = 0 }) {
-  const meta = PAGE_META[page] || PAGE_META.home;
-  const timestamp = now
-    ? now.toLocaleString("es-PE", {
-        weekday: "short",
-        day: "2-digit",
-        month: "short",
-        hour: "2-digit",
-        minute: "2-digit",
-      })
-    : "";
-  const displayName = user?.name || user?.username || "Usuario";
-
-  return (
-    <header className="sticky top-3 z-20 rounded-[24px] border border-white/10 bg-white/[0.05] px-3 py-3 shadow-[0_18px_50px_rgba(0,0,0,0.24)] backdrop-blur-2xl md:top-4 md:rounded-[28px] md:px-5 md:py-4">
-      <div className="space-y-3">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-[0.18em] text-slate-400 sm:text-xs sm:tracking-[0.24em]">
-              <span>FastPlayer</span>
-              <span className="rounded-full border border-sky-300/20 bg-sky-400/10 px-2.5 py-1 text-sky-100">Solo peliculas</span>
-            </div>
-            <h1 className="mt-1.5 text-xl font-black text-white md:mt-2 md:text-3xl">{meta.title}</h1>
-            <p className="mt-1 max-w-xl text-xs text-slate-300 md:text-sm">{meta.subtitle}</p>
-          </div>
-
-          <div className="flex shrink-0 items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-2.5 py-2 md:px-3">
-            <button className="relative grid size-10 place-items-center rounded-xl border border-white/10 bg-white/[0.04] text-slate-200 transition duration-300 hover:border-sky-300/35 hover:bg-sky-500/10 hover:text-white">
-              <Icon name="bell" className="size-4.5 md:size-5" />
-              {notifications > 0 ? (
-                <span className="absolute right-1.5 top-1.5 size-2 rounded-full bg-sky-400 shadow-[0_0_10px_rgba(96,165,250,0.8)]" />
-              ) : null}
-            </button>
-
-            <div className="grid size-10 place-items-center rounded-xl bg-gradient-to-br from-sky-400 to-blue-700 text-sm font-black text-white">
-              {displayName.slice(0, 1).toUpperCase()}
-            </div>
-
-            <div className="hidden min-w-0 sm:block">
-              <p className="truncate text-sm font-semibold text-white">{displayName}</p>
-              <div className="flex items-center gap-2">
-                <p className="text-[11px] text-emerald-300">Activo</p>
-                <span className="hidden text-[10px] uppercase tracking-[0.18em] text-slate-500 lg:inline">{timestamp}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <label className="group flex min-w-0 flex-1 items-center gap-3 rounded-2xl border border-white/10 bg-black/20 px-3 py-2.5 transition duration-300 focus-within:border-sky-300/35 focus-within:bg-sky-500/8 md:px-4 md:py-3">
-            <Icon name="search" className="size-4.5 text-slate-400 group-focus-within:text-sky-200 md:size-5" />
-            <input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Buscar peliculas o series..."
-              className="w-full bg-transparent text-xs text-white outline-none placeholder:text-slate-500 md:text-sm"
-            />
-          </label>
-        </div>
-      </div>
-    </header>
-  );
-}
-
-function MobileBottomNav({ page, setPage }) {
-  return (
-    <nav className="fixed inset-x-3 bottom-3 z-30 xl:hidden">
-      <div className="grid grid-cols-4 gap-2 rounded-[26px] border border-white/10 bg-slate-950/90 p-2 shadow-[0_20px_60px_rgba(0,0,0,0.42)] backdrop-blur-2xl">
-        {NAV_ITEMS.map((item) => {
-          const active = page === item.key;
-          return (
-            <button
-              key={item.key}
-              onClick={() => setPage(item.key)}
-              className={`flex flex-col items-center justify-center gap-1 rounded-2xl px-2 py-3 text-[11px] font-semibold transition duration-300 ${
-                active ? "bg-sky-400/14 text-white" : "text-slate-400"
-              }`}
-            >
-              <Icon name={item.icon} className="size-5" />
-              <span>{item.label}</span>
-            </button>
-          );
-        })}
-      </div>
-    </nav>
-  );
-}
-
-function HeroSection({ hero, tmdbHero }) {
-  const bg = tmdbHero?.backdrop_path ? `${TMDB_IMG_BASE}${tmdbHero.backdrop_path}` : (hero?.stream_icon || hero?.cover);
-  const title = tmdbHero?.title || tmdbHero?.name || hero?.name || "FASTNET ORIGINAL";
-  const year = (tmdbHero?.release_date || tmdbHero?.first_air_date || "").slice(0, 4);
-  const runtime = tmdbHero?.runtime ? `${tmdbHero.runtime} min` : "";
-  const rating = tmdbHero?.vote_average ? `${Number(tmdbHero.vote_average).toFixed(1)} TMDB` : "";
-  const genres = (tmdbHero?.genres || []).slice(0, 3).map((g) => g.name);
-  const overview = tmdbHero?.overview || hero?.plot || hero?.description || "";
-  const cast = (tmdbHero?.credits?.cast || []).slice(0, 4).map((p) => p.name).filter(Boolean);
-  const tags = [...genres, year, runtime, rating].filter(Boolean);
-  return (
-    <section className="relative overflow-hidden rounded-[28px] border border-sky-300/20 bg-slate-900/70 min-h-[420px] shadow-fp-glow">
-      {bg ? <img src={bg} alt="hero" className="absolute inset-0 h-full w-full object-cover opacity-65" /> : null}
-      <div className="absolute inset-0 bg-gradient-to-r from-[#040b18] via-[#050d1e]/85 to-transparent" />
-      <div className="relative z-10 p-8 md:p-12 max-w-3xl space-y-5">
-        <span className="inline-flex px-3 py-1 rounded-full text-xs tracking-[0.24em] uppercase border border-white/20 bg-white/10">Cine premium</span>
-        <h2 className="text-4xl md:text-6xl font-black leading-[0.95] text-white">{title}</h2>
-        {tags.length ? (
-          <div className="flex flex-wrap gap-2 text-xs text-slate-200/90">
-            {tags.map((i) => <span key={i} className="rounded-full border border-white/20 bg-white/10 px-3 py-1">{i}</span>)}
-          </div>
-        ) : null}
-        {overview ? <p className="text-slate-200/90 max-w-2xl">{overview}</p> : null}
-        {cast.length ? <p className="text-xs text-sky-200/90">Reparto: {cast.join(", ")}</p> : null}
-        <div className="flex flex-wrap gap-3">
-          <a href={hero?.stream_id ? `/play/movie/${hero.stream_id}` : "#"} className="rounded-xl bg-fp-accent px-6 py-3 font-semibold text-white transition duration-300 hover:shadow-fp-button">Ver ahora</a>
-          <a href="/app" className="rounded-xl border border-white/25 bg-white/10 px-6 py-3 font-semibold text-white transition duration-300 hover:bg-white/20">Mas informacion</a>
-          <button className="rounded-xl border border-sky-300/40 bg-sky-400/10 px-6 py-3 font-semibold text-sky-100 transition duration-300 hover:shadow-fp-button">Agregar a favoritos</button>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function QuickAccess({ setPage }) {
-  const items = [
-    { key: "movies", label: "Peliculas", icon: "movies", detail: "Catalogo premium", metric: "Estrenos" },
-    { key: "series", label: "Series", icon: "series", detail: "Temporadas y episodios", metric: "Explorar" },
-    { key: "settings", label: "Ajustes", icon: "settings", detail: "Cuenta y sesion", metric: "Perfil" },
-  ];
-
-  return (
-    <section className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-      {items.map((item) => (
-        <button
-          key={item.key}
-          onClick={() => setPage(item.key)}
-          className="group flex items-center gap-4 rounded-[24px] border border-white/10 bg-white/[0.04] p-4 text-left transition duration-300 hover:-translate-y-1 hover:border-sky-300/40 hover:shadow-fp-card"
-        >
-          <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-sky-400/12 text-sky-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
-            <Icon name={item.icon} className="size-5" />
-          </span>
-          <div className="min-w-0">
-            <p className="font-semibold text-white">{item.label}</p>
-            <p className="text-xs text-slate-300">{item.detail}</p>
-            <p className="mt-2 text-xs font-semibold uppercase tracking-[0.18em] text-sky-300">{item.metric}</p>
-          </div>
-        </button>
-      ))}
     </section>
   );
 }
@@ -639,49 +343,32 @@ function LiveNow({ channels = [] }) {
   );
 }
 
-function HoverCards({ title, items = [], type = "movie", limit = 10, hideTitle = false, imageOverrides = {}, metaOverrides = {} }) {
+function movieMeta(it = {}, extra = {}) {
+  const year = String(extra.release_date || it.release_date || it.first_air_date || it.year || "").slice(0, 4);
+  const rating = Number(extra.vote_average || it.rating_5based * 2 || it.rating || 0);
+  return [year, rating > 0 ? `★ ${rating.toFixed(1)}` : ""].filter(Boolean).join(" · ");
+}
+
+function HoverCards({ items = [], type = "movie", limit = 10, imageOverrides = {}, metaOverrides = {} }) {
   return (
-    <section>
-      {!hideTitle && <h3 className="fp-section-title">{title}</h3>}
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
-        {items.slice(0, limit).map((it, i) => {
-          const id = it.stream_id || it.series_id || it.id;
-          const href = type === "series" ? `/play/series/${id}` : `/play/movie/${id}`;
-          const img = imageOverrides[id] || it.stream_icon || it.cover;
-          const meta = metaOverrides[id] || {};
-          const synopsis = meta.overview || it.plot || it.description || `Disfruta ${it.name || "este contenido"} en FastnetPlayer.`;
-          const year = (meta.release_date || it.release_date || it.first_air_date || "").slice(0, 4);
-          const rating = meta.vote_average ? Number(meta.vote_average).toFixed(1) : "";
-          return (
-            <a
-              key={`${id}-${i}`}
-              href={href}
-              className="group relative overflow-hidden rounded-[22px] border border-white/10 bg-slate-900/40 aspect-[2/3] shadow-fp-card transition duration-300 hover:-translate-y-1 hover:border-sky-300/30"
-            >
-              {img ? (
-                <div className="h-full w-full bg-slate-950/70">
-                  <img src={img} alt="" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
-                </div>
-              ) : null}
-              <div className="absolute inset-0 bg-gradient-to-t from-[#030814]/95 via-[#030814]/35 to-transparent" />
-              <div className="absolute inset-x-0 bottom-0 p-4">
-                <div className="flex flex-wrap gap-2 text-[10px] uppercase tracking-[0.16em] text-slate-100/90">
-                  {rating ? <span className="rounded-full border border-sky-300/20 bg-sky-400/10 px-2.5 py-1">★ {rating}</span> : null}
-                  {year ? <span className="rounded-full border border-white/15 bg-white/[0.08] px-2.5 py-1">{year}</span> : null}
-                  <span className="rounded-full border border-white/15 bg-white/[0.08] px-2.5 py-1">{type}</span>
-                </div>
-                <p className="mt-3 text-lg font-black leading-[0.96] text-white line-clamp-2">{it.name}</p>
-                <p className="mt-2 text-xs leading-5 text-slate-200/85 line-clamp-2">{synopsis}</p>
-                <div className="mt-3 flex gap-2 text-xs">
-                  <span className="rounded-xl bg-fp-accent px-3 py-2 font-semibold text-white">Reproducir</span>
-                  <span className="rounded-xl border border-white/20 bg-white/[0.06] px-3 py-2 text-slate-100">Detalles</span>
-                </div>
-              </div>
-            </a>
-          );
-        })}
-      </div>
-    </section>
+    <div className="grid grid-cols-3 gap-x-3 gap-y-5 sm:grid-cols-4 md:grid-cols-5 md:gap-x-4 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-8">
+      {items.slice(0, limit).map((it, i) => {
+        const id = it.stream_id || it.series_id || it.id;
+        const href = type === "series" ? `/play/series/${id}` : `/play/movie/${id}`;
+        const img = imageOverrides[id] || it.stream_icon || it.cover;
+        const meta = metaOverrides[id] || {};
+        return (
+          <PosterCard
+            key={`${id}-${i}`}
+            className="w-full"
+            title={it.name}
+            image={img}
+            href={href}
+            meta={movieMeta(it, meta)}
+          />
+        );
+      })}
+    </div>
   );
 }
 
@@ -775,20 +462,16 @@ function CatalogSection({ title, items = [], categories = [], type = "movie", se
   }, [categories, categoryId]);
 
   return (
-    <section className="space-y-5">
-      <div className="flex items-end justify-between gap-4">
-        <div>
-          <h3 className="fp-section-title">{title}</h3>
-          <p className="text-xs uppercase tracking-[0.22em] text-slate-400">
-            {filteredItems.length} resultados
-          </p>
-        </div>
+    <section className="space-y-6 px-4 pb-12 pt-24 md:px-10 md:pt-28">
+      <div className="flex items-baseline gap-3">
+        <h1 className="text-3xl font-extrabold tracking-[-0.03em] text-white md:text-4xl">{title}</h1>
+        <span className="text-sm text-zinc-500">{filteredItems.length} titulos</span>
       </div>
       <div className="flex gap-2 overflow-x-auto fp-no-scrollbar pb-1">
         <button
           onClick={() => setCategoryId("all")}
-          className={`px-4 py-2 rounded-xl border text-sm whitespace-nowrap transition duration-300 backdrop-blur ${
-            categoryId === "all" ? "bg-sky-500/25 border-sky-300/40 text-white" : "border-white/10 text-slate-300 hover:bg-white/10"
+          className={`rounded-full border px-4 py-1.5 text-sm whitespace-nowrap transition duration-200 ${
+            categoryId === "all" ? "border-white bg-white text-black" : "border-white/15 text-zinc-300 hover:border-white/40 hover:text-white"
           }`}
         >
           Todas
@@ -797,8 +480,8 @@ function CatalogSection({ title, items = [], categories = [], type = "movie", se
           <button
             key={cat.category_id}
             onClick={() => setCategoryId(cat.category_id)}
-            className={`px-4 py-2 rounded-xl border text-sm whitespace-nowrap transition duration-300 backdrop-blur ${
-              String(categoryId) === String(cat.category_id) ? "bg-sky-500/25 border-sky-300/40 text-white" : "border-white/10 text-slate-300 hover:bg-white/10"
+            className={`rounded-full border px-4 py-1.5 text-sm whitespace-nowrap transition duration-200 ${
+              String(categoryId) === String(cat.category_id) ? "border-white bg-white text-black" : "border-white/15 text-zinc-300 hover:border-white/40 hover:text-white"
             }`}
           >
             {cat.category_name}
@@ -811,11 +494,9 @@ function CatalogSection({ title, items = [], categories = [], type = "movie", se
         </div>
       ) : null}
       <HoverCards
-        title={`${title} (${filteredItems.length})`}
         items={filteredItems}
         type={type}
         limit={filteredItems.length || 0}
-        hideTitle
         imageOverrides={imageOverrides}
         metaOverrides={metaOverrides}
       />
@@ -933,393 +614,244 @@ function StatsPanel({ home }) {
   );
 }
 
-function HomeBannerCard({ banner, featured = false, compact = false }) {
-  if (!banner) return null;
-
-  const href = banner.content_type === "url"
-    ? banner.action_url
-    : banner.external_id
-      ? `/play/${banner.content_type}/${banner.external_id}`
-      : banner.action_url;
-
-  const image = proxiedImageUrl(banner.image_url || banner.mobile_image_url);
-  const title = banner.title || "Banner";
-  const subtitle = banner.subtitle || "";
-  const external = Boolean(href && /^https?:\/\//i.test(href));
-
-  return (
-    <a
-      href={href || "#"}
-      target={external ? "_blank" : undefined}
-      rel={external ? "noreferrer" : undefined}
-      className={`group relative block w-full overflow-hidden rounded-[26px] border border-white/10 bg-slate-900/60 shadow-fp-soft transition duration-300 hover:-translate-y-1 hover:border-sky-300/30 ${featured ? "min-h-[220px] md:min-h-[270px]" : compact ? "min-h-[150px] md:min-h-[170px]" : "min-h-[180px]"}`}
-    >
-      {image ? <img src={image} alt={title} className="absolute inset-0 h-full w-full object-cover opacity-75 transition duration-300 group-hover:scale-[1.03]" /> : null}
-      <div className="absolute inset-0 bg-gradient-to-r from-[#04101f]/96 via-[#04101f]/72 to-transparent" />
-      <div className="absolute inset-0 bg-gradient-to-t from-[#030814]/65 via-transparent to-transparent" />
-      <div className={`relative z-10 flex h-full flex-col justify-end ${featured ? "p-5 md:p-7" : "p-4 md:p-5"}`}>
-        <div className="mb-3 flex flex-wrap gap-2">
-          <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-slate-100">
-            {getContentLabel(banner.content_type)}
-          </span>
-          {banner.position !== undefined ? (
-            <span className="rounded-full border border-sky-300/20 bg-sky-400/10 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-sky-100">
-              Pos {banner.position}
-            </span>
-          ) : null}
-        </div>
-        <h3 className={`${featured ? "text-3xl md:text-5xl" : compact ? "text-xl md:text-2xl" : "text-2xl md:text-3xl"} max-w-3xl font-black leading-[0.94] text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.55)]`}>
-          {title}
-        </h3>
-        {subtitle ? <p className={`${featured ? "mt-3 max-w-2xl" : "mt-2"} text-sm text-slate-200/90 line-clamp-2`}>{subtitle}</p> : null}
-        {featured ? (
-          <div className="mt-5 flex flex-wrap gap-3">
-            <button
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                if (!href) return;
-                if (external) {
-                  window.open(href, "_blank", "noreferrer");
-                  return;
-                }
-                window.location.href = href;
-              }}
-              className="inline-flex items-center gap-2 rounded-xl bg-fp-accent px-5 py-3 text-sm font-semibold text-white transition duration-300 hover:shadow-fp-button"
-            >
-              <Icon name="play" className="size-4" />
-              Ver ahora
-            </button>
-            <button className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/[0.06] px-5 py-3 text-sm font-semibold text-white transition duration-300 hover:border-sky-300/35 hover:bg-sky-500/10">
-              <Icon name="plus" className="size-4" />
-              Mi lista
-            </button>
-            <button className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/[0.06] px-5 py-3 text-sm font-semibold text-white transition duration-300 hover:border-sky-300/35 hover:bg-sky-500/10">
-              <Icon name="info" className="size-4" />
-              Mas informacion
-            </button>
-          </div>
-        ) : (
-          <div className={`${featured ? "mt-4" : "mt-3"} inline-flex items-center gap-2 text-sm font-semibold text-cyan-100`}>
-            <span className="rounded-xl bg-sky-500/20 px-4 py-2 border border-sky-300/20">Reproducir</span>
-            <span className="text-xs uppercase tracking-[0.18em] text-slate-300">catalogo premium</span>
-          </div>
-        )}
-      </div>
-    </a>
-  );
+function movieHref(movie) {
+  return `/play/movie/${movie.stream_id || movie.id}`;
 }
 
-function HomeSectionItemCard({ item, variant = "default" }) {
-  const title = getSectionItemTitle(item);
-  const href = getSectionItemHref(item);
-  const external = Boolean(href && /^https?:\/\//i.test(href));
-  const image = proxiedImageUrl(item.custom_image);
-  const description =
-    item.overview ||
-    item.description ||
-    item.plot ||
-    item.synopsis ||
-    item.summary ||
-    `Disfruta ${title} desde FastPlayer.`;
-  const isFeature = variant === "feature";
-  const isCompact = variant === "compact";
-
-  return (
-    <a
-      href={href || "#"}
-      target={external ? "_blank" : undefined}
-      rel={external ? "noreferrer" : undefined}
-      className={`group overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] transition duration-300 hover:-translate-y-1 hover:border-sky-300/30 hover:shadow-fp-card ${isFeature ? "relative block w-full min-h-[160px] md:min-h-[210px]" : ""}`}
-    >
-      {isFeature ? (
-        <>
-          {image ? (
-            <img
-              src={image}
-              alt={title}
-              loading="eager"
-              decoding="async"
-              className="absolute inset-0 h-full w-full object-cover object-center transition duration-500 group-hover:scale-[1.03]"
-            />
-          ) : (
-            <div className="absolute inset-0 grid place-items-center bg-gradient-to-br from-slate-900 to-slate-800 p-4 text-center">
-              <div>
-                <p className="text-2xl font-black text-sky-200">{getContentLabel(item.content_type)}</p>
-                <p className="mt-2 text-xs text-slate-400 break-all">{item.external_id}</p>
-              </div>
-            </div>
-          )}
-          <div className="absolute inset-0 bg-gradient-to-r from-[#04101f]/35 via-[#04101f]/12 to-[#04101f]/35" />
-          <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#030814]/60 via-[#030814]/18 to-transparent" />
-          <div className="relative z-10 flex h-full min-h-[160px] flex-col justify-between p-4 md:min-h-[210px] md:p-6">
-            <div className="space-y-2 md:max-w-[68%]">
-              <div className="flex flex-wrap gap-2">
-                {item.badge ? (
-                  <span className="rounded-full bg-sky-500/90 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.15em] text-white shadow-lg">
-                    {item.badge}
-                  </span>
-                ) : null}
-                <span className="rounded-full border border-white/15 bg-black/20 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-slate-100">
-                  {getContentLabel(item.content_type)}
-                </span>
-              </div>
-              <p className="text-lg font-black leading-[0.95] text-white md:text-3xl">{title}</p>
-            </div>
-            <div className="space-y-2 md:max-w-[60%]">
-              <p className="line-clamp-2 text-xs leading-5 text-slate-100/90 md:text-sm">
-                {description}
-              </p>
-              <p className="text-[10px] uppercase tracking-[0.18em] text-slate-300">
-                {item.content_type} · {item.external_id}
-              </p>
-            </div>
-          </div>
-        </>
-      ) : (
-        <>
-          <div className={`relative bg-slate-900/70 ${isCompact ? "aspect-[16/10]" : "aspect-[2/3]"}`}>
-            {image ? (
-              <img src={image} alt={title} className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]" />
-            ) : (
-              <div className="grid h-full w-full place-items-center bg-gradient-to-br from-slate-900 to-slate-800 p-4 text-center">
-                <div>
-                  <p className="text-2xl font-black text-sky-200">{getContentLabel(item.content_type)}</p>
-                  <p className="mt-2 text-xs text-slate-400 break-all">{item.external_id}</p>
-                </div>
-              </div>
-            )}
-            {item.badge ? (
-              <span className="absolute left-3 top-3 rounded-full bg-sky-500/85 px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.15em] text-white shadow-lg">
-                {item.badge}
-              </span>
-            ) : null}
-          </div>
-          <div className="space-y-1 p-4">
-            <p className="line-clamp-1 font-black text-white">{title}</p>
-            <p className="text-[11px] uppercase tracking-[0.18em] text-slate-400">
-              {item.content_type} · {item.external_id}
-            </p>
-          </div>
-        </>
-      )}
-    </a>
-  );
+function bannerHref(banner) {
+  if (banner.content_type === "url") return banner.action_url;
+  if (banner.external_id) return `/play/${banner.content_type}/${banner.external_id}`;
+  return banner.action_url;
 }
 
-function HomeSectionBlock({ section }) {
-  const items = Array.isArray(section?.items) ? section.items.filter(Boolean) : [];
-  if (!items.length) return null;
-
-  const layout = section.layout || "carousel";
-
-  const renderItems = () => {
-    if (layout === "grid") {
-      return (
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
-          {items.map((item) => (
-            <HomeSectionItemCard key={item.id || item.external_id} item={item} variant="compact" />
-          ))}
-        </div>
-      );
-    }
-
-    if (items.length === 2) {
-      return (
-        <div className="grid grid-cols-2 gap-3 md:gap-4">
-          {items.map((item) => (
-            <HomeSectionItemCard key={item.id || item.external_id} item={item} variant="compact" />
-          ))}
-        </div>
-      );
-    }
-
-    if (layout === "hero" || items.length === 1) {
-      const [lead, ...rest] = items;
-      if (items.length === 1) {
-        return <HomeSectionItemCard item={lead} variant="feature" />;
-      }
-
-      return (
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-3 md:hidden">
-            {[lead, ...rest].slice(0, 6).map((item) => (
-              <HomeSectionItemCard key={item.id || item.external_id} item={item} variant="compact" />
-            ))}
-          </div>
-          <div className="hidden md:block">
-            <HomeSectionItemCard item={lead} variant="feature" />
-          </div>
-          <div className="hidden gap-4 md:grid sm:grid-cols-2 xl:grid-cols-3">
-            {rest.slice(0, 6).map((item) => (
-              <HomeSectionItemCard key={item.id || item.external_id} item={item} variant="compact" />
-            ))}
-          </div>
-        </div>
-      );
-    }
-
-    return (
-      <div className="grid auto-cols-[180px] grid-flow-col gap-3 overflow-x-auto pb-2 fp-no-scrollbar">
-        {items.map((item) => (
-          <div key={item.id || item.external_id} className="w-[180px]">
-            <HomeSectionItemCard item={item} variant="compact" />
+function HomeSkeleton() {
+  return (
+    <div>
+      <div className="fp-skeleton h-[420px] w-full md:h-[560px]" />
+      <div className="space-y-8 px-4 pt-8 md:px-10">
+        {[0, 1].map((n) => (
+          <div key={n} className="space-y-3">
+            <div className="fp-skeleton h-6 w-48 rounded-md" />
+            <div className="flex gap-3 overflow-hidden">
+              {[0, 1, 2, 3, 4, 5].map((c) => (
+                <div key={c} className="fp-skeleton aspect-video w-[250px] shrink-0 rounded-lg md:w-[320px]" />
+              ))}
+            </div>
           </div>
         ))}
       </div>
-    );
-  };
-
-  return (
-    <section className="space-y-4">
-      <div className="flex items-end justify-between gap-4">
-        <div>
-          <h3 className="fp-section-title">{section.title}</h3>
-          <p className="text-xs uppercase tracking-[0.22em] text-slate-400">
-            {section.content_type} · {items.length} items
-          </p>
-        </div>
-        <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-slate-300">
-          {layout}
-        </span>
-      </div>
-      {renderItems()}
-    </section>
+    </div>
   );
 }
 
-function HomeLike({ home, isLoading, error, onRetry, searchQuery = "", setPage, movieCategories = [] }) {
+function HomeLike({ home, isLoading, error, onRetry, searchQuery = "", movies = [], movieCategories = [], blockedIds = new Set() }) {
   const q = searchQuery.trim().toLowerCase();
-  const banners = (home?.banners || []).filter((banner) => {
-    if (!isMovieOnlyContent(banner.content_type)) return false;
-    if (!q) return true;
-    return [banner.title, banner.subtitle, banner.content_type, banner.external_id]
-      .filter(Boolean)
-      .join(" ")
-      .toLowerCase()
-      .includes(q);
-  });
+
+  // Solo las peliculas se bloquean: los ids de series/canales son otra numeracion.
+  const isBlockedItem = (item) => /^(movie|movies|vod)$/i.test(String(item?.content_type || "")) && blockedIds.has(String(item?.external_id));
+
+  const banners = (home?.banners || []).filter((banner) => isMovieOnlyContent(banner.content_type) && !isBlockedItem(banner));
   const sections = (home?.sections || [])
     .filter((section) => isMovieOnlyContent(section?.content_type))
-    .map((section) => {
-      const items = Array.isArray(section.items)
-        ? section.items.filter((item) => item && isMovieOnlyContent(item.content_type))
-        : [];
-      const filteredItems = q
-        ? items.filter((item) => {
-            const text = [
-              item.custom_title,
-              item.title,
-              item.name,
-              item.badge,
-              item.external_id,
-              item.content_type,
-            ]
-              .filter(Boolean)
-              .join(" ")
-              .toLowerCase();
-            return text.includes(q) || String(section.title || "").toLowerCase().includes(q);
-          })
-        : items;
-      return { ...section, items: filteredItems };
-    })
-    .filter((section) => Array.isArray(section.items) && section.items.length > 0);
-  const featuredMovies = (home?.movies || [])
-    .filter(Boolean)
-    .filter((item) => {
-      if (!q) return true;
-      return [item.name, item.plot, item.genre, item.year, item.category_name]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase()
-        .includes(q);
-    });
-  const showSkeleton = isLoading && !home;
+    .map((section) => ({
+      ...section,
+      items: Array.isArray(section.items) ? section.items.filter((item) => item && isMovieOnlyContent(item.content_type) && !isBlockedItem(item)) : [],
+    }))
+    .filter((section) => section.items.length > 0);
+  const featuredMovies = (home?.movies || []).filter((movie) => movie && !blockedIds.has(String(movie.stream_id ?? movie.id)));
 
-  if (error && !home) {
+  const slides = useMemo(() => {
+    if (banners.length) {
+      return banners.slice(0, 5).map((banner, i) => ({
+        id: banner.id || `${banner.title}-${i}`,
+        title: banner.title || "Destacado",
+        subtitle: banner.subtitle,
+        image: proxiedImageUrl(banner.image_url || banner.mobile_image_url),
+        href: bannerHref(banner),
+        badge: getContentLabel(banner.content_type),
+      }));
+    }
+    const sectionItems = sections.flatMap((section) => section.items).filter((item) => item.custom_image).slice(0, 5);
+    if (sectionItems.length) {
+      return sectionItems.map((item, i) => {
+        const poster = isTmdbImage(item.custom_image);
+        return {
+          id: item.id || `${item.external_id}-${i}`,
+          title: getSectionItemTitle(item),
+          subtitle: item.overview || item.description || item.plot || "",
+          image: poster ? "" : proxiedImageUrl(item.custom_image),
+          poster: poster ? proxiedImageUrl(tmdbSize(item.custom_image, "w780")) : "",
+          query: poster ? getSectionItemTitle(item) : "",
+          kind: String(item.content_type).toLowerCase() === "series" ? "tv" : "movie",
+          href: getSectionItemHref(item),
+          badge: item.badge || getContentLabel(item.content_type),
+        };
+      });
+    }
+    const pool = featuredMovies.length ? featuredMovies : movies;
+    return [...pool]
+      .filter((movie) => movie.stream_icon || movie.cover)
+      .sort((a, b) => Number(b.rating || 0) - Number(a.rating || 0))
+      .slice(0, 5)
+      .map((movie) => ({
+        id: movie.stream_id || movie.id,
+        title: movie.name,
+        subtitle: movie.plot || movie.description || "",
+        poster: proxiedImageUrl(movie.stream_icon || movie.cover),
+        query: movie.name,
+        kind: "movie",
+        href: movieHref(movie),
+        badge: "Pelicula",
+      }));
+  }, [home, movies]);
+
+  // Fondo horizontal en HD desde TMDB; mientras llega (o si falla) se ve el poster con desenfoque.
+  const [backdrops, setBackdrops] = useState({});
+  useEffect(() => {
+    let cancelled = false;
+    slides
+      .filter((slide) => slide.query && !backdrops[slide.id])
+      .forEach(async (slide) => {
+        try {
+          const res = await fetch(`/api/imdb/search?q=${encodeURIComponent(normalizeTitle(slide.query))}&language=es-MX`, { credentials: "same-origin" });
+          if (!res.ok) return;
+          const data = await res.json();
+          const results = data?.data?.results || [];
+          const hit = results.find((r) => r?.media_type === slide.kind && r?.backdrop_path) || results.find((r) => r?.backdrop_path);
+          if (hit && !cancelled) {
+            setBackdrops((prev) => ({ ...prev, [slide.id]: proxiedImageUrl(`https://image.tmdb.org/t/p/original${hit.backdrop_path}`) }));
+          }
+        } catch {
+          // Sin TMDB se mantiene el poster.
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [slides]);
+  const heroSlides = useMemo(() => slides.map((slide) => (backdrops[slide.id] ? { ...slide, image: backdrops[slide.id] } : slide)), [slides, backdrops]);
+
+  const catalogRows = useMemo(() => {
+    if (!movies.length) return [];
+    const withAdded = movies.some((movie) => Number(movie.added));
+    const recent = withAdded ? [...movies].sort((a, b) => Number(b.added || 0) - Number(a.added || 0)) : movies;
+    const rows = [{ key: "recent", title: "Agregadas recientemente", items: recent.slice(0, 24) }];
+
+    const counts = new Map();
+    movies.forEach((movie) => counts.set(String(movie.category_id), (counts.get(String(movie.category_id)) || 0) + 1));
+    movieCategories
+      .map((category) => ({ category, count: counts.get(String(category.category_id)) || 0 }))
+      .filter((entry) => entry.count >= 3)
+      .sort((a, b) => b.count - a.count)
+      .forEach(({ category }) => {
+        rows.push({
+          key: `cat-${category.category_id}`,
+          title: category.category_name,
+          items: movies.filter((movie) => String(movie.category_id) === String(category.category_id)).slice(0, 24),
+        });
+      });
+    return rows;
+  }, [movies, movieCategories]);
+
+  const searchResults = useMemo(() => {
+    if (!q) return [];
+    const matches = (text) => String(text || "").toLowerCase().includes(q);
+    const seen = new Set();
+    return [...featuredMovies, ...movies]
+      .filter((movie) => [movie.name, movie.plot, movie.genre, movie.category_name, movie.year].some(matches))
+      .filter((movie) => {
+        const id = movie.stream_id || movie.id;
+        if (seen.has(id)) return false;
+        seen.add(id);
+        return true;
+      });
+  }, [q, home, movies]);
+
+  if (error && !home && !movies.length) {
     return (
-      <section className="rounded-[28px] border border-rose-300/20 bg-rose-500/10 p-8 text-white">
-        <p className="text-xl font-black">No se pudo cargar el home</p>
+      <section className="mx-4 mt-28 rounded-2xl border border-rose-300/20 bg-rose-500/10 p-8 text-white md:mx-10">
+        <p className="text-xl font-bold">No se pudo cargar el inicio</p>
         <p className="mt-2 text-sm text-rose-100/90">{error}</p>
-        <button onClick={onRetry} className="mt-5 rounded-xl bg-fp-accent px-5 py-3 font-semibold text-white transition hover:shadow-fp-button">
+        <button onClick={onRetry} className="mt-5 rounded-lg bg-coral px-5 py-3 font-semibold text-white transition hover:bg-coral-soft">
           Reintentar
         </button>
       </section>
     );
   }
 
+  if (isLoading && !home && !movies.length) return <HomeSkeleton />;
+
+  if (q) {
+    return (
+      <section className="space-y-6 px-4 pb-12 pt-24 md:px-10 md:pt-28">
+        <h1 className="text-2xl font-extrabold tracking-[-0.02em] text-white md:text-3xl">
+          Resultados para <span className="text-coral">"{searchQuery.trim()}"</span>
+        </h1>
+        {searchResults.length ? (
+          <HoverCards items={searchResults} type="movie" limit={120} />
+        ) : (
+          <p className="rounded-xl border border-dashed border-white/10 px-5 py-10 text-center text-sm text-zinc-400">
+            No encontramos peliculas con ese nombre.
+          </p>
+        )}
+      </section>
+    );
+  }
+
+  const hasContent = slides.length || sections.length || featuredMovies.length || catalogRows.length;
+
   return (
-    <div className="space-y-8">
-      {showSkeleton ? (
-        <section className="rounded-[32px] border border-white/10 min-h-[420px] p-8 md:p-12 space-y-5 bg-slate-900/40">
-          <div className="fp-skeleton h-8 w-36 rounded-full" />
-          <div className="fp-skeleton h-14 w-[60%] rounded-xl" />
-          <div className="fp-skeleton h-5 w-[45%] rounded-lg" />
-          <div className="flex gap-3 pt-2">
-            <div className="fp-skeleton h-12 w-32 rounded-xl" />
-            <div className="fp-skeleton h-12 w-40 rounded-xl" />
-            <div className="fp-skeleton h-12 w-48 rounded-xl" />
-          </div>
-        </section>
-      ) : (
-        <>
-          <QuickAccess setPage={setPage} />
+    <div className="pb-12">
+      <Billboard slides={heroSlides} />
 
-          {banners.length ? (
-            <section className="space-y-4">
-              {banners.length === 1 ? (
-                <HomeBannerCard banner={banners[0]} featured />
+      <div className={`relative z-10 space-y-8 md:space-y-10 ${slides.length ? "-mt-8 md:-mt-14" : "pt-24 md:pt-28"}`}>
+        {sections.map((section) => (
+          <Row key={section.id || section.slug || section.title} title={section.title}>
+            {section.items.map((item, i) =>
+              isTmdbImage(item.custom_image) ? (
+                <PosterCard
+                  key={item.id || `${item.external_id}-${i}`}
+                  title={getSectionItemTitle(item)}
+                  image={proxiedImageUrl(tmdbSize(item.custom_image, "w500"))}
+                  href={getSectionItemHref(item)}
+                  meta={getContentLabel(item.content_type)}
+                />
               ) : (
-                <div className="grid gap-4 xl:grid-cols-[1.35fr_0.95fr]">
-                  <HomeBannerCard banner={banners[0]} featured />
-                  <div className="grid gap-4">
-                    {banners.slice(1, 3).map((banner) => (
-                      <HomeBannerCard key={banner.id || banner.title} banner={banner} compact />
-                    ))}
-                  </div>
-                </div>
-              )}
-              {banners.length > 3 ? (
-                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                  {banners.slice(3, 6).map((banner) => (
-                    <HomeBannerCard key={banner.id || banner.title} banner={banner} compact />
-                  ))}
-                </div>
-              ) : null}
-            </section>
-          ) : featuredMovies.length ? (
-            <section className="space-y-4">
-              <HeroSection hero={featuredMovies[0]} />
-            </section>
-          ) : null}
+                <LandscapeCard
+                  key={item.id || `${item.external_id}-${i}`}
+                  title={getSectionItemTitle(item)}
+                  image={proxiedImageUrl(item.custom_image)}
+                  href={getSectionItemHref(item)}
+                  badge={item.badge}
+                  label={getContentLabel(item.content_type)}
+                />
+              ),
+            )}
+          </Row>
+        ))}
 
-          {sections.length ? (
-            <section className="space-y-6">
-              <div className="space-y-8">
-                {sections.map((section) => (
-                  <HomeSectionBlock key={section.id || section.slug} section={section} />
-                ))}
-              </div>
-            </section>
-          ) : featuredMovies.length ? (
-            <section className="space-y-6">
-              <CatalogSection
-                title="Peliculas recomendadas"
-                items={featuredMovies}
-                categories={movieCategories}
-                type="movie"
-                searchQuery={searchQuery}
-              />
-            </section>
-          ) : (
-            <section className="rounded-[28px] border border-dashed border-white/10 bg-white/[0.03] p-8 text-slate-300">
-              No hay peliculas destacadas por ahora.
-            </section>
-          )}
+        {featuredMovies.length ? (
+          <Row title="Recomendadas para ti">
+            {featuredMovies.slice(0, 24).map((movie) => (
+              <PosterCard key={movie.stream_id || movie.id} title={movie.name} image={movie.stream_icon || movie.cover} href={movieHref(movie)} meta={movieMeta(movie)} />
+            ))}
+          </Row>
+        ) : null}
 
-        </>
-      )}
+        {catalogRows.map((row) => (
+          <Row key={row.key} title={row.title}>
+            {row.items.map((movie) => (
+              <PosterCard key={movie.stream_id || movie.id} title={movie.name} image={movie.stream_icon || movie.cover} href={movieHref(movie)} meta={movieMeta(movie)} />
+            ))}
+          </Row>
+        ))}
+
+        {!hasContent ? (
+          <p className="mx-4 rounded-xl border border-dashed border-white/10 px-5 py-10 text-center text-sm text-zinc-400 md:mx-10">
+            No hay peliculas disponibles por ahora.
+          </p>
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -1672,23 +1204,20 @@ function App() {
     const saved = localStorage.getItem("fastnet:lastPage");
     return WEB_PAGES.has(saved) ? saved : "home";
   });
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => localStorage.getItem("fastnet:sidebarCollapsed") === "1");
   const [searchQuery, setSearchQuery] = useState("");
-  const [now, setNow] = useState(() => new Date());
-  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const [data, setData] = useState({
     home: null,
     homeLoading: false,
     homeError: null,
     movies: null,
     movieCategories: [],
+    unplayableIds: [],
     series: null,
     seriesCategories: [],
+    unplayableSeriesIds: [],
   });
   const [playerMode, setPlayerModeState] = useState(() => (desktopMode ? getDesktopPlayerMode() : "internal"));
   const [hasVlc, setHasVlc] = useState(false);
-  const mainScrollRef = useRef(null);
-  const lastScrollTopRef = useRef(0);
 
   useEffect(() => {
     api("/me").then((m) => setAuth({ ready: true, ok: true, user: m.user })).catch(() => setAuth({ ready: true, ok: false, user: null }));
@@ -1699,26 +1228,13 @@ function App() {
   }, [page]);
 
   useEffect(() => {
-    setIsHeaderVisible(true);
-    lastScrollTopRef.current = 0;
-    if (mainScrollRef.current) {
-      mainScrollRef.current.scrollTop = 0;
-    }
+    window.scrollTo(0, 0);
   }, [page]);
-
-  useEffect(() => {
-    localStorage.setItem("fastnet:sidebarCollapsed", sidebarCollapsed ? "1" : "0");
-  }, [sidebarCollapsed]);
 
   useEffect(() => {
     if (WEB_PAGES.has(page)) return;
     setPage("home");
   }, [page]);
-
-  useEffect(() => {
-    const timer = window.setInterval(() => setNow(new Date()), 60000);
-    return () => window.clearInterval(timer);
-  }, []);
 
   useEffect(() => {
     if (!desktopMode) return;
@@ -1768,9 +1284,25 @@ function App() {
 
   useEffect(() => {
     if (!auth.ok) return;
-    if (page === "movies" && !data.movies) api("/movies").then((d) => setData((s) => ({ ...s, movies: d.items || [], movieCategories: d.categories || [] })));
-    if (page === "series" && !data.series) api("/series").then((d) => setData((s) => ({ ...s, series: d.items || [], seriesCategories: d.categories || [] })));
+    if ((page === "movies" || page === "home") && !data.movies) {
+      api("/movies")
+        .then((d) => setData((s) => ({ ...s, movies: d.items || [], movieCategories: d.categories || [], unplayableIds: d.unplayable_ids || [] })))
+        .catch(() => setData((s) => ({ ...s, movies: s.movies || [] })));
+    }
+    if (page === "series" && !data.series) api("/series").then((d) => setData((s) => ({ ...s, series: d.items || [], seriesCategories: d.categories || [], unplayableSeriesIds: d.unplayable_ids || [] })));
   }, [auth.ok, page, data.movies, data.series]);
+
+  // Peliculas que el navegador no reproduce bien (audio AC3/DTS...) se ocultan; con VLC externo se muestran todas.
+  const hideUnplayable = !(desktopMode && playerMode === "vlc");
+  const blockedIds = useMemo(
+    () => (hideUnplayable ? new Set((data.unplayableIds || []).map(String)) : new Set()),
+    [hideUnplayable, data.unplayableIds],
+  );
+
+  const blockedSeriesIds = useMemo(
+    () => (hideUnplayable ? new Set((data.unplayableSeriesIds || []).map(String)) : new Set()),
+    [hideUnplayable, data.unplayableSeriesIds],
+  );
 
   const onLogout = async () => {
     await api("/logout", { method: "POST" });
@@ -1780,117 +1312,85 @@ function App() {
   if (!auth.ready) return <div className="min-h-screen grid place-items-center text-white bg-fp-night">Cargando...</div>;
   if (!auth.ok) return <Login onDone={() => { window.location.href = "/app"; }} />;
 
-  const handleMainScroll = (event) => {
-    const currentTop = event.currentTarget.scrollTop;
-    const lastTop = lastScrollTopRef.current;
-    const delta = currentTop - lastTop;
-
-    if (currentTop <= 24) {
-      setIsHeaderVisible(true);
-    } else if (delta > 6) {
-      setIsHeaderVisible(false);
-    } else if (delta < -6) {
-      setIsHeaderVisible(true);
-    }
-
-    lastScrollTopRef.current = currentTop;
-  };
-
+  const isVisibleMovie = (movie) => !blockedIds.has(String(movie?.stream_id ?? movie?.external_id ?? ""));
+  const visibleMovies = (data.movies || []).filter(isVisibleMovie);
+  const visibleCategoryIds = new Set(visibleMovies.map((movie) => String(movie.category_id)));
+  const movieCategories = (data.movieCategories || []).filter((category) => !data.movies?.length || visibleCategoryIds.has(String(category.category_id)));
   const movieCatalogItems = (data.movies && data.movies.length)
-    ? data.movies
-    : extractFallbackCatalogItems(data.home, "movie");
+    ? visibleMovies
+    : extractFallbackCatalogItems(data.home, "movie").filter(isVisibleMovie);
+  const isVisibleSeries = (item) => !blockedSeriesIds.has(String(item?.series_id ?? item?.external_id ?? ""));
+  const visibleSeries = (data.series || []).filter(isVisibleSeries);
+  const visibleSeriesCategoryIds = new Set(visibleSeries.map((item) => String(item.category_id)));
+  const seriesCategories = (data.seriesCategories || []).filter((category) => !data.series?.length || visibleSeriesCategoryIds.has(String(category.category_id)));
   const seriesCatalogItems = (data.series && data.series.length)
-    ? data.series
-    : extractFallbackCatalogItems(data.home, "series");
+    ? visibleSeries
+    : extractFallbackCatalogItems(data.home, "series").filter(isVisibleSeries);
 
   return (
-    <div className="relative h-screen overflow-hidden bg-fp-night text-white">
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -left-24 top-0 size-[28rem] rounded-full bg-sky-500/14 blur-[120px]" />
-        <div className="absolute right-0 top-10 size-[24rem] rounded-full bg-blue-600/12 blur-[120px]" />
-        <div className="absolute bottom-0 left-1/2 size-[30rem] -translate-x-1/2 rounded-full bg-cyan-500/8 blur-[140px]" />
-      </div>
-      <div className="relative z-10 mx-auto flex h-full max-w-[1880px] gap-5 p-3 pb-24 md:p-6 md:pb-6 min-w-0">
-        <Side
-          page={page}
-          setPage={setPage}
-          onLogout={onLogout}
-          user={auth.user}
-          desktopMode={desktopMode}
-          playerMode={playerMode}
-          collapsed={sidebarCollapsed}
-          setCollapsed={setSidebarCollapsed}
-        />
-        <div className="flex min-w-0 flex-1 flex-col gap-3 md:gap-5">
-          <div
-            className={`overflow-hidden transition-all duration-300 ${
-              isHeaderVisible ? "max-h-64 translate-y-0 opacity-100" : "pointer-events-none max-h-0 -translate-y-3 opacity-0"
-            }`}
-          >
-            <TopHeader
-              page={page}
-              searchQuery={searchQuery}
-              setSearchQuery={setSearchQuery}
+    <div className="min-h-screen bg-ink text-white">
+      <Navbar
+        page={page}
+        setPage={setPage}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        user={auth.user}
+        onLogout={onLogout}
+      />
+
+      <main className="pb-20 md:pb-0">
+        {page === "home" && (
+          <HomeLike
+            home={data.home}
+            isLoading={data.homeLoading}
+            error={data.homeError}
+            searchQuery={searchQuery}
+            movies={visibleMovies}
+            blockedIds={blockedIds}
+            movieCategories={movieCategories}
+            onRetry={() => {
+              setData((state) => ({
+                ...state,
+                home: null,
+                homeLoading: false,
+                homeError: null,
+              }));
+            }}
+          />
+        )}
+        {page === "movies" && (
+          <CatalogSection
+            title="Peliculas"
+            items={movieCatalogItems}
+            categories={movieCategories}
+            type="movie"
+            searchQuery={searchQuery}
+          />
+        )}
+        {page === "series" && (
+          <CatalogSection
+            title="Series"
+            items={seriesCatalogItems}
+            categories={seriesCategories}
+            type="series"
+            searchQuery={searchQuery}
+          />
+        )}
+        {page === "settings" && (
+          <div className="mx-auto w-full max-w-4xl px-4 pb-12 pt-24 md:px-10 md:pt-28">
+            <SettingsPanel
+              desktopMode={desktopMode}
+              playerMode={playerMode}
+              setPlayerMode={setPlayerMode}
+              hasVlc={hasVlc}
               user={auth.user}
-              now={now}
-              notifications={(data.home?.banners?.length || 0) + (data.home?.sections?.length || 0)}
+              onLogout={onLogout}
             />
           </div>
-          <main
-            ref={mainScrollRef}
-            onScroll={handleMainScroll}
-            className="min-h-0 flex-1 space-y-6 overflow-y-auto overflow-x-hidden pr-1 fp-no-scrollbar"
-          >
-            {page === "home" && (
-              <HomeLike
-                home={data.home}
-                isLoading={data.homeLoading}
-                error={data.homeError}
-                searchQuery={searchQuery}
-                setPage={setPage}
-                movieCategories={data.movieCategories || []}
-                onRetry={() => {
-                  setData((state) => ({
-                    ...state,
-                    home: null,
-                    homeLoading: false,
-                    homeError: null,
-                  }));
-                }}
-              />
-            )}
-            {page === "movies" && (
-              <CatalogSection
-                title="Peliculas"
-                items={movieCatalogItems}
-                categories={data.movieCategories || []}
-                type="movie"
-                searchQuery={searchQuery}
-              />
-            )}
-            {page === "series" && (
-              <CatalogSection
-                title="Series"
-                items={seriesCatalogItems}
-                categories={data.seriesCategories || []}
-                type="series"
-                searchQuery={searchQuery}
-              />
-            )}
-            {page === "settings" && (
-              <SettingsPanel
-                desktopMode={desktopMode}
-                playerMode={playerMode}
-                setPlayerMode={setPlayerMode}
-                hasVlc={hasVlc}
-                user={auth.user}
-                onLogout={onLogout}
-              />
-            )}
-          </main>
-        </div>
-      </div>
-      <MobileBottomNav page={page} setPage={setPage} />
+        )}
+      </main>
+
+      <MobileNav page={page} setPage={setPage} />
     </div>
   );
 }

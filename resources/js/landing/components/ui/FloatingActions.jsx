@@ -8,7 +8,7 @@ const FloatingActions = ({ onOpenManual }) => {
                 onClick={onOpenManual}
                 whileHover={{ scale: 1.05, y: -2 }}
                 whileTap={{ scale: 0.95 }}
-                className="flex h-12 min-w-[4rem] flex-col items-center justify-center rounded-xl border border-orange-500/30 bg-orange-600 p-2 text-white shadow-lg shadow-orange-600/20 backdrop-blur-sm transition-colors hover:border-orange-400 hover:bg-orange-500 sm:h-14 sm:min-w-[5rem]"
+                className="flex h-12 min-w-[4rem] flex-col items-center justify-center rounded-xl border border-coral/40 bg-coral p-2 text-white shadow-[0_1px_0_rgba(255,255,255,0.3)_inset,0_10px_30px_rgba(255,99,99,0.35)] transition-colors hover:bg-coral-soft sm:h-14 sm:min-w-[5rem]"
                 title="Ver Manual de Usuario"
             >
                 <BookOpen className="h-5 w-5 sm:h-6 sm:w-6" />

@@ -3,12 +3,63 @@
 @source "../views/**/*.blade.php";
 
 @theme {
-  --color-fp-night: #030712;
-  --color-fp-accent: #1f6fff;
-  --shadow-fp-glow: 0 30px 90px rgba(25, 117, 255, 0.22);
-  --shadow-fp-soft: 0 12px 45px rgba(0, 0, 0, 0.45);
-  --shadow-fp-button: 0 10px 30px rgba(38, 124, 255, 0.45);
-  --shadow-fp-card: 0 16px 35px rgba(15, 23, 42, 0.6);
+  --font-display: "Inter", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --color-ink: #08080b;
+  --color-coral: #ff6363;
+  --color-coral-soft: #ff8a7a;
+  --color-fp-night: #08080b;
+  --color-fp-accent: #ff6363;
+  --shadow-fp-glow: 0 30px 90px rgba(255, 99, 99, 0.18);
+  --shadow-fp-soft: 0 12px 45px rgba(0, 0, 0, 0.55);
+  --shadow-fp-button: 0 10px 30px rgba(255, 99, 99, 0.4);
+  --shadow-fp-card: 0 16px 35px rgba(0, 0, 0, 0.6);
+
+  /* Paleta de marca: los acentos azules pasan a coral y los grises azulados a neutros. */
+  --color-sky-50: #fff1f1;
+  --color-sky-100: #ffe0de;
+  --color-sky-200: #ffc6c2;
+  --color-sky-300: #ffa299;
+  --color-sky-400: #ff7f78;
+  --color-sky-500: #ff6363;
+  --color-sky-600: #ee4444;
+  --color-sky-700: #c93030;
+  --color-sky-800: #a12a2a;
+  --color-sky-900: #7f2828;
+  --color-sky-950: #451414;
+  --color-cyan-50: #fff1f1;
+  --color-cyan-100: #ffe0de;
+  --color-cyan-200: #ffc6c2;
+  --color-cyan-300: #ffa299;
+  --color-cyan-400: #ff7f78;
+  --color-cyan-500: #ff6363;
+  --color-cyan-600: #ee4444;
+  --color-cyan-700: #c93030;
+  --color-cyan-800: #a12a2a;
+  --color-cyan-900: #7f2828;
+  --color-cyan-950: #451414;
+  --color-blue-50: #fff1f1;
+  --color-blue-100: #ffe0de;
+  --color-blue-200: #ffc6c2;
+  --color-blue-300: #ffa299;
+  --color-blue-400: #ff7f78;
+  --color-blue-500: #f05252;
+  --color-blue-600: #dc3a3a;
+  --color-blue-700: #b42828;
+  --color-blue-800: #8f2323;
+  --color-blue-900: #6e2020;
+  --color-blue-950: #3d1111;
+  --color-slate-50: #fafafa;
+  --color-slate-100: #f4f4f5;
+  --color-slate-200: #e4e4e7;
+  --color-slate-300: #d4d4d8;
+  --color-slate-400: #a1a1aa;
+  --color-slate-500: #71717a;
+  --color-slate-600: #52525b;
+  --color-slate-700: #3f3f46;
+  --color-slate-800: #232328;
+  --color-slate-900: #111115;
+  --color-slate-950: #08080b;
 }
 
 @layer base {
@@ -20,11 +71,10 @@
     margin: 0;
     min-height: 100vh;
     background:
-      radial-gradient(1200px 700px at 5% -10%, rgba(44, 88, 204, 0.4), transparent 50%),
-      radial-gradient(1000px 700px at 90% 0%, rgba(42, 99, 255, 0.16), transparent 45%),
-      #030712;
+      radial-gradient(1000px 600px at 50% -15%, rgba(255, 99, 99, 0.18), transparent 60%),
+      #08080b;
     color: #fff;
-    font-family: "Manrope", "Segoe UI", system-ui, sans-serif;
+    font-family: "Inter", "Segoe UI", system-ui, sans-serif;
   }
 
   a {
@@ -35,17 +85,17 @@
 
 @layer components {
   .fp-input {
-    @apply w-full rounded-xl border border-white/20 bg-white/5 px-4 py-3 text-white outline-none transition duration-300 focus:border-sky-300/60 focus:bg-white/10;
+    @apply w-full rounded-lg border border-white/10 bg-white/[0.04] px-4 py-3 text-white placeholder:text-zinc-500 outline-none transition duration-300 focus:border-coral/60 focus:bg-white/[0.07] focus:ring-2 focus:ring-coral/20;
   }
 
   .fp-section-title {
-    @apply text-2xl md:text-3xl font-black text-white tracking-tight mt-1 mb-4;
+    @apply text-xl md:text-2xl font-bold text-white tracking-[-0.02em] mt-1 mb-4;
   }
 
   .fp-skeleton {
     position: relative;
     overflow: hidden;
-    background: linear-gradient(120deg, rgba(30, 41, 59, 0.35), rgba(51, 65, 85, 0.45), rgba(30, 41, 59, 0.35));
+    background: linear-gradient(120deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
     background-size: 200% 100%;
     animation: fpShimmer 1.4s ease-in-out infinite;
   }
@@ -59,6 +109,32 @@
     width: 0;
     height: 0;
   }
+}
+
+@keyframes fpFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fpRise {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fpMarquee {
+  to { transform: translateX(-50%); }
+}
+
+.fp-marquee {
+  animation: fpMarquee 45s linear infinite;
+}
+
+.fp-marquee:hover {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fp-marquee { animation: none; }
 }
 
 @keyframes fpShimmer {

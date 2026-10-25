@@ -13,14 +13,7 @@ function LandingApp() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-slate-950 text-slate-100">
-      <div className="pointer-events-none fixed inset-0">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(34,211,238,0.18),_transparent_55%)]" />
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(14,116,144,0.08)_1px,transparent_1px),linear-gradient(rgba(14,116,144,0.08)_1px,transparent_1px)] bg-[size:120px_120px] opacity-40" />
-        <div className="absolute -top-32 right-[-10%] h-72 w-72 rounded-full bg-fuchsia-500/20 blur-3xl" />
-        <div className="absolute bottom-[-20%] left-[-10%] h-80 w-80 rounded-full bg-cyan-400/20 blur-3xl" />
-      </div>
-
+    <div className="relative min-h-screen overflow-x-hidden bg-ink font-display text-zinc-100 antialiased selection:bg-coral/30">
       <ManualModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
 
       <div className="relative z-10">
@@ -28,13 +21,13 @@ function LandingApp() {
         <main>
           <Hero />
           <Features />
-          <Downloads />
+          <Downloads onOpenManual={() => setIsModalOpen(true)} />
           <Pricing />
           <Testimonials />
         </main>
-        <footer className="border-t border-white/5 py-4">
-          <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">
-            <p className="text-center text-[10px] uppercase tracking-[0.2em] text-slate-500">
+        <footer className="border-t border-white/[0.06] py-6">
+          <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
+            <p className="text-center font-mono text-[10px] uppercase tracking-[0.14em] text-zinc-500">
               {FOOTER_TEXT}
             </p>
           </div>

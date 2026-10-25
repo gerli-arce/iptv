@@ -1,17 +1,17 @@
 const baseClasses =
-  "inline-flex max-w-full items-center justify-center gap-2 rounded-full px-5 py-2.5 text-center text-sm font-semibold uppercase tracking-wide transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950";
+  "inline-flex max-w-full items-center justify-center gap-2 rounded-lg text-center text-sm font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral/70 focus-visible:ring-offset-2 focus-visible:ring-offset-ink";
 
 const variants = {
   primary:
-    "bg-cyan-400 text-slate-950 shadow-[0_0_24px_rgba(34,211,238,0.45)] hover:-translate-y-0.5 hover:shadow-[0_0_35px_rgba(34,211,238,0.65)]",
+    "bg-coral text-white shadow-[0_1px_0_rgba(255,255,255,0.35)_inset,0_8px_28px_rgba(255,99,99,0.35)] hover:bg-coral-soft hover:-translate-y-0.5 hover:shadow-[0_1px_0_rgba(255,255,255,0.35)_inset,0_12px_36px_rgba(255,99,99,0.5)]",
   secondary:
-    "bg-fuchsia-500/15 text-fuchsia-200 border border-fuchsia-400/40 hover:bg-fuchsia-500/25",
+    "bg-white/[0.06] text-zinc-100 border border-white/10 shadow-[0_1px_0_rgba(255,255,255,0.06)_inset] hover:bg-white/10 hover:-translate-y-0.5",
   outline:
-    "border border-cyan-400/50 text-cyan-200 hover:bg-cyan-400/10",
+    "border border-white/15 text-zinc-200 hover:border-white/30 hover:bg-white/5",
 };
 
 const sizes = {
-  sm: "px-4 py-2 text-xs",
+  sm: "px-3.5 py-2 text-xs",
   md: "px-5 py-2.5 text-sm",
   lg: "px-6 py-3 text-base",
 };

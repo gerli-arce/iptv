@@ -1,10 +1,10 @@
 {
-  "_index-Kg3Hig6q.js": {
-    "file": "assets/index-Kg3Hig6q.js",
-    "name": "index"
+  "_x-rVpbPbgz.js": {
+    "file": "assets/x-rVpbPbgz.js",
+    "name": "x"
   },
   "resources/css/app.css": {
-    "file": "assets/app-D9xPY7fI.css",
+    "file": "assets/app-BvP3AYgM.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "name": "app",
@@ -13,27 +13,27 @@
     ]
   },
   "resources/js/landing.jsx": {
-    "file": "assets/landing-DoqDzpQz.js",
+    "file": "assets/landing-MrKd8vPQ.js",
     "name": "landing",
     "src": "resources/js/landing.jsx",
     "isEntry": true,
     "imports": [
-      "_index-Kg3Hig6q.js"
+      "_x-rVpbPbgz.js"
     ],
     "css": [
-      "assets/app-D9xPY7fI.css"
+      "assets/app-BvP3AYgM.css"
     ]
   },
   "resources/js/spa.jsx": {
-    "file": "assets/spa-CQGbEz_8.js",
+    "file": "assets/spa-CBbOiPLZ.js",
     "name": "spa",
     "src": "resources/js/spa.jsx",
     "isEntry": true,
     "imports": [
-      "_index-Kg3Hig6q.js"
+      "_x-rVpbPbgz.js"
     ],
     "css": [
-      "assets/app-D9xPY7fI.css"
+      "assets/app-BvP3AYgM.css"
     ]
   }
 }

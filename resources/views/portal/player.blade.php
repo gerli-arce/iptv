@@ -4,18 +4,34 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $title }}</title>
+    @include('partials.favicon')
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'Segoe UI', 'system-ui', 'sans-serif'] },
+                    colors: {
+                        cyan: { 100: '#ffe0de', 200: '#ffc6c2', 300: '#ffa299', 400: '#ff6363', 500: '#ff6363', 600: '#ee4444' },
+                        blue: { 500: '#f05252', 600: '#dc3a3a' },
+                        slate: { 300: '#d4d4d8', 400: '#a1a1aa', 500: '#71717a', 950: '#08080b' },
+                    },
+                },
+            },
+        };
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 </head>
-<body class="min-h-screen bg-[#050914] text-[#F4F7FB]">
+<body class="min-h-screen bg-[#08080b] font-sans text-[#F4F7FB]">
     <div class="pointer-events-none fixed inset-0 overflow-hidden">
-        <div class="absolute -left-16 top-0 h-56 w-56 rounded-full bg-cyan-500/10 blur-3xl"></div>
-        <div class="absolute right-0 top-12 h-64 w-64 rounded-full bg-blue-600/10 blur-3xl"></div>
-        <div class="absolute bottom-0 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-fuchsia-500/5 blur-3xl"></div>
+        <div class="absolute inset-x-0 top-0 h-[360px] bg-[radial-gradient(ellipse_60%_70%_at_50%_-20%,rgba(255,99,99,0.16),transparent_70%)]"></div>
     </div>
 
     <div class="relative mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-4 p-3 pb-8 md:p-5">
-        <header class="rounded-[24px] border border-white/10 bg-[#0B1220]/85 px-4 py-3 shadow-[0_18px_60px_rgba(0,0,0,0.28)] backdrop-blur-xl">
+        <header class="rounded-[24px] border border-white/10 bg-[#0d0d11]/85 px-4 py-3 shadow-[0_18px_60px_rgba(0,0,0,0.28)] backdrop-blur-xl">
             <div class="flex items-start justify-between gap-3">
                 <div class="min-w-0">
                     <a
@@ -44,7 +60,7 @@
             </div>
         </header>
 
-        <section class="rounded-[28px] border border-white/10 bg-[#09111E]/88 p-3 shadow-[0_22px_80px_rgba(0,0,0,0.34)] backdrop-blur-xl md:p-4">
+        <section class="rounded-[28px] border border-white/10 bg-[#0d0d11]/88 p-3 shadow-[0_22px_80px_rgba(0,0,0,0.34)] backdrop-blur-xl md:p-4">
             <div class="overflow-hidden rounded-[22px] border border-white/10 bg-black">
                 <div class="relative aspect-video bg-black">
                     <video id="video" controls autoplay playsinline class="h-full w-full bg-black object-contain"></video>
@@ -52,6 +68,14 @@
                         Preparando reproduccion...
                     </div>
                 </div>
+            </div>
+
+            <div id="audio-warning" class="mt-3 hidden rounded-[20px] border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">
+                <p class="font-semibold">Este video suena sin audio en el navegador</p>
+                <p class="mt-1 text-xs text-amber-100/80">
+                    La pelicula parece usar un formato de audio (como AC3, E-AC3 o DTS) que Chrome y Brave no pueden reproducir.
+                    La imagen funciona, pero el sonido solo se escucha en la app de Android, en VLC o en un navegador compatible.
+                </p>
             </div>
 
             <div class="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-[20px] border border-white/10 bg-white/[0.03] px-4 py-3">
@@ -72,7 +96,7 @@
         </section>
 
         @if(!empty($episodes) && !empty($seriesId))
-            <section class="rounded-[28px] border border-white/10 bg-[#0B1220]/82 p-4 backdrop-blur-xl md:p-5">
+            <section class="rounded-[28px] border border-white/10 bg-[#0d0d11]/82 p-4 backdrop-blur-xl md:p-5">
                 <div class="flex items-center justify-between gap-3">
                     <div>
                         <p class="text-[11px] uppercase tracking-[0.18em] text-slate-500">Lista de episodios</p>
@@ -87,7 +111,7 @@
                     @foreach($episodes as $ep)
                         <a
                             href="{{ route('portal.play.series', ['seriesId' => $seriesId, 'episodeId' => $ep['id']]) }}"
-                            class="rounded-2xl border px-4 py-3 transition {{ (int)$currentEpisodeId === (int)$ep['id'] ? 'border-cyan-300/40 bg-cyan-400/12 text-white shadow-[0_0_25px_rgba(34,211,238,0.12)]' : 'border-white/10 bg-white/[0.03] text-slate-300 hover:border-white/20 hover:text-white' }}"
+                            class="rounded-2xl border px-4 py-3 transition {{ (int)$currentEpisodeId === (int)$ep['id'] ? 'border-cyan-300/40 bg-cyan-400/12 text-white shadow-[0_0_25px_rgba(255,99,99,0.14)]' : 'border-white/10 bg-white/[0.03] text-slate-300 hover:border-white/20 hover:text-white' }}"
                         >
                             <div class="flex items-start justify-between gap-3">
                                 <div class="min-w-0">
@@ -195,7 +219,21 @@
         video.addEventListener('playing', () => {
             setStatus('Reproduciendo', 'emerald');
             hideOverlay();
+            scheduleAudioCheck();
         });
+
+        // Si el video avanza pero el navegador no decodifica nada de audio, avisamos en pantalla.
+        let audioCheckTimer = null;
+        function scheduleAudioCheck() {
+            clearTimeout(audioCheckTimer);
+            audioCheckTimer = setTimeout(() => {
+                const warning = document.getElementById('audio-warning');
+                if (!warning || video.paused || video.muted || video.volume === 0 || video.currentTime < 2) return;
+                const noAudio = (typeof video.webkitAudioDecodedByteCount === 'number' && video.webkitAudioDecodedByteCount === 0)
+                    || video.mozHasAudio === false;
+                warning.classList.toggle('hidden', !noAudio);
+            }, 4000);
+        }
 
         video.addEventListener('waiting', () => {
             setStatus('Cargando...', 'amber');

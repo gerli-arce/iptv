@@ -14,22 +14,22 @@ const ManualModal = ({ isOpen, onClose }) => {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         onClick={onClose}
-                        className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm"
+                        className="absolute inset-0 bg-black/80 backdrop-blur-sm"
                     />
                     <motion.div
                         initial={{ opacity: 0, scale: 0.95, y: 20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                        className="relative flex h-full max-h-[85vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-slate-900 shadow-2xl"
+                        className="relative flex h-full max-h-[85vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0d0d11] shadow-2xl"
                     >
                         {/* Header */}
-                        <div className="flex items-center justify-between border-b border-white/10 bg-slate-900/50 px-6 py-4 backdrop-blur-md">
+                        <div className="flex items-center justify-between border-b border-white/10 bg-[#0d0d11]/50 px-6 py-4 backdrop-blur-md">
                             <div className="flex items-center gap-3">
-                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-cyan-400/10 text-cyan-300">
+                                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-coral/10 text-coral-soft">
                                     <BookOpen className="h-5 w-5" />
                                 </div>
                                 <div>
-                                    <h2 className="font-display text-lg font-semibold uppercase tracking-wider text-white">
+                                    <h2 className="text-lg font-semibold tracking-tight text-white">
                                         Manual de Usuario
                                     </h2>
                                     <p className="text-xs text-slate-400">Guía completa de instalación y uso</p>
@@ -95,7 +95,7 @@ const ManualModal = ({ isOpen, onClose }) => {
                                             <Section title="Para Celular Android" icon={Smartphone}>
                                                 <ol className="ml-4 list-decimal space-y-2 text-slate-300">
                                                     <li>Descarga el archivo APK desde el botón "Descargar para Celular".</li>
-                                                    <li>Ve a <span className="text-cyan-300">Configuración {'>'} Seguridad</span> y permite la instalación de fuentes desconocidas.</li>
+                                                    <li>Ve a <span className="text-coral-soft">Configuración {'>'} Seguridad</span> y permite la instalación de fuentes desconocidas.</li>
                                                     <li>Abre el archivo descargado e instálalo.</li>
                                                     <li>Abre la aplicación FASTNET TV.</li>
                                                 </ol>
@@ -163,10 +163,10 @@ const ManualModal = ({ isOpen, onClose }) => {
                                                 Aprende a instalar y configurar FASTNET TV paso a paso.
                                             </p>
 
-                                            <div className="rounded-xl border border-cyan-400/20 bg-cyan-400/5 p-6">
+                                            <div className="rounded-xl border border-coral/20 bg-coral/5 p-6">
                                                 <div className="flex items-start gap-4">
-                                                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-cyan-400/10">
-                                                        <Download className="h-6 w-6 text-cyan-300" />
+                                                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-coral/10">
+                                                        <Download className="h-6 w-6 text-coral-soft" />
                                                     </div>
                                                     <div className="flex-1">
                                                         <h4 className="mb-2 font-semibold text-white">Manual en PDF</h4>
@@ -176,7 +176,7 @@ const ManualModal = ({ isOpen, onClose }) => {
                                                         <a
                                                             href="/manual%20IPTV.pdf"
                                                             download
-                                                            className="inline-flex items-center gap-2 rounded-lg bg-cyan-400/20 px-4 py-2 text-sm font-medium text-cyan-200 transition hover:bg-cyan-400/30"
+                                                            className="inline-flex items-center gap-2 rounded-lg bg-coral/20 px-4 py-2 text-sm font-medium text-coral-soft transition hover:bg-coral/30"
                                                         >
                                                             <Download className="h-4 w-4" />
                                                             Descargar Manual PDF
@@ -201,7 +201,7 @@ const TabButton = ({ active, onClick, icon: Icon, label }) => (
     <button
         onClick={onClick}
         className={`flex w-full items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-all ${active
-            ? "bg-cyan-400/10 text-cyan-300 shadow-[inset_3px_0_0_0_#22d3ee]"
+            ? "bg-coral/10 text-coral-soft shadow-[inset_3px_0_0_0_#ff6363]"
             : "text-slate-400 hover:bg-white/5 hover:text-slate-200"
             }`}
     >
@@ -213,7 +213,7 @@ const TabButton = ({ active, onClick, icon: Icon, label }) => (
 const TabButtonMobile = ({ active, onClick, label }) => (
     <button
         onClick={onClick}
-        className={`whitespace-nowrap rounded-full px-4 py-1.5 text-xs font-medium transition-all ${active ? "bg-cyan-400 text-slate-900" : "bg-white/5 text-slate-400"
+        className={`whitespace-nowrap rounded-full px-4 py-1.5 text-xs font-medium transition-all ${active ? "bg-coral text-white" : "bg-white/5 text-slate-400"
             }`}
     >
         {label}
@@ -223,7 +223,7 @@ const TabButtonMobile = ({ active, onClick, label }) => (
 const Section = ({ title, icon: Icon, children }) => (
     <div className="rounded-xl border border-white/5 bg-white/5 p-6">
         <h3 className="mb-4 flex items-center gap-2 text-lg font-medium text-white">
-            <Icon className="h-5 w-5 text-cyan-400" />
+            <Icon className="h-5 w-5 text-coral" />
             {title}
         </h3>
         {children}

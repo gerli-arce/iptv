@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Política de Privacidad de Fastnet Player para TV">
     <title>Política de Privacidad TV | Fastnet Player</title>
+    @include('partials.favicon')
     <style>
         html {
             background: #030712;

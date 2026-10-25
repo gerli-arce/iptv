@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Services\MovieCompatService;
 use App\Services\TmdbService;
 use App\Services\XtreamService;
 use Illuminate\Http\JsonResponse;
@@ -17,7 +18,8 @@ class PortalController extends Controller
 {
     public function __construct(
         private readonly XtreamService $xtreamService,
-        private readonly TmdbService $tmdbService
+        private readonly TmdbService $tmdbService,
+        private readonly MovieCompatService $movieCompat
     )
     {
     }
@@ -287,6 +289,9 @@ class PortalController extends Controller
                 ];
             }
         }
+
+        // Oculta los episodios que el navegador no reproduce bien (audio AC3/DTS, etc.).
+        $flatEpisodes = $this->movieCompat->playableEpisodes($flatEpisodes);
 
         usort($flatEpisodes, function ($a, $b) {
             $sa = (int) preg_replace('/\D+/', '', (string) $a['season']);
@@ -565,8 +570,10 @@ class PortalController extends Controller
         $items = $this->xtreamService->getVodStreams($serverUrl, $username, $password);
         $categories = $this->xtreamService->getVodCategories($serverUrl, $username, $password);
         return response()->json([
-            'items' => $items,
+            'items' => $this->movieCompat->annotate($items),
             'categories' => $categories,
+            // Peliculas que un navegador no reproduce bien (audio AC3/DTS, etc.). Los clientes con VLC pueden ignorarlas.
+            'unplayable_ids' => array_map('intval', array_keys($this->movieCompat->unplayable())),
         ]);
     }
 
@@ -579,8 +586,10 @@ class PortalController extends Controller
         $items = $this->xtreamService->getSeries($serverUrl, $username, $password);
         $categories = $this->xtreamService->getSeriesCategories($serverUrl, $username, $password);
         return response()->json([
-            'items' => $items,
+            'items' => $this->movieCompat->annotateSeries($items),
             'categories' => $categories,
+            // Series que un navegador no reproduce bien (todos sus episodios sin audio compatible).
+            'unplayable_ids' => array_map('intval', array_keys($this->movieCompat->unplayableSeries())),
         ]);
     }
 

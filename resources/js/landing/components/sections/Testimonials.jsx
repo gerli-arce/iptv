@@ -1,53 +1,58 @@
-import { motion } from "framer-motion";
-import { MessageSquare } from "lucide-react";
+import { useEffect, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { Quote } from "lucide-react";
 import { TESTIMONIALS } from "../../data/constants";
 
-const fadeInUp = {
-  hidden: { opacity: 0, y: 24 },
-  show: { opacity: 1, y: 0 },
-};
-
 const Testimonials = () => {
-  return (
-    <section id="testimonials" className="scroll-mt-24 py-16">
-      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">
-        <motion.div
-          variants={fadeInUp}
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: true, amount: 0.3 }}
-          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          className="space-y-4"
-        >
-          <h2 className="font-display text-3xl uppercase tracking-[0.2em] text-white sm:text-4xl">
-            {TESTIMONIALS.title}
-          </h2>
-        </motion.div>
+  const [active, setActive] = useState(0);
+  const total = TESTIMONIALS.items.length;
 
-        <div className="mt-10 grid gap-6 md:grid-cols-3">
-          {TESTIMONIALS.items.map((testimonial, index) => (
-            <motion.div
-              key={testimonial.name}
-              variants={fadeInUp}
-              initial="hidden"
-              whileInView="show"
-              viewport={{ once: true, amount: 0.2 }}
-              transition={{
-                duration: 0.6,
-                ease: [0.22, 1, 0.36, 1],
-                delay: index * 0.08,
-              }}
-              whileHover={{ y: -6 }}
-              className="flex h-full flex-col justify-between rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur"
+  useEffect(() => {
+    const id = setInterval(() => setActive((i) => (i + 1) % total), 7000);
+    return () => clearInterval(id);
+  }, [active, total]);
+
+  const current = TESTIMONIALS.items[active];
+
+  return (
+    <section id="testimonials" className="scroll-mt-0 border-t-8 border-[#17171c] py-20 sm:py-28">
+      <div className="mx-auto w-full max-w-3xl px-4 text-center sm:px-6">
+        <p className="font-mono text-xs uppercase tracking-[0.18em] text-coral">
+          {TESTIMONIALS.title}
+        </p>
+
+        <div className="relative mt-8 min-h-[250px] sm:min-h-[220px]">
+          <AnimatePresence mode="wait">
+            <motion.figure
+              key={active}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -16 }}
+              transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+              className="space-y-6"
             >
-              <MessageSquare className="h-6 w-6 text-fuchsia-300" />
-              <p className="mt-4 text-sm text-slate-200">
-                {testimonial.quote}
-              </p>
-              <p className="mt-6 text-xs uppercase tracking-[0.3em] text-cyan-200">
-                {testimonial.name}
-              </p>
-            </motion.div>
+              <Quote className="mx-auto h-8 w-8 text-coral" />
+              <blockquote className="text-2xl font-semibold leading-snug tracking-tight text-white sm:text-3xl">
+                {current.quote}
+              </blockquote>
+              <figcaption className="text-sm font-medium text-zinc-400">
+                {current.name}
+              </figcaption>
+            </motion.figure>
+          </AnimatePresence>
+        </div>
+
+        <div className="mt-6 flex items-center justify-center gap-2">
+          {TESTIMONIALS.items.map((item, i) => (
+            <button
+              key={item.name}
+              type="button"
+              onClick={() => setActive(i)}
+              aria-label={`Testimonio de ${item.name}`}
+              className={`h-1.5 rounded-full transition-all ${
+                i === active ? "w-8 bg-coral" : "w-3 bg-white/20 hover:bg-white/40"
+              }`}
+            />
           ))}
         </div>
       </div>

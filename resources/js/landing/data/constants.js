@@ -5,6 +5,7 @@ export const BRAND = {
 
 export const NAV_LINKS = [
   { label: "Caracteristicas", href: "#features" },
+  { label: "Descargas", href: "#downloads" },
   { label: "Planes", href: "#pricing" },
   { label: "Testimonios", href: "#testimonials" },
 ];
@@ -29,6 +30,34 @@ export const STATS = [
   { value: "10+", label: "Peliculas nuevas" },
   { value: "20+", label: "Series completas" },
   { value: "24/7", label: "Soporte humano" },
+];
+
+// Imagenes opcionales: copia tus archivos en public/landing/ y escribe aqui el
+// nombre, por ejemplo image("hero.jpg"). Con null se muestra un fondo abstracto.
+const image = (file) => (file ? `/landing/${file}` : null);
+
+export const SHOWCASE = {
+  hero: image(null),
+  tv: image("tv2.png"),
+  phone: image("phone.jpg"),
+};
+
+export const PLAY_STORE_URL =
+  "https://play.google.com/store/apps/details?id=com.fastnet.player&hl=es_PE";
+
+export const STEPS = [
+  {
+    title: "Descarga la app",
+    description: "Instalala desde Play Store o descarga el APK para tu celular o Android TV. Es gratis.",
+  },
+  {
+    title: "Ingresa con tu usuario",
+    description: "Usa el usuario y contraseña que te da nuestro soporte.",
+  },
+  {
+    title: "Disfruta sin limites",
+    description: "La lista de canales se carga sola y empiezas a ver al instante.",
+  },
 ];
 
 export const FEATURES = {
