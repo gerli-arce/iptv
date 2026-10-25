@@ -2,8 +2,11 @@
 
 use App\Http\Controllers\Web\PortalController;
 use App\Http\Controllers\Web\ImageProxyController;
+use App\Http\Controllers\Web\SeoController;
 use Illuminate\Support\Facades\Route;
 
+Route::get('/robots.txt', [SeoController::class, 'robots'])->name('seo.robots');
+Route::get('/sitemap.xml', [SeoController::class, 'sitemap'])->name('seo.sitemap');
 Route::view('/privacy-policy', 'privacy-policy')->name('privacy-policy');
 Route::view('/tv-privacy-policy', 'tv-privacy-policy')->name('tv-privacy-policy');
 Route::view('/data-deletion', 'data-deletion')->name('data-deletion');

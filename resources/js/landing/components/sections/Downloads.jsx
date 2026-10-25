@@ -30,7 +30,7 @@ const Downloads = ({ onOpenManual }) => {
                     transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
                     className="order-2 lg:order-1"
                 >
-                    <PhoneFrame src={SHOWCASE.phone} />
+                    <PhoneFrame src={SHOWCASE.phone} alt="App Fastnet Player en el celular: TV por internet, películas y series" />
                 </motion.div>
 
                 <motion.div
@@ -46,10 +46,10 @@ const Downloads = ({ onOpenManual }) => {
                             Descarga gratuita
                         </p>
                         <h2 className="text-3xl font-bold tracking-[-0.03em] text-white sm:text-5xl">
-                            Descarga Nuestras Apps
+                            Descarga la app de IPTV Fastnet Player
                         </h2>
                         <p className="text-base leading-relaxed text-zinc-400 sm:text-lg">
-                            Instala FASTNET TV en todos tus dispositivos y disfruta donde quieras, cuando quieras. Descarga gratuita y configuración automática.
+                            Instala Fastnet Player, tu IPTV en Perú, en todos tus dispositivos y disfruta donde quieras, cuando quieras. Descarga gratuita y configuración automática.
                         </p>
                     </div>
 

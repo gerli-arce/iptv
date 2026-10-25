@@ -6,6 +6,7 @@
     <meta name="description" content="Eliminación de datos de Fastnet Player">
     <title>Eliminación de datos | Fastnet Player</title>
     @include('partials.favicon')
+    @include('partials.seo-page', ['path' => '/data-deletion'])
     <style>
         html {
             background: #030712;

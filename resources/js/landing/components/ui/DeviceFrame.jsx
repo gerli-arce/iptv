@@ -1,9 +1,9 @@
 import { Play } from "lucide-react";
 
-const Screen = ({ src, children }) => (
+const Screen = ({ src, alt = "", children }) => (
   <>
     {src ? (
-      <img src={src} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
+      <img src={src} alt={alt} loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
     ) : (
       <div className="absolute inset-0 bg-[#0b0b10] bg-[radial-gradient(ellipse_80%_70%_at_30%_20%,rgba(255,99,99,0.55),transparent_60%),radial-gradient(ellipse_70%_60%_at_80%_90%,rgba(120,70,255,0.4),transparent_60%)]" />
     )}
@@ -11,12 +11,12 @@ const Screen = ({ src, children }) => (
   </>
 );
 
-export const TvFrame = ({ src }) => (
+export const TvFrame = ({ src, alt = "" }) => (
   <div className="relative mx-auto w-full max-w-xl">
     <div className="pointer-events-none absolute -inset-8 rounded-full bg-coral/15 blur-3xl" />
     <div className="relative rounded-2xl border border-white/15 bg-[#050507] p-2 shadow-[0_40px_100px_rgba(0,0,0,0.7)] sm:p-2.5">
       <div className="relative aspect-video overflow-hidden rounded-lg">
-        <Screen src={src}>
+        <Screen src={src} alt={alt}>
           {!src && (
             <>
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
@@ -37,12 +37,12 @@ export const TvFrame = ({ src }) => (
   </div>
 );
 
-export const PhoneFrame = ({ src }) => (
+export const PhoneFrame = ({ src, alt = "" }) => (
   <div className="relative mx-auto w-52 sm:w-60">
     <div className="pointer-events-none absolute -inset-10 rounded-full bg-coral/15 blur-3xl" />
     <div className="relative rounded-[2rem] border border-white/15 bg-[#050507] p-2 shadow-[0_40px_100px_rgba(0,0,0,0.7)]">
       <div className="relative aspect-[9/19] overflow-hidden rounded-[1.5rem]">
-        <Screen src={src}>
+        <Screen src={src} alt={alt}>
           {!src && (
             <img
               src="/logo-fastnet-player.png"

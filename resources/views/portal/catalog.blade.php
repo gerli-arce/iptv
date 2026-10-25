@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $title }} - FastnetPlayer</title>
     @include('partials.favicon')
+    @include('partials.noindex')
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-[#030712] text-white">

@@ -55,6 +55,11 @@ return [
     'url' => env('APP_URL', 'http://localhost'),
 
     /*
+    | URL publica del sitio para SEO (canonical, sitemap, Open Graph). Cambiala con SITE_URL si cambia el dominio.
+    */
+    'site_url' => env('SITE_URL', 'https://fastv.fastnetperu.com.pe'),
+
+    /*
     |--------------------------------------------------------------------------
     | Runtime Home API URL
     |--------------------------------------------------------------------------

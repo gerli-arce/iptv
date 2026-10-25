@@ -1,6 +1,8 @@
+import seo from "../../../data/landing-seo.json";
+
 export const BRAND = {
-  name: "FASTNET TV",
-  tagline: "Experiencia IPTV premium",
+  name: "Fastnet Player",
+  tagline: "IPTV · TV por internet",
 };
 
 export const NAV_LINKS = [
@@ -8,15 +10,18 @@ export const NAV_LINKS = [
   { label: "Descargas", href: "#downloads" },
   { label: "Planes", href: "#pricing" },
   { label: "Testimonios", href: "#testimonials" },
+  { label: "Preguntas", href: "#faq" },
 ];
 
 export const HERO = {
-  kicker: "IPTV Premium",
-  title: "Entretenimiento sin limites",
+  kicker: "IPTV Premium · TV por internet",
+  title: "Fastnet Player",
+  // La segunda linea del titular se escribe y se borra sola; estas frases rotan en bucle.
+  rotatingWords: ["IPTV en Perú", "TV por internet", "canales en vivo", "cine y series", "en tu Smart TV", "en 4K"],
   subtitle:
-    "Canales en vivo, peliculas recien estrenadas, series completas y contenido internacional en una sola plataforma.",
+    "IPTV en Perú: televisión por internet con más de 150 canales en HD, estrenos de cine y series completas en una sola plataforma. Disfrútalo en tu celular, tablet, Smart TV o Android TV.",
   description:
-    "Streaming estable, calidad 4K y acceso inmediato desde celular, tablet o Smart TV.",
+    "Catálogo actualizado cada semana y soporte humano 24/7.",
   primaryCta: "Ver planes",
   secondaryCta: "Explorar demo",
   highlightTitle: "Streaming de nueva generacion",
@@ -61,7 +66,7 @@ export const STEPS = [
 ];
 
 export const FEATURES = {
-  title: "Por que elegir FASTNET TV",
+  title: "¿Por qué elegir Fastnet Player?",
   subtitle:
     "Una experiencia IPTV solida con el equilibrio perfecto entre calidad, catalogo y soporte.",
   items: [
@@ -111,7 +116,7 @@ export const PRICING = {
   plans: [
     {
       name: "Basico",
-      price: "10",
+      price: seo.plans[0].price,
       currency: "S/",
       period: "mes",
       description: "Ideal para empezar con contenido completo en HD.",
@@ -128,7 +133,7 @@ export const PRICING = {
     },
     {
       name: "Premium",
-      price: "15",
+      price: seo.plans[1].price,
       currency: "S/",
       period: "mes",
       description: "La experiencia total con 4K y estrenos al instante.",
@@ -168,5 +173,18 @@ export const TESTIMONIALS = {
   ],
 };
 
+export const ABOUT = seo.about;
+
+export const FAQ = {
+  title: "Preguntas frecuentes sobre IPTV y Fastnet Player",
+  items: seo.faq,
+};
+
 export const FOOTER_TEXT =
-  "(c) 2026 FASTNET TV. Todos los derechos reservados. | Servicio IPTV Premium con peliculas y series";
+  "© 2026 Fastnet Player (FASTNET TV). Todos los derechos reservados. IPTV en Perú: televisión por internet con canales en vivo, películas y series.";
+
+export const FOOTER_LINKS = [
+  { label: "Política de privacidad", href: "/privacy-policy" },
+  { label: "Privacidad TV", href: "/tv-privacy-policy" },
+  { label: "Eliminación de datos", href: "/data-deletion" },
+];

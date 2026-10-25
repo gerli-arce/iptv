@@ -6,6 +6,7 @@
     <meta name="description" content="Política de Privacidad de Fastnet Player">
     <title>Política de Privacidad | Fastnet Player</title>
     @include('partials.favicon')
+    @include('partials.seo-page', ['path' => '/privacy-policy'])
     <style>
         html {
             background: #030712;

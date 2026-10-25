@@ -17,9 +17,9 @@ const Testimonials = () => {
   return (
     <section id="testimonials" className="scroll-mt-0 border-t-8 border-[#17171c] py-20 sm:py-28">
       <div className="mx-auto w-full max-w-3xl px-4 text-center sm:px-6">
-        <p className="font-mono text-xs uppercase tracking-[0.18em] text-coral">
+        <h2 className="font-mono text-xs font-normal uppercase tracking-[0.18em] text-coral">
           {TESTIMONIALS.title}
-        </p>
+        </h2>
 
         <div className="relative mt-8 min-h-[250px] sm:min-h-[220px]">
           <AnimatePresence mode="wait">

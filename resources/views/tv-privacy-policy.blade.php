@@ -6,6 +6,7 @@
     <meta name="description" content="Política de Privacidad de Fastnet Player para TV">
     <title>Política de Privacidad TV | Fastnet Player</title>
     @include('partials.favicon')
+    @include('partials.seo-page', ['path' => '/tv-privacy-policy'])
     <style>
         html {
             background: #030712;
