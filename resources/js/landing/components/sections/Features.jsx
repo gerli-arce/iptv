@@ -68,7 +68,7 @@ const Features = () => {
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
         >
-          <TvFrame src={SHOWCASE.tv} alt="Fastnet Player en Smart TV: canales en vivo de IPTV en HD y 4K" />
+          <TvFrame src={SHOWCASE.tv} alt="Fastnet Player en Smart TV: canales en vivo en HD y 4K" />
         </motion.div>
       </div>
     </section>

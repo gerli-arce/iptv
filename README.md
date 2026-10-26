@@ -1,10 +1,10 @@
 # Fastplayer Platform
 
-Proyecto Laravel del reproductor IPTV para FASTNET:
+Proyecto Laravel del reproductor Fastnet Player:
 
-- `/` muestra la landing IPTV de ventas
+- `/` muestra la landing de ventas
 - `/login` muestra el acceso al reproductor
-- `/app` carga el reproductor IPTV
+- `/app` carga el reproductor
 - `/api/player` expone la API web del reproductor con sesion
 - `APP_TARGET=player` activa solo la parte del reproductor
 
@@ -118,7 +118,7 @@ powershell -ExecutionPolicy Bypass -File desktop-vlc/build.ps1
 
 ## Estructura relevante
 
-- `resources/js/landing/`: landing IPTV integrada
+- `resources/js/landing/`: landing integrada
 - `resources/js/spa.jsx`: reproductor/login React
 - `resources/views/landing.blade.php`: entrada Blade de la landing
 - `resources/views/spa.blade.php`: entrada Blade del reproductor
@@ -128,6 +128,6 @@ powershell -ExecutionPolicy Bypass -File desktop-vlc/build.ps1
 ## Notas
 
 - Solo existe un `package.json` activo
-- La landing de IPTV se integra dentro del mismo frontend Laravel/Vite
+- La landing se integra dentro del mismo frontend Laravel/Vite
 - El panel admin vive en `../iptv-admin`
 - Se conserva un alias legacy en `/portal-api` para no romper integraciones internas durante la transicion

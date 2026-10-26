@@ -226,7 +226,7 @@ class LoginFrame(ttk.Frame):
 
         fields = [
             ("Backend URL", self.backend_url),
-            ("Servidor IPTV", self.server_url),
+            ("Servidor", self.server_url),
             ("Usuario", self.username),
             ("Contraseña", self.password),
         ]
@@ -239,7 +239,7 @@ class LoginFrame(ttk.Frame):
         self.login_button = ttk.Button(self, text="Conectar", command=self._submit)
         self.login_button.grid(row=len(fields) + 1, column=0, columnspan=2, sticky="ew", pady=(14, 0))
 
-        self.status = tk.StringVar(value="Ingresa tus datos IPTV para comenzar.")
+        self.status = tk.StringVar(value="Ingresa tus datos para comenzar.")
         ttk.Label(self, textvariable=self.status, foreground="#5b6475", wraplength=520).grid(row=len(fields) + 2, column=0, columnspan=2, sticky="w", pady=(12, 0))
 
     def set_busy(self, busy: bool):

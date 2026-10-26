@@ -12,7 +12,7 @@
     <form method="POST" action="{{ route('portal.login.submit') }}" class="w-full max-w-md bg-[#0E1420] border border-white/10 rounded-2xl p-6 space-y-4">
         @csrf
         <h1 class="text-2xl font-bold">Ingresar a Fastnet</h1>
-        <p class="text-sm text-[#8A93A3]">Conecta con tu servidor IPTV para ver canales, peliculas y series.</p>
+        <p class="text-sm text-[#8A93A3]">Conecta con tu servidor para ver canales, peliculas y series.</p>
 
         @if ($errors->has('credentials'))
             <div class="text-sm text-red-400">{{ $errors->first('credentials') }}</div>

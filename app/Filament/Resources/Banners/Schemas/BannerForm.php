@@ -55,7 +55,7 @@ class BannerForm
                     ->visible(fn (Get $get): bool => $get('content_type') !== 'url')
                     ->searchable()
                     ->placeholder('Busca y selecciona contenido del servidor')
-                    ->helperText('Selecciona el tipo y busca el contenido remoto que quieres recomendar. Usa la sesion IPTV actual o configura catalog_server_url, catalog_username y catalog_password.')
+                    ->helperText('Selecciona el tipo y busca el contenido remoto que quieres recomendar. Usa la sesion actual o configura catalog_server_url, catalog_username y catalog_password.')
                     ->getSearchResultsUsing(function (string $search, Get $get): array {
                         $contentType = (string) $get('content_type');
 

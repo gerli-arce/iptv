@@ -174,7 +174,7 @@ const ManualModal = ({ isOpen, onClose }) => {
                                                             Descarga el manual completo en formato PDF para consultarlo sin conexión.
                                                         </p>
                                                         <a
-                                                            href="/manual%20IPTV.pdf"
+                                                            href="/manual-fastnet-player.pdf"
                                                             download
                                                             className="inline-flex items-center gap-2 rounded-lg bg-coral/20 px-4 py-2 text-sm font-medium text-coral-soft transition hover:bg-coral/30"
                                                         >

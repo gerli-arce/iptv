@@ -16,7 +16,7 @@ const FloatingActions = ({ onOpenManual }) => {
             </motion.button>
 
             <motion.a
-                href="https://wa.me/51942059874?text=Hola%2C%20estoy%20interesado%20en%20el%20servicio%20IPTV%20de%20FASTNET%20TV.%20%C2%BFPodr%C3%ADan%20brindarme%20m%C3%A1s%20informaci%C3%B3n%3F"
+                href="https://wa.me/51942059874?text=Hola%2C%20estoy%20interesado%20en%20el%20servicio%20de%20Fastnet%20Player.%20%C2%BFPodr%C3%ADan%20brindarme%20m%C3%A1s%20informaci%C3%B3n%3F"
                 target="_blank"
                 rel="noopener noreferrer"
                 whileHover={{ scale: 1.05, y: -2 }}

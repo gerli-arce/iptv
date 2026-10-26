@@ -2,12 +2,11 @@
   "brand": "Fastnet Player",
   "alternate_names": [
     "FASTNET TV",
-    "FastnetPlayer",
-    "Fastnet IPTV"
+    "FastnetPlayer"
   ],
-  "title": "Fastnet Player – IPTV Perú | TV por Internet en HD y 4K",
-  "description": "Fastnet Player: IPTV en Perú. Televisión por internet con +150 canales HD, estrenos de cine y series. Para celular, Smart TV y Android TV. Desde S/ 10 al mes.",
-  "keywords": "IPTV Perú, Fastnet Player, FASTNET TV, televisión por internet, TV por internet, IPTV Smart TV, IPTV Android TV, canales en vivo, películas y series online, TV en vivo online, IPTV 4K, IPTV HD, app IPTV Android, IPTV premium",
+  "title": "Fastnet Player – TV por Internet en Perú | Canales y Cine",
+  "description": "Fastnet Player: televisión por internet en Perú. +150 canales HD, estrenos de cine y series. Para celular, Smart TV y Android TV. Desde S/ 10 al mes.",
+  "keywords": "Fastnet Player, FASTNET TV, televisión por internet, TV por internet Perú, TV en vivo online, canales en vivo, películas y series online, streaming de TV, app de TV para Android, TV para Smart TV, TV para Android TV, TV en 4K, TV en HD",
   "phone": "+51942059874",
   "play_store_url": "https://play.google.com/store/apps/details?id=com.fastnet.player&hl=es_PE",
   "plans": [
@@ -25,9 +24,9 @@
     }
   ],
   "about": {
-    "title": "¿Qué es IPTV? Televisión por internet con Fastnet Player",
+    "title": "¿Qué es la televisión por internet? Conoce Fastnet Player",
     "paragraphs": [
-      "IPTV (Internet Protocol Television) es la televisión por internet: en lugar de antena o cable, los canales y el catálogo de películas y series llegan por tu conexión a internet. Fastnet Player reúne todo en una sola app para que veas TV en vivo, estrenos de cine y series completas cuando quieras.",
+      "La televisión por internet llega por tu conexión a internet en lugar de antena o cable: canales en vivo, películas y series cuando quieras. Fastnet Player reúne todo en una sola app para que veas TV en vivo, estrenos de cine y series completas.",
       "Disfruta más de 150 canales en HD, calidad 4K Ultra HD y un catálogo que se actualiza cada semana, en tu celular, tablet, Smart TV o Android TV, con soporte humano 24/7."
     ],
     "points": [
@@ -41,11 +40,11 @@
   "faq": [
     {
       "q": "¿Qué es Fastnet Player?",
-      "a": "Fastnet Player es una plataforma de IPTV en Perú: ves televisión por internet con más de 150 canales en HD, estrenos de cine y series completas en una sola app."
+      "a": "Fastnet Player es una plataforma de televisión por internet en Perú: ves más de 150 canales en HD, estrenos de cine y series completas en una sola app."
     },
     {
-      "q": "¿Qué es IPTV y cómo funciona?",
-      "a": "IPTV es la televisión por internet (Internet Protocol Television). En lugar de antena o cable, los canales, películas y series llegan por tu conexión a internet. Instalas la app, ingresas con tu usuario y contraseña, y empiezas a ver."
+      "q": "¿Cómo funciona la televisión por internet?",
+      "a": "La televisión por internet llega por tu conexión a internet, en lugar de antena o cable. Instalas la app, ingresas con tu usuario y contraseña, y empiezas a ver canales, películas y series."
     },
     {
       "q": "¿En qué dispositivos puedo ver Fastnet Player?",
@@ -56,7 +55,7 @@
       "a": "Descarga la aplicación oficial desde Play Store, o instala el APK para celular o Android TV. Luego ingresa con el usuario y la contraseña que te da nuestro soporte: la lista de canales se carga sola y empiezas a ver al instante."
     },
     {
-      "q": "¿Cuánto cuesta el servicio de IPTV?",
+      "q": "¿Cuánto cuesta el servicio de Fastnet Player?",
       "a": "El plan Básico cuesta S/ 10 al mes (150+ canales HD, películas recientes y series completas) y el plan Premium S/ 15 al mes (todo lo del Básico más estrenos de cine, calidad 4K Ultra HD, múltiples dispositivos y sin publicidad)."
     },
     {

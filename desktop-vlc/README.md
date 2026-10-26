@@ -39,7 +39,7 @@ El ejecutable queda en:
 1. Abre la app.
 2. Ingresa:
    - Backend URL
-   - Servidor IPTV
+   - Servidor
    - Usuario
    - Contraseña
 3. Pulsa `Conectar`.

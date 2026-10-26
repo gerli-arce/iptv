@@ -40,7 +40,7 @@ class HomeSectionItemForm
                     ->label('Contenido del servidor')
                     ->searchable()
                     ->placeholder('Busca y selecciona contenido del servidor')
-                    ->helperText('Primero elige el tipo y luego busca el contenido remoto. Usa la sesion IPTV actual o configura catalog_server_url, catalog_username y catalog_password.')
+                    ->helperText('Primero elige el tipo y luego busca el contenido remoto. Usa la sesion actual o configura catalog_server_url, catalog_username y catalog_password.')
                     ->getSearchResultsUsing(function (string $search, Get $get): array {
                         $contentType = (string) $get('content_type');
 

@@ -48,7 +48,7 @@
                 '@id' => $url . '#app',
                 'name' => $seo['brand'],
                 'alternateName' => 'FASTNET TV',
-                'description' => 'App de IPTV en Perú: televisión por internet con canales en vivo, películas y series en HD y 4K.',
+                'description' => 'App de televisión por internet en Perú: canales en vivo, películas y series en HD y 4K.',
                 'operatingSystem' => 'Android',
                 'applicationCategory' => 'MultimediaApplication',
                 'image' => $image,
@@ -97,7 +97,7 @@
     <meta property="og:image" content="{{ $image }}">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
-    <meta property="og:image:alt" content="Fastnet Player: IPTV en Perú, televisión por internet con canales HD, películas y series">
+    <meta property="og:image:alt" content="Fastnet Player: televisión por internet en Perú con canales HD, películas y series">
 
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="{{ $seo['title'] }}">
@@ -136,11 +136,11 @@
         </div>
         <div id="seo-fallback" class="mx-auto max-w-3xl px-4 py-16 text-zinc-200">
             <a href="{{ $url }}" class="flex items-center gap-3">
-                <img src="/logo-fastnet-player.png" alt="Fastnet Player, IPTV en Perú" width="48" height="48" class="rounded-xl">
+                <img src="/logo-fastnet-player.png" alt="Fastnet Player, televisión por internet en Perú" width="48" height="48" class="rounded-xl">
                 <strong class="text-lg text-white">{{ $seo['brand'] }}</strong>
             </a>
 
-            <h1 class="mt-8 text-4xl font-extrabold text-white">Fastnet Player: IPTV en Perú, televisión por internet con canales, cine y series</h1>
+            <h1 class="mt-8 text-4xl font-extrabold text-white">Fastnet Player: televisión por internet en Perú con canales, cine y series</h1>
             <p class="mt-4 text-lg">{{ $seo['description'] }}</p>
 
             <h2 class="mt-10 text-2xl font-bold text-white">{{ $seo['about']['title'] }}</h2>
@@ -153,7 +153,7 @@
                 @endforeach
             </ul>
 
-            <h2 class="mt-10 text-2xl font-bold text-white">Planes de IPTV</h2>
+            <h2 class="mt-10 text-2xl font-bold text-white">Planes de Fastnet Player</h2>
             <ul class="mt-3 space-y-2">
                 @foreach ($seo['plans'] as $plan)
                     <li><strong class="text-white">Plan {{ $plan['name'] }}: S/ {{ $plan['price'] }} al mes.</strong> {{ $plan['summary'] }}</li>
@@ -166,7 +166,7 @@
                 · <a class="underline" href="/login">Iniciar sesión</a>
             </p>
 
-            <h2 class="mt-10 text-2xl font-bold text-white">Preguntas frecuentes sobre IPTV</h2>
+            <h2 class="mt-10 text-2xl font-bold text-white">Preguntas frecuentes sobre Fastnet Player</h2>
             @foreach ($seo['faq'] as $item)
                 <h3 class="mt-5 text-lg font-semibold text-white">{{ $item['q'] }}</h3>
                 <p class="mt-1">{{ $item['a'] }}</p>

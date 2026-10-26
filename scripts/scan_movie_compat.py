@@ -6,7 +6,7 @@ audio AC3/E-AC3/DTS: la imagen corre pero no hay sonido. Este script los detecta
 el resultado en resources/data/, que la web usa para ocultarlos.
 
 Uso (necesita ffprobe, por ejemplo en el servidor de peliculas):
-    python3 scan_movie_compat.py --kind movies --server http://iptv.ejemplo.com --user USUARIO \
+    python3 scan_movie_compat.py --kind movies --server http://tv.ejemplo.com --user USUARIO \
         --password CLAVE --out movie-compat.json --workers 3
     python3 scan_movie_compat.py --kind series ... --out series-compat.json
 

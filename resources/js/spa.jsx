@@ -219,7 +219,7 @@ function Login({ onDone }) {
             <span className="h-px flex-1 bg-white/10" />
           </div>
 
-          <p className="text-center text-sm text-zinc-400">Aun no tienes una cuenta de la mejor senal IPTV?</p>
+          <p className="text-center text-sm text-zinc-400">Aun no tienes una cuenta de Fastnet Player?</p>
           <a
             href={salesUrl}
             target="_blank"

@@ -2,7 +2,7 @@ import seo from "../../../data/landing-seo.json";
 
 export const BRAND = {
   name: "Fastnet Player",
-  tagline: "IPTV · TV por internet",
+  tagline: "TV por internet",
 };
 
 export const NAV_LINKS = [
@@ -14,12 +14,12 @@ export const NAV_LINKS = [
 ];
 
 export const HERO = {
-  kicker: "IPTV Premium · TV por internet",
+  kicker: "Premium · TV por internet",
   title: "Fastnet Player",
   // La segunda linea del titular se escribe y se borra sola; estas frases rotan en bucle.
-  rotatingWords: ["IPTV en Perú", "TV por internet", "canales en vivo", "cine y series", "en tu Smart TV", "en 4K"],
+  rotatingWords: ["TV en Perú", "TV por internet", "canales en vivo", "cine y series", "en tu Smart TV", "en 4K"],
   subtitle:
-    "IPTV en Perú: televisión por internet con más de 150 canales en HD, estrenos de cine y series completas en una sola plataforma. Disfrútalo en tu celular, tablet, Smart TV o Android TV.",
+    "Televisión por internet en Perú con más de 150 canales en HD, estrenos de cine y series completas en una sola plataforma. Disfrútalo en tu celular, tablet, Smart TV o Android TV.",
   description:
     "Catálogo actualizado cada semana y soporte humano 24/7.",
   primaryCta: "Ver planes",
@@ -68,7 +68,7 @@ export const STEPS = [
 export const FEATURES = {
   title: "¿Por qué elegir Fastnet Player?",
   subtitle:
-    "Una experiencia IPTV solida con el equilibrio perfecto entre calidad, catalogo y soporte.",
+    "Una experiencia de streaming sólida con el equilibrio perfecto entre calidad, catálogo y soporte.",
   items: [
     {
       icon: "Tv",
@@ -176,12 +176,12 @@ export const TESTIMONIALS = {
 export const ABOUT = seo.about;
 
 export const FAQ = {
-  title: "Preguntas frecuentes sobre IPTV y Fastnet Player",
+  title: "Preguntas frecuentes sobre Fastnet Player",
   items: seo.faq,
 };
 
 export const FOOTER_TEXT =
-  "© 2026 Fastnet Player (FASTNET TV). Todos los derechos reservados. IPTV en Perú: televisión por internet con canales en vivo, películas y series.";
+  "© 2026 Fastnet Player (FASTNET TV). Todos los derechos reservados. Televisión por internet en Perú: canales en vivo, películas y series.";
 
 export const FOOTER_LINKS = [
   { label: "Política de privacidad", href: "/privacy-policy" },
