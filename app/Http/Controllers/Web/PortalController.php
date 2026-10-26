@@ -10,6 +10,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Throwable;
 use Illuminate\View\View;
@@ -568,7 +569,8 @@ class PortalController extends Controller
     }
 
     /**
-     * URL de reproduccion (HLS) de un canal en vivo, ya pasada por el proxy de la app.
+     * URL de reproduccion (HLS) de un canal en vivo. Si el panel lo permite se entrega la direccion HTTPS directa
+     * (el video no pasa por este servidor); la del proxy va siempre como respaldo en fallback_url.
      */
     public function apiLiveStream(int $id): JsonResponse
     {
@@ -577,9 +579,43 @@ class PortalController extends Controller
             return response()->json(['message' => 'No autenticado'], 401);
         }
 
-        $base = rtrim($serverUrl, '/') . "/live/{$username}/{$password}/{$id}";
+        $path = "/live/{$username}/{$password}/{$id}.m3u8";
+        $proxyUrl = $this->buildStreamProxyUrl(rtrim($serverUrl, '/') . $path);
 
-        return response()->json(['url' => $this->buildStreamProxyUrl("{$base}.m3u8")]);
+        $directBase = (string) config('app.live_direct_base');
+        $sameServer = $directBase !== ''
+            && strtolower((string) parse_url($directBase, PHP_URL_HOST)) === strtolower((string) parse_url($serverUrl, PHP_URL_HOST));
+
+        if ($sameServer && $this->canServeLiveDirect($id, $directBase . $path)) {
+            return response()->json(['url' => $directBase . $path, 'fallback_url' => $proxyUrl, 'direct' => true]);
+        }
+
+        return response()->json(['url' => $proxyUrl, 'direct' => false]);
+    }
+
+    /**
+     * Un canal se puede ver directo si el panel responde por HTTPS y, si redirige, la redireccion tambien es HTTPS
+     * (algunos canales viven en otro servidor del panel que solo atiende por HTTP y el navegador lo bloquearia).
+     * El resultado se guarda un rato para no repetir la consulta en cada apertura.
+     */
+    private function canServeLiveDirect(int $id, string $url): bool
+    {
+        try {
+            return (bool) Cache::remember("live.direct.{$id}", now()->addMinutes(30), function () use ($url): bool {
+                $response = Http::withoutRedirecting()->timeout(6)->withUserAgent('Mozilla/5.0')->get($url);
+                if ($response->status() === 200) {
+                    return true;
+                }
+                if (! in_array($response->status(), [301, 302, 303, 307, 308], true)) {
+                    throw new \RuntimeException('respuesta inesperada');
+                }
+
+                return str_starts_with(strtolower($response->header('Location')), 'https://');
+            });
+        } catch (Throwable) {
+            // Sin respuesta clara (o error del panel): por el proxy, y se vuelve a intentar en la proxima apertura.
+            return false;
+        }
     }
 
     public function apiMovies(): JsonResponse

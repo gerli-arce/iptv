@@ -100,29 +100,40 @@ function LivePlayer({ channel, categoryName, getStream, onClose, onStep }) {
     video.addEventListener("playing", onPlaying);
 
     getStream(channel.stream_id)
-      .then(({ url }) => {
+      .then(({ url, fallback_url: fallbackUrl }) => {
         if (cancelled) return;
+        // Primero la direccion directa del panel (si la hay) y, si falla, la que pasa por el proxy de la app.
+        const sources = [url, fallbackUrl].filter(Boolean);
         if (Hls.isSupported()) {
-          hls = new Hls(HLS_CONFIG);
-          hls.loadSource(url);
-          hls.attachMedia(video);
-          hls.on(Hls.Events.MANIFEST_PARSED, tryPlay);
-          let retries = 0;
-          hls.on(Hls.Events.ERROR, (_event, data) => {
-            if (!data?.fatal || cancelled) return;
-            // Ante un corte de red o de decodificacion se reintenta unas veces antes de mostrar el error.
-            if (retries < 3 && data.type === Hls.ErrorTypes.NETWORK_ERROR) {
-              retries += 1;
-              hls.startLoad();
-            } else if (retries < 3 && data.type === Hls.ErrorTypes.MEDIA_ERROR) {
-              retries += 1;
-              hls.recoverMediaError();
-            } else {
-              setStatus("error");
-            }
-          });
+          const start = (index) => {
+            if (hls) hls.destroy();
+            const instance = new Hls(HLS_CONFIG);
+            hls = instance;
+            instance.loadSource(sources[index]);
+            instance.attachMedia(video);
+            instance.on(Hls.Events.MANIFEST_PARSED, tryPlay);
+            let retries = 0;
+            instance.on(Hls.Events.ERROR, (_event, data) => {
+              if (!data?.fatal || cancelled) return;
+              if (index + 1 < sources.length) {
+                start(index + 1);
+                return;
+              }
+              // Ante un corte de red o de decodificacion se reintenta unas veces antes de mostrar el error.
+              if (retries < 3 && data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+                retries += 1;
+                instance.startLoad();
+              } else if (retries < 3 && data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+                retries += 1;
+                instance.recoverMediaError();
+              } else {
+                setStatus("error");
+              }
+            });
+          };
+          start(0);
         } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
-          video.src = url;
+          video.src = sources[0];
           tryPlay();
         } else {
           setStatus("error");
