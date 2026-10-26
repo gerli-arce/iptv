@@ -1,0 +1,85 @@
+{
+ "_nota": "Canales que pasan el analisis del panel pero fallan al reproducirlos de verdad en Chrome con hls.js (prueba del 2026-10-26, dos pasadas). scan_live_compat.py los deja fuera.",
+ "excluded": {
+  "19": {
+   "name": "CHILEVISION HD",
+   "reason": "se corta a los pocos segundos en Chrome (error al decodificar el audio)"
+  },
+  "27": {
+   "name": "HBO POP HD",
+   "reason": "se corta a los pocos segundos en Chrome (error al decodificar el audio)"
+  },
+  "30": {
+   "name": "SPACE HD",
+   "reason": "se corta a los pocos segundos en Chrome (error al decodificar el audio)"
+  },
+  "33": {
+   "name": "TNT NOVELAS HD",
+   "reason": "se corta a los pocos segundos en Chrome (error al decodificar el audio)"
+  },
+  "50": {
+   "name": "BETHEL TV HD",
+   "reason": "se corta a los pocos segundos en Chrome (error al decodificar el audio)"
+  },
+  "60": {
+   "name": "CANAL RH HD",
+   "reason": "el panel no entrega la lista del canal (403)"
+  },
+  "74": {
+   "name": "DISCOVERY WORLD HD",
+   "reason": "se corta a los pocos segundos en Chrome (error al decodificar el audio)"
+  },
+  "75": {
+   "name": "INVESTIGACION DISCOVERY HD",
+   "reason": "se corta a los pocos segundos en Chrome (error al decodificar el audio)"
+  },
+  "76": {
+   "name": "DISCOVERY CHANNEL HD",
+   "reason": "se corta a los pocos segundos en Chrome (error al decodificar el audio)"
+  },
+  "85": {
+   "name": "WARNER HD",
+   "reason": "se corta a los pocos segundos en Chrome (error al decodificar el audio)"
+  },
+  "117": {
+   "name": "GOLDEN HD",
+   "reason": "se corta a los pocos segundos en Chrome (error al decodificar el audio)"
+  },
+  "126": {
+   "name": "EUROCHANEL HD",
+   "reason": "se corta a los pocos segundos en Chrome (error al decodificar el audio)"
+  },
+  "132": {
+   "name": "TNT SPORT PREMIUM HD",
+   "reason": "se corta a los pocos segundos en Chrome (error al decodificar el audio)"
+  },
+  "139": {
+   "name": "VENUS HD",
+   "reason": "se corta a los pocos segundos en Chrome (error al decodificar el audio)"
+  },
+  "155": {
+   "name": "TVN HD",
+   "reason": "se corta a los pocos segundos en Chrome (error al decodificar el audio)"
+  },
+  "176": {
+   "name": "CITY TV HD",
+   "reason": "se corta a los pocos segundos en Chrome (error al decodificar el audio)"
+  },
+  "177": {
+   "name": "CANAL 9 HD",
+   "reason": "el panel no entrega la lista del canal (403)"
+  },
+  "1442": {
+   "name": "DISCOVERY TURBO",
+   "reason": "se corta a los pocos segundos en Chrome (error al decodificar el audio)"
+  },
+  "2133": {
+   "name": "CNN ESPAÑOL HD",
+   "reason": "se corta a los pocos segundos en Chrome (error al decodificar el audio)"
+  },
+  "2158": {
+   "name": "HBO FAMILY HD",
+   "reason": "se corta a los pocos segundos en Chrome (error al decodificar el audio)"
+  }
+ }
+}

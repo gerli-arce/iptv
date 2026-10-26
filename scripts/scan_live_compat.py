@@ -25,7 +25,10 @@ import urllib.request
 
 PLAYABLE_VIDEO = {"h264"}
 PLAYABLE_AUDIO = {"aac", "mp2", "mp3"}
-OUT = os.path.join(os.path.dirname(__file__), "..", "resources", "data", "live-compat.json")
+DATA = os.path.join(os.path.dirname(__file__), "..", "resources", "data")
+OUT = os.path.join(DATA, "live-compat.json")
+# Canales que el panel da por buenos pero fallan al reproducirlos de verdad en Chrome (hls.js).
+OVERRIDES = os.path.join(DATA, "live-compat-overrides.json")
 
 
 def clean(value):
@@ -92,9 +95,16 @@ def main():
         else:
             excluded[channel_id] = {"name": stream.get("name", ""), "reason": reason}
 
+    if os.path.isfile(OVERRIDES):
+        with open(OVERRIDES, encoding="utf-8") as handle:
+            for channel_id, item in json.load(handle).get("excluded", {}).items():
+                if channel_id in playable:
+                    del playable[channel_id]
+                    excluded[channel_id] = item
+
     report = {
         "generated_at": time.strftime("%Y-%m-%d %H:%M:%S"),
-        "criteria": "en linea + video h264 + audio aac/mp2/mp3",
+        "criteria": "en linea + video h264 + audio aac/mp2/mp3 + prueba real en Chrome (live-compat-overrides.json)",
         "total": len(streams),
         "playable_count": len(playable),
         "playable": dict(sorted(playable.items(), key=lambda kv: int(kv[0]))),

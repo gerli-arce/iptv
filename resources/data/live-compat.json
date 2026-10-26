@@ -1,8 +1,8 @@
 {
  "generated_at": "2026-10-26 09:08:12",
- "criteria": "en linea + video h264 + audio aac/mp2/mp3",
+ "criteria": "en linea + video h264 + audio aac/mp2/mp3 + prueba real en Chrome (live-compat-overrides.json)",
  "total": 206,
- "playable_count": 145,
+ "playable_count": 125,
  "playable": {
   "1": "AMERICA TV HD",
   "2": "TV AGRO HD",
@@ -13,16 +13,12 @@
   "12": "PBO HD",
   "13": "RADIO ENERGIA",
   "17": "VIVA TV",
-  "19": "CHILEVISION HD",
   "22": "CINECANAL HD",
   "23": "DHE HD",
   "24": "DISCOVERY THEATER HD",
   "26": "HBO HD",
-  "27": "HBO POP HD",
   "28": "HBO XTREME HD",
-  "30": "SPACE HD",
   "31": "STUDIO UNIVERSAL HD",
-  "33": "TNT NOVELAS HD",
   "36": "ESPN 3 HD",
   "37": "ESPN 4 HD",
   "38": "ESPN 6 HD",
@@ -34,14 +30,12 @@
   "46": "CLASSIC+ HD",
   "48": "TELENOSTALGIA HD",
   "49": "DISNEY CHANNEL HD",
-  "50": "BETHEL TV HD",
   "52": "TLMUNDO HD",
   "53": "RUMBA TV HD",
   "54": "FASTCUMBIA HD",
   "57": "FASTMUSIC HD",
   "58": "FASTFOLKLORE HD",
   "59": "PICHANAKI TV HD",
-  "60": "CANAL RH HD",
   "61": "VISION HD",
   "62": "DISCOVERY KIDS HD",
   "63": "CARTOOM NETWORD HD",
@@ -54,16 +48,12 @@
   "70": "PASIONES HD",
   "71": "NATIVA HD",
   "73": "TV PERENE HD",
-  "74": "DISCOVERY WORLD HD",
-  "75": "INVESTIGACION DISCOVERY HD",
-  "76": "DISCOVERY CHANNEL HD",
   "78": "CANAL N HD",
   "79": "TRAVEL & LIVING HD",
   "80": "TNT HD",
   "81": "TNT SERIES HD",
   "82": "WEST HD",
   "83": "CINEMAX HD",
-  "85": "WARNER HD",
   "86": "AMC SERIES HD",
   "87": "CLOVER CHANNEL HD",
   "88": "STAR TVE HD",
@@ -89,27 +79,22 @@
   "114": "DSPORTS+ HD",
   "115": "DSPORTS HD",
   "116": "BABY TV HD",
-  "117": "GOLDEN HD",
   "118": "TASTEMADE HD",
   "119": "AZ CORAZON HD",
   "120": "TELE SUR HD",
   "121": "ENLACE HD",
   "125": "DW HD",
-  "126": "EUROCHANEL HD",
   "127": "RT HD",
   "131": "TELE SELVA HD",
-  "132": "TNT SPORT PREMIUM HD",
   "133": "CLARO SPORT HD",
   "135": "AMC HD",
   "136": "CHACRA TV HD",
   "137": "GARAGE TV HD",
   "138": "PLAYBOY HD",
-  "139": "VENUS HD",
   "141": "MOVISTAR DEPORTES HD",
   "151": "FX HD",
   "152": "STAR CHANNEL HD",
   "154": "TL-LIMA HD",
-  "155": "TVN HD",
   "156": "FRANCE 24 HD",
   "157": "TRIVU HD",
   "158": "KANAL D DRAMA HD",
@@ -120,8 +105,6 @@
   "170": "ANIMAL PLANET HD",
   "174": "E! HD",
   "175": "EWTN HD",
-  "176": "CITY TV HD",
-  "177": "CANAL 9 HD",
   "178": "SELVATIKA TV HD",
   "181": "COMEDY CENTRAL HD",
   "183": "HOGAR TV HD",
@@ -129,7 +112,6 @@
   "189": "PERUANISIMA TV HD",
   "191": "LIGA 1 HD",
   "192": "SELVA TV HD",
-  "1442": "DISCOVERY TURBO",
   "2041": "CONTINENTAL HD",
   "2043": "ELITE DIGITAL HD",
   "2044": "CANAL INFANTIL HD",
@@ -140,9 +122,7 @@
   "2050": "MI MUSICA ROMANTICA HD",
   "2051": "MI MUSICA SALSA HD",
   "2132": "HBO SIGNATURE",
-  "2133": "CNN ESPAÑOL HD",
   "2157": "DSPORT 2 HD",
-  "2158": "HBO FAMILY HD",
   "2340": "MAX ACTION HD",
   "2343": "ZTV HD",
   "2347": "MAX KIDS",
@@ -183,17 +163,33 @@
    "name": "TV PERU HD",
    "reason": "audio aac_latm"
   },
+  "19": {
+   "name": "CHILEVISION HD",
+   "reason": "se corta a los pocos segundos en Chrome (error al decodificar el audio)"
+  },
   "21": {
    "name": "UNIVISION HD",
    "reason": "audio ac3"
+  },
+  "27": {
+   "name": "HBO POP HD",
+   "reason": "se corta a los pocos segundos en Chrome (error al decodificar el audio)"
   },
   "29": {
    "name": "SONY CHANNEL HD",
    "reason": "audio ac3"
   },
+  "30": {
+   "name": "SPACE HD",
+   "reason": "se corta a los pocos segundos en Chrome (error al decodificar el audio)"
+  },
   "32": {
    "name": "SUN CHANNEL HD",
    "reason": "audio ac3"
+  },
+  "33": {
+   "name": "TNT NOVELAS HD",
+   "reason": "se corta a los pocos segundos en Chrome (error al decodificar el audio)"
   },
   "34": {
    "name": "ESPN 1 HD",
@@ -211,6 +207,10 @@
    "name": "HISTORY 2",
    "reason": "audio ac3"
   },
+  "50": {
+   "name": "BETHEL TV HD",
+   "reason": "se corta a los pocos segundos en Chrome (error al decodificar el audio)"
+  },
   "51": {
    "name": "JN19 HD",
    "reason": "audio aac_latm"
@@ -223,6 +223,22 @@
    "name": "CANAL DIGITAL HD",
    "reason": "sin senal"
   },
+  "60": {
+   "name": "CANAL RH HD",
+   "reason": "el panel no entrega la lista del canal (403)"
+  },
+  "74": {
+   "name": "DISCOVERY WORLD HD",
+   "reason": "se corta a los pocos segundos en Chrome (error al decodificar el audio)"
+  },
+  "75": {
+   "name": "INVESTIGACION DISCOVERY HD",
+   "reason": "se corta a los pocos segundos en Chrome (error al decodificar el audio)"
+  },
+  "76": {
+   "name": "DISCOVERY CHANNEL HD",
+   "reason": "se corta a los pocos segundos en Chrome (error al decodificar el audio)"
+  },
   "77": {
    "name": "PX SPORTS HD",
    "reason": "sin senal"
@@ -230,6 +246,10 @@
   "84": {
    "name": "CREOKIDS HD",
    "reason": "sin senal"
+  },
+  "85": {
+   "name": "WARNER HD",
+   "reason": "se corta a los pocos segundos en Chrome (error al decodificar el audio)"
   },
   "90": {
    "name": "GOURMET HD",
@@ -239,6 +259,10 @@
    "name": "REYNO INFANTIL HD",
    "reason": "audio ac3"
   },
+  "117": {
+   "name": "GOLDEN HD",
+   "reason": "se corta a los pocos segundos en Chrome (error al decodificar el audio)"
+  },
   "122": {
    "name": "LA TELE HD",
    "reason": "audio aac_latm"
@@ -247,6 +271,10 @@
    "name": "WILLAX HD",
    "reason": "audio aac_latm"
   },
+  "126": {
+   "name": "EUROCHANEL HD",
+   "reason": "se corta a los pocos segundos en Chrome (error al decodificar el audio)"
+  },
   "128": {
    "name": "DPELICULA HD",
    "reason": "audio ac3"
@@ -254,6 +282,14 @@
   "130": {
    "name": "NUEVO TIEMPO HD",
    "reason": "sin senal"
+  },
+  "132": {
+   "name": "TNT SPORT PREMIUM HD",
+   "reason": "se corta a los pocos segundos en Chrome (error al decodificar el audio)"
+  },
+  "139": {
+   "name": "VENUS HD",
+   "reason": "se corta a los pocos segundos en Chrome (error al decodificar el audio)"
   },
   "143": {
    "name": "RADIO MODA",
@@ -274,6 +310,10 @@
   "150": {
    "name": "RADIO STUDIO 92",
    "reason": "solo audio (aac_latm)"
+  },
+  "155": {
+   "name": "TVN HD",
+   "reason": "se corta a los pocos segundos en Chrome (error al decodificar el audio)"
   },
   "159": {
    "name": "RCN NOVELAS HD",
@@ -299,6 +339,14 @@
    "name": "LIFETIME HD",
    "reason": "audio ac3"
   },
+  "176": {
+   "name": "CITY TV HD",
+   "reason": "se corta a los pocos segundos en Chrome (error al decodificar el audio)"
+  },
+  "177": {
+   "name": "CANAL 9 HD",
+   "reason": "el panel no entrega la lista del canal (403)"
+  },
   "182": {
    "name": "DISTRITO COMEDIA HD",
    "reason": "audio ac3"
@@ -311,6 +359,10 @@
    "name": "RADIO LA INOLVIDABLE",
    "reason": "sin senal"
   },
+  "1442": {
+   "name": "DISCOVERY TURBO",
+   "reason": "se corta a los pocos segundos en Chrome (error al decodificar el audio)"
+  },
   "2040": {
    "name": "SAMARITANO TV HD",
    "reason": "sin audio detectado"
@@ -318,6 +370,10 @@
   "2042": {
    "name": "ESTUDIO JM HD",
    "reason": "sin senal"
+  },
+  "2133": {
+   "name": "CNN ESPAÑOL HD",
+   "reason": "se corta a los pocos segundos en Chrome (error al decodificar el audio)"
   },
   "2134": {
    "name": "RADIO LA ZONA",
@@ -378,6 +434,10 @@
   "2150": {
    "name": "ROCK EN ESPAÑOL",
    "reason": "solo audio (ac3)"
+  },
+  "2158": {
+   "name": "HBO FAMILY HD",
+   "reason": "se corta a los pocos segundos en Chrome (error al decodificar el audio)"
   },
   "2341": {
    "name": "MAX COMEDY HD",
