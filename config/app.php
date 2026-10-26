@@ -67,13 +67,13 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Direccion HTTPS directa de los canales en vivo
+    | Direccion HTTPS directa del panel
     |--------------------------------------------------------------------------
     |
-    | Direccion HTTPS del panel (con CORS) desde la que el navegador puede pedir el video sin pasar por este
-    | servidor. Solo se usa si el usuario inicia sesion con el mismo servidor. Vacio = todo por el proxy.
+    | Direccion HTTPS del panel (con CORS) desde la que el navegador puede pedir canales, peliculas y series sin
+    | pasar por este servidor. Solo se usa si el usuario inicia sesion con el mismo servidor. Vacio = todo por el proxy.
     */
-    'live_direct_base' => rtrim((string) env('LIVE_DIRECT_BASE', 'https://iptv.fastnetperu.com.pe:8099'), '/'),
+    'stream_direct_base' => rtrim((string) env('STREAM_DIRECT_BASE', 'https://iptv.fastnetperu.com.pe:8099'), '/'),
 
     /*
     |--------------------------------------------------------------------------

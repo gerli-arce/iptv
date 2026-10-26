@@ -236,13 +236,16 @@ class PortalController extends Controller
 
         if ($type === 'movie') {
             $ext = request()->query('ext', 'mp4');
-            $candidates = array_values(array_unique([
+            $direct = $this->directStreamUrl($serverUrl, "/movie/{$username}/{$password}/{$id}.{$ext}");
+            $candidates = array_values(array_unique(array_filter([
+                // Primero la direccion directa del panel (el video no pasa por este servidor); el resto es respaldo.
+                $direct,
                 $this->buildStreamProxyUrl(rtrim($serverUrl, '/') . "/movie/{$username}/{$password}/{$id}.{$ext}"),
                 $this->buildStreamProxyUrl(rtrim($serverUrl, '/') . "/movie/{$username}/{$password}/{$id}.mp4"),
                 $this->buildStreamProxyUrl(rtrim($serverUrl, '/') . "/movie/{$username}/{$password}/{$id}.mkv"),
                 $this->buildStreamProxyUrl(rtrim($serverUrl, '/') . "/movie/{$username}/{$password}/{$id}.m3u8"),
                 $this->buildStreamProxyUrl(rtrim($serverUrl, '/') . "/movie/{$username}/{$password}/{$id}.ts"),
-            ]));
+            ])));
             $url = $candidates[0];
             $title = "Pelicula {$id}";
         }
@@ -318,13 +321,15 @@ class PortalController extends Controller
         }
 
         $selectedExt = $selected['ext'] ?: 'mp4';
-        $candidates = array_values(array_unique([
+        $direct = $this->directStreamUrl($serverUrl, "/series/{$username}/{$password}/{$selected['id']}.{$selectedExt}");
+        $candidates = array_values(array_unique(array_filter([
+            $direct,
             $this->buildStreamProxyUrl(rtrim($serverUrl, '/') . "/series/{$username}/{$password}/{$selected['id']}.{$selectedExt}"),
             $this->buildStreamProxyUrl(rtrim($serverUrl, '/') . "/series/{$username}/{$password}/{$selected['id']}.mp4"),
             $this->buildStreamProxyUrl(rtrim($serverUrl, '/') . "/series/{$username}/{$password}/{$selected['id']}.mkv"),
             $this->buildStreamProxyUrl(rtrim($serverUrl, '/') . "/series/{$username}/{$password}/{$selected['id']}.m3u8"),
             $this->buildStreamProxyUrl(rtrim($serverUrl, '/') . "/series/{$username}/{$password}/{$selected['id']}.ts"),
-        ]));
+        ])));
         $url = $candidates[0];
         $title = $selected['title'];
 
@@ -581,29 +586,38 @@ class PortalController extends Controller
 
         $path = "/live/{$username}/{$password}/{$id}.m3u8";
         $proxyUrl = $this->buildStreamProxyUrl(rtrim($serverUrl, '/') . $path);
+        $directUrl = $this->directStreamUrl($serverUrl, $path);
 
-        $directBase = (string) config('app.live_direct_base');
-        $sameServer = $directBase !== ''
-            && strtolower((string) parse_url($directBase, PHP_URL_HOST)) === strtolower((string) parse_url($serverUrl, PHP_URL_HOST));
-
-        if ($sameServer && $this->canServeLiveDirect($id, $directBase . $path)) {
-            return response()->json(['url' => $directBase . $path, 'fallback_url' => $proxyUrl, 'direct' => true]);
+        if ($directUrl) {
+            return response()->json(['url' => $directUrl, 'fallback_url' => $proxyUrl, 'direct' => true]);
         }
 
         return response()->json(['url' => $proxyUrl, 'direct' => false]);
     }
 
     /**
-     * Un canal se puede ver directo si el panel responde por HTTPS y, si redirige, la redireccion tambien es HTTPS
-     * (algunos canales viven en otro servidor del panel que solo atiende por HTTP y el navegador lo bloquearia).
-     * El resultado se guarda un rato para no repetir la consulta en cada apertura.
+     * Direccion HTTPS directa del panel para una ruta (/live/..., /movie/..., /series/...), o null si hay que pasar por
+     * el proxy: otro servidor de login, panel sin HTTPS directo configurado, o contenido que vive en un servidor del panel
+     * que no atiende por HTTPS (el navegador bloquearia la redireccion).
      */
-    private function canServeLiveDirect(int $id, string $url): bool
+    private function directStreamUrl(string $serverUrl, string $path): ?string
     {
+        $directBase = (string) config('app.stream_direct_base');
+        if ($directBase === ''
+            || strtolower((string) parse_url($directBase, PHP_URL_HOST)) !== strtolower((string) parse_url($serverUrl, PHP_URL_HOST))) {
+            return null;
+        }
+
+        $url = $directBase . $path;
+        // La decision no depende del usuario: se guarda por tipo e id, sin las credenciales.
+        $key = 'stream.direct.' . md5((string) preg_replace('#^/(live|movie|series)/[^/]+/[^/]+/#', '/$1/', $path));
+
         try {
-            return (bool) Cache::remember("live.direct.{$id}", now()->addMinutes(30), function () use ($url): bool {
-                $response = Http::withoutRedirecting()->timeout(6)->withUserAgent('Mozilla/5.0')->get($url);
-                if ($response->status() === 200) {
+            $ok = (bool) Cache::remember($key, now()->addMinutes(30), function () use ($url): bool {
+                // Range para que, si el panel respondiera con el archivo en vez de redirigir, no se baje completo.
+                $response = Http::withoutRedirecting()->timeout(6)->withUserAgent('Mozilla/5.0')
+                    ->withHeaders(['Range' => 'bytes=0-0'])->get($url);
+                if (in_array($response->status(), [200, 206], true)) {
                     return true;
                 }
                 if (! in_array($response->status(), [301, 302, 303, 307, 308], true)) {
@@ -614,8 +628,10 @@ class PortalController extends Controller
             });
         } catch (Throwable) {
             // Sin respuesta clara (o error del panel): por el proxy, y se vuelve a intentar en la proxima apertura.
-            return false;
+            return null;
         }
+
+        return $ok ? $url : null;
     }
 
     public function apiMovies(): JsonResponse

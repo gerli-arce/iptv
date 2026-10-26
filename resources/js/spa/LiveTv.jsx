@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Hls from "hls.js";
 import { ChevronLeft, ChevronRight, Play, RotateCcw, Tv, VolumeX, X } from "lucide-react";
 import { proxiedImageUrl } from "./helpers";
+import { Row } from "./Browse";
 
 const HLS_CONFIG = {
   enableWorker: true,
@@ -28,7 +29,7 @@ function ChannelCard({ channel, onOpen }) {
   return (
     <button
       onClick={() => onOpen(channel)}
-      className="group text-left outline-none"
+      className="group block w-full text-left outline-none"
       aria-label={`Ver ${channel.name} en vivo`}
     >
       <div className="relative aspect-video overflow-hidden rounded-lg bg-gradient-to-br from-[#3b3b45] to-[#24242c] ring-1 ring-white/10 transition duration-300 group-hover:-translate-y-1 group-hover:ring-white/35 group-focus-visible:ring-coral group-hover:shadow-[0_18px_40px_rgba(0,0,0,0.6)]">
@@ -51,7 +52,7 @@ function ChannelCard({ channel, onOpen }) {
   );
 }
 
-function LivePlayer({ channel, categoryName, getStream, onClose, onStep }) {
+export function LivePlayer({ channel, categoryName, getStream, onClose, onStep }) {
   const videoRef = useRef(null);
   const [status, setStatus] = useState("loading"); // loading | playing | error | tap
   const [silent, setSilent] = useState(false);
@@ -220,6 +221,157 @@ function LivePlayer({ channel, categoryName, getStream, onClose, onStep }) {
   );
 }
 
+// Canales que la gente mas ve, en el orden en que se muestran en el inicio.
+const FEATURED_CHANNELS = [
+  "AMERICA TV HD",
+  "PANAMERICANA HD",
+  "EXITOSA HD",
+  "CANAL N HD",
+  "DSPORTS HD",
+  "DSPORTS+ HD",
+  "ESPN PREMIUN HD",
+  "LIGA 1 MAX HD",
+  "LIGA 1 HD",
+  "CLARO SPORT HD",
+  "TNT SPORT PREMIUM HD",
+  "MOVISTAR DEPORTES HD",
+  "HBO HD",
+  "CINECANAL HD",
+  "DISCOVERY CHANNEL HD",
+  "CNN ESPAÑOL HD",
+  "NATIONAL GEOGRAPHIC HD",
+  "TNT HD",
+];
+
+export function pickFeaturedChannels(channels = []) {
+  const byName = new Map(channels.map((c) => [String(c.name).trim().toUpperCase(), c]));
+  return FEATURED_CHANNELS.map((name) => byName.get(name)).filter(Boolean);
+}
+
+// Fila "Canales recomendados" del inicio: abre el canal en el mismo reproductor de TV en vivo.
+export function FeaturedChannels({ channels = [], categories = [], getStream }) {
+  const [activeId, setActiveId] = useState(null);
+  const featured = useMemo(() => pickFeaturedChannels(channels), [channels]);
+  if (!featured.length) return null;
+
+  const active = activeId == null ? null : featured.find((c) => c.stream_id === activeId) || null;
+  const step = (delta) => {
+    const index = featured.findIndex((c) => c.stream_id === activeId);
+    if (index === -1) return;
+    setActiveId(featured[(index + delta + featured.length) % featured.length].stream_id);
+  };
+  const categoryName = (channel) => categories.find((cat) => String(cat.category_id) === String(channel?.category_id))?.category_name;
+
+  return (
+    <>
+      <Row title="Canales recomendados" subtitle="TV en vivo">
+        {featured.map((channel) => (
+          <div key={channel.stream_id} className="w-[190px] shrink-0 snap-start md:w-[240px]">
+            <ChannelCard channel={channel} onOpen={(c) => setActiveId(c.stream_id)} />
+          </div>
+        ))}
+      </Row>
+      {active ? <LivePlayer channel={active} categoryName={categoryName(active)} getStream={getStream} onClose={() => setActiveId(null)} onStep={step} /> : null}
+    </>
+  );
+}
+
+function ChannelRow({ category, channels, onOpen, onSeeAll }) {
+  const scroller = useRef(null);
+  const scrollBy = (dir) => {
+    const el = scroller.current;
+    if (el) el.scrollBy({ left: dir * el.clientWidth * 0.85, behavior: "smooth" });
+  };
+
+  return (
+    <section className="group/row space-y-3">
+      <div className="flex items-baseline justify-between gap-3">
+        <div className="flex items-baseline gap-2.5">
+          <h2 className="text-lg font-bold tracking-[-0.01em] text-white md:text-xl">{category.category_name}</h2>
+          <span className="font-mono text-xs text-zinc-500">{channels.length}</span>
+        </div>
+        <button onClick={onSeeAll} className="flex items-center gap-0.5 text-xs font-medium text-zinc-400 transition hover:text-white">
+          Ver todos
+          <ChevronRight className="size-3.5" />
+        </button>
+      </div>
+      <div className="relative">
+        <button
+          onClick={() => scrollBy(-1)}
+          aria-label="Anterior"
+          className="absolute -left-3 top-0 z-10 hidden h-[calc(100%-2.25rem)] w-10 items-center justify-center bg-gradient-to-r from-[#08080b] to-transparent text-white opacity-0 transition group-hover/row:opacity-100 md:flex"
+        >
+          <ChevronLeft className="size-7" />
+        </button>
+        <div ref={scroller} className="fp-no-scrollbar -mx-4 flex snap-x scroll-pl-4 gap-3 overflow-x-auto scroll-smooth px-4 pb-1 md:mx-0 md:scroll-pl-0 md:px-0">
+          {channels.map((channel) => (
+            <div key={channel.stream_id} className="w-[168px] shrink-0 snap-start md:w-[208px]">
+              <ChannelCard channel={channel} onOpen={onOpen} />
+            </div>
+          ))}
+        </div>
+        <button
+          onClick={() => scrollBy(1)}
+          aria-label="Siguiente"
+          className="absolute -right-3 top-0 z-10 hidden h-[calc(100%-2.25rem)] w-10 items-center justify-center bg-gradient-to-l from-[#08080b] to-transparent text-white opacity-0 transition group-hover/row:opacity-100 md:flex"
+        >
+          <ChevronRight className="size-7" />
+        </button>
+      </div>
+    </section>
+  );
+}
+
+function CategoryNav({ items, value, onChange }) {
+  return (
+    <>
+      {/* Escritorio: lista vertical fija a la izquierda */}
+      <aside className="hidden w-56 shrink-0 lg:block">
+        <nav className="fp-no-scrollbar sticky top-24 max-h-[calc(100vh-8rem)] space-y-0.5 overflow-y-auto pr-2" aria-label="Categorias">
+          <p className="mb-2 px-3 font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-500">Categorias</p>
+          {items.map((cat) => {
+            const active = String(value) === String(cat.category_id);
+            return (
+              <button
+                key={cat.category_id}
+                onClick={() => onChange(cat.category_id)}
+                className={`relative flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left text-sm transition ${
+                  active ? "bg-white/[0.08] font-semibold text-white" : "text-zinc-400 hover:bg-white/[0.04] hover:text-white"
+                }`}
+              >
+                {active ? <span className="absolute inset-y-2 left-0 w-0.5 rounded-full bg-coral" /> : null}
+                <span className="truncate">{cat.category_name}</span>
+                <span className={`font-mono text-xs ${active ? "text-zinc-300" : "text-zinc-600"}`}>{cat.count}</span>
+              </button>
+            );
+          })}
+        </nav>
+      </aside>
+
+      {/* Movil y tablet: fila deslizable que se queda fija bajo el menu */}
+      <div className="sticky top-16 z-30 -mx-4 border-b border-white/[0.06] bg-[#08080b]/90 backdrop-blur-xl md:top-[72px] md:-mx-10 lg:hidden">
+        <div className="fp-no-scrollbar flex gap-1.5 overflow-x-auto px-4 py-2.5 md:px-10">
+          {items.map((cat) => {
+            const active = String(value) === String(cat.category_id);
+            return (
+              <button
+                key={cat.category_id}
+                onClick={() => onChange(cat.category_id)}
+                className={`whitespace-nowrap rounded-md px-3 py-1.5 text-[13px] font-medium transition ${
+                  active ? "bg-white text-black" : "bg-white/[0.06] text-zinc-300 hover:bg-white/10 hover:text-white"
+                }`}
+              >
+                {cat.category_name}
+                <span className={`ml-1.5 font-mono text-[11px] ${active ? "text-black/50" : "text-zinc-500"}`}>{cat.count}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </>
+  );
+}
+
 export function LiveTv({ channels = [], categories = [], loading, error, searchQuery = "", hideUnplayable = true, getStream, onRetry }) {
   const [categoryId, setCategoryId] = useState("all");
   const [activeId, setActiveId] = useState(null);
@@ -243,21 +395,38 @@ export function LiveTv({ channels = [], categories = [], loading, error, searchQ
     [visible, categoryId, q],
   );
 
-  const active = activeId == null ? null : filtered.find((c) => c.stream_id === activeId) || visible.find((c) => c.stream_id === activeId) || null;
+  // En "Todos" (sin busqueda) los canales se muestran en una fila por categoria.
+  const grouped = categoryId === "all" && !q;
+  const groups = useMemo(() => {
+    if (!grouped) return [];
+    return visibleCategories
+      .map((cat) => ({ category: cat, channels: visible.filter((c) => String(c.category_id) === String(cat.category_id)) }))
+      .filter((g) => g.channels.length);
+  }, [grouped, visibleCategories, visible]);
+
+  // Orden en pantalla, para que "anterior / siguiente" del reproductor siga lo que se ve.
+  const ordered = useMemo(() => (grouped ? groups.flatMap((g) => g.channels) : filtered), [grouped, groups, filtered]);
+
+  const active = activeId == null ? null : visible.find((c) => c.stream_id === activeId) || null;
   const categoryName = (channel) => categories.find((cat) => String(cat.category_id) === String(channel?.category_id))?.category_name;
+  const currentCategory = visibleCategories.find((cat) => String(cat.category_id) === String(categoryId));
 
   const step = (delta) => {
-    const list = filtered.length ? filtered : visible;
+    const list = ordered.length ? ordered : visible;
     const index = list.findIndex((c) => c.stream_id === activeId);
     if (index === -1 || !list.length) return;
     setActiveId(list[(index + delta + list.length) % list.length].stream_id);
   };
 
+  const navItems = [{ category_id: "all", category_name: "Todos", count: visible.length }, ...visibleCategories];
+  const heading = q ? `Resultados para "${searchQuery.trim()}"` : currentCategory ? currentCategory.category_name : "TV en vivo";
+  const total = grouped ? visible.length : filtered.length;
+
   return (
-    <section className="space-y-6 px-4 pb-12 pt-24 md:px-10 md:pt-28">
-      <div className="flex items-baseline gap-3">
-        <h1 className="text-3xl font-extrabold tracking-[-0.03em] text-white md:text-4xl">TV en vivo</h1>
-        {!loading && !error ? <span className="text-sm text-zinc-500">{filtered.length} canales</span> : null}
+    <section className="px-4 pb-12 pt-24 md:px-10 md:pt-28">
+      <div className="mb-6 flex items-baseline gap-3">
+        <h1 className="text-3xl font-extrabold tracking-[-0.03em] text-white md:text-4xl">{heading}</h1>
+        {!loading && !error ? <span className="text-sm text-zinc-500">{total} canales</span> : null}
       </div>
 
       {error ? (
@@ -269,45 +438,39 @@ export function LiveTv({ channels = [], categories = [], loading, error, searchQ
         </div>
       ) : null}
 
-      {!error && visibleCategories.length ? (
-        <div className="flex gap-2 overflow-x-auto pb-1 fp-no-scrollbar">
-          {[{ category_id: "all", category_name: "Todos", count: visible.length }, ...visibleCategories].map((cat) => {
-            const active = String(categoryId) === String(cat.category_id);
-            return (
-              <button
-                key={cat.category_id}
-                onClick={() => setCategoryId(cat.category_id)}
-                className={`whitespace-nowrap rounded-full border px-4 py-1.5 text-sm transition duration-200 ${
-                  active ? "border-white bg-white text-black" : "border-white/15 text-zinc-300 hover:border-white/40 hover:text-white"
-                }`}
-              >
-                {cat.category_name}
-                <span className={`ml-1.5 text-xs ${active ? "text-black/50" : "text-zinc-500"}`}>{cat.count}</span>
-              </button>
-            );
-          })}
-        </div>
-      ) : null}
+      {!error ? (
+        <div className="flex flex-col lg:flex-row lg:gap-8">
+          {!loading && visibleCategories.length ? <CategoryNav items={navItems} value={categoryId} onChange={setCategoryId} /> : null}
 
-      {loading ? (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-          {Array.from({ length: 12 }).map((_, i) => (
-            <div key={i} className="fp-skeleton aspect-video rounded-lg" />
-          ))}
-        </div>
-      ) : null}
+          <div className="min-w-0 flex-1 space-y-8 pt-4 lg:pt-0">
+            {loading ? (
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
+                {Array.from({ length: 10 }).map((_, i) => (
+                  <div key={i} className="fp-skeleton aspect-video rounded-lg" />
+                ))}
+              </div>
+            ) : null}
 
-      {!loading && !error && !filtered.length ? (
-        <p className="rounded-xl border border-dashed border-white/10 px-5 py-10 text-center text-sm text-zinc-400">
-          {q ? "No encontramos canales con ese nombre." : "No hay canales disponibles por ahora."}
-        </p>
-      ) : null}
+            {!loading && !filtered.length ? (
+              <p className="rounded-xl border border-dashed border-white/10 px-5 py-10 text-center text-sm text-zinc-400">
+                {q ? "No encontramos canales con ese nombre." : "No hay canales disponibles por ahora."}
+              </p>
+            ) : null}
 
-      {!loading && !error && filtered.length ? (
-        <div className="grid grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-3 md:grid-cols-4 md:gap-x-4 lg:grid-cols-5 xl:grid-cols-6">
-          {filtered.map((channel) => (
-            <ChannelCard key={channel.stream_id} channel={channel} onOpen={(c) => setActiveId(c.stream_id)} />
-          ))}
+            {!loading && grouped
+              ? groups.map((g) => (
+                  <ChannelRow key={g.category.category_id} category={g.category} channels={g.channels} onOpen={(c) => setActiveId(c.stream_id)} onSeeAll={() => setCategoryId(g.category.category_id)} />
+                ))
+              : null}
+
+            {!loading && !grouped && filtered.length ? (
+              <div className="grid grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-3 md:grid-cols-4 md:gap-x-4 xl:grid-cols-5">
+                {filtered.map((channel) => (
+                  <ChannelCard key={channel.stream_id} channel={channel} onOpen={(c) => setActiveId(c.stream_id)} />
+                ))}
+              </div>
+            ) : null}
+          </div>
         </div>
       ) : null}
 

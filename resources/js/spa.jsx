@@ -4,7 +4,7 @@ import Hls from "hls.js";
 import "../css/app.css";
 import { fetchHomeData } from "./services/homeApi";
 import { getContentLabel, getSectionItemHref, getSectionItemTitle, isMovieOnlyContent, isTmdbImage, proxiedImageUrl, tmdbSize } from "./spa/helpers";
-import { LiveTv } from "./spa/LiveTv";
+import { FeaturedChannels, LiveTv } from "./spa/LiveTv";
 import { MobileNav, Navbar } from "./spa/Navbar";
 import { Billboard, LandscapeCard, PosterCard, Row } from "./spa/Browse";
 
@@ -647,7 +647,7 @@ function HomeSkeleton() {
   );
 }
 
-function HomeLike({ home, isLoading, error, onRetry, searchQuery = "", movies = [], movieCategories = [], blockedIds = new Set() }) {
+function HomeLike({ home, isLoading, error, onRetry, searchQuery = "", movies = [], movieCategories = [], blockedIds = new Set(), liveChannels = [], liveCategories = [] }) {
   const q = searchQuery.trim().toLowerCase();
 
   // Solo las peliculas se bloquean: los ids de series/canales son otra numeracion.
@@ -808,6 +808,10 @@ function HomeLike({ home, isLoading, error, onRetry, searchQuery = "", movies = 
       <Billboard slides={heroSlides} />
 
       <div className={`relative z-10 space-y-8 md:space-y-10 ${slides.length ? "-mt-8 md:-mt-14" : "pt-24 md:pt-28"}`}>
+        <div className="pt-5 md:pt-2">
+          <FeaturedChannels channels={liveChannels} categories={liveCategories} getStream={getLiveStream} />
+        </div>
+
         {sections.map((section) => (
           <Row key={section.id || section.slug || section.title} title={section.title}>
             {section.items.map((item, i) =>
@@ -1282,7 +1286,7 @@ function App() {
   }, [auth.ok, page, data.home]);
 
   useEffect(() => {
-    if (!auth.ok || page !== "live" || data.live || data.liveError) return;
+    if (!auth.ok || (page !== "live" && page !== "home") || data.live || data.liveError) return;
     api("/live")
       .then((d) => setData((state) => ({ ...state, live: { channels: d.channels || [], categories: d.categories || [] } })))
       .catch(() => setData((state) => ({ ...state, liveError: true })));
@@ -1360,6 +1364,8 @@ function App() {
             movies={visibleMovies}
             blockedIds={blockedIds}
             movieCategories={movieCategories}
+            liveChannels={(data.live?.channels || []).filter((c) => !(hideUnplayable && c.web_playable === false))}
+            liveCategories={data.live?.categories || []}
             onRetry={() => {
               setData((state) => ({
                 ...state,

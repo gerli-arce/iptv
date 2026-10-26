@@ -1,10 +1,10 @@
 {
-  "_x-rVpbPbgz.js": {
-    "file": "assets/x-rVpbPbgz.js",
+  "_x-CpxkikKL.js": {
+    "file": "assets/x-CpxkikKL.js",
     "name": "x"
   },
   "resources/css/app.css": {
-    "file": "assets/app-CnrNJ3BR.css",
+    "file": "assets/app-EsL35zd6.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "name": "app",
@@ -13,27 +13,27 @@
     ]
   },
   "resources/js/landing.jsx": {
-    "file": "assets/landing-CdTr1EG6.js",
+    "file": "assets/landing-Dkr81vKK.js",
     "name": "landing",
     "src": "resources/js/landing.jsx",
     "isEntry": true,
     "imports": [
-      "_x-rVpbPbgz.js"
+      "_x-CpxkikKL.js"
     ],
     "css": [
-      "assets/app-CnrNJ3BR.css"
+      "assets/app-EsL35zd6.css"
     ]
   },
   "resources/js/spa.jsx": {
-    "file": "assets/spa-mzkMicxO.js",
+    "file": "assets/spa-BlQ5Q362.js",
     "name": "spa",
     "src": "resources/js/spa.jsx",
     "isEntry": true,
     "imports": [
-      "_x-rVpbPbgz.js"
+      "_x-CpxkikKL.js"
     ],
     "css": [
-      "assets/app-CnrNJ3BR.css"
+      "assets/app-EsL35zd6.css"
     ]
   }
 }
