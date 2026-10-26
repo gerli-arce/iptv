@@ -439,7 +439,7 @@ class PortalController extends Controller
             return response()->json(['message' => 'No autenticado'], 401);
         }
         $categories = $this->xtreamService->getLiveCategories($serverUrl, $username, $password);
-        $channels = $this->xtreamService->getLiveStreams($serverUrl, $username, $password);
+        $channels = $this->movieCompat->annotateLive($this->xtreamService->getLiveStreams($serverUrl, $username, $password));
         $selectedCategory = $request->query('category_id', 'all');
         if ($selectedCategory !== 'all') {
             $channels = array_values(array_filter($channels, fn ($ch) => (string) ($ch['category_id'] ?? '') === (string) $selectedCategory));
@@ -499,7 +499,13 @@ class PortalController extends Controller
                 ->get($remoteUrl);
             abort_unless($playlistResponse->successful(), 502);
 
-            $playlist = $this->rewriteM3u8Playlist($playlistResponse->body(), $remoteUrl, $serverUrl);
+            // Si el panel redirige la lista a otro de sus servidores, los fragmentos viven ahi, no en el servidor original.
+            $effectiveUrl = (string) ($playlistResponse->effectiveUri() ?? $remoteUrl);
+            $effectiveParts = parse_url($effectiveUrl) ?: [];
+            $effectiveOrigin = ($effectiveParts['scheme'] ?? 'http') . '://' . ($effectiveParts['host'] ?? parse_url($serverUrl, PHP_URL_HOST))
+                . (isset($effectiveParts['port']) ? ':' . $effectiveParts['port'] : '');
+
+            $playlist = $this->rewriteM3u8Playlist($playlistResponse->body(), $effectiveUrl, $effectiveOrigin);
 
             return response($playlist, 200, [
                 'Content-Type' => 'application/vnd.apple.mpegurl',
@@ -559,6 +565,21 @@ class PortalController extends Controller
                 flush();
             }
         }, $status, $headers);
+    }
+
+    /**
+     * URL de reproduccion (HLS) de un canal en vivo, ya pasada por el proxy de la app.
+     */
+    public function apiLiveStream(int $id): JsonResponse
+    {
+        [$serverUrl, $username, $password] = $this->getIptvSessionCredentials();
+        if (! $serverUrl || ! $username || ! $password) {
+            return response()->json(['message' => 'No autenticado'], 401);
+        }
+
+        $base = rtrim($serverUrl, '/') . "/live/{$username}/{$password}/{$id}";
+
+        return response()->json(['url' => $this->buildStreamProxyUrl("{$base}.m3u8")]);
     }
 
     public function apiMovies(): JsonResponse
@@ -639,7 +660,11 @@ class PortalController extends Controller
             return false;
         }
 
-        return strtolower($remoteHost) === strtolower($serverHost);
+        $remoteHost = strtolower($remoteHost);
+
+        // El panel puede repartir canales desde otros de sus servidores (balanceadores): se permiten solo los configurados.
+        return $remoteHost === strtolower($serverHost)
+            || in_array($remoteHost, array_map('strtolower', (array) config('app.stream_allowed_hosts', [])), true);
     }
 
     private function rewriteM3u8Playlist(string $playlist, string $remoteUrl, string $serverUrl): string

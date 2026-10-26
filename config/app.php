@@ -60,6 +60,12 @@ return [
     'site_url' => env('SITE_URL', 'https://fastv.fastnetperu.com.pe'),
 
     /*
+    | Servidores del panel desde los que tambien se pueden pedir canales y peliculas a traves del proxy /stream
+    | (ademas del servidor con el que inicia sesion el usuario). Separados por coma.
+    */
+    'stream_allowed_hosts' => array_values(array_filter(array_map('trim', explode(',', (string) env('STREAM_ALLOWED_HOSTS', '179.63.6.214'))))),
+
+    /*
     |--------------------------------------------------------------------------
     | Runtime Home API URL
     |--------------------------------------------------------------------------

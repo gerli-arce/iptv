@@ -36,6 +36,7 @@ foreach (['/api/player', '/portal-api'] as $prefix) {
         Route::post('/logout', [PortalController::class, 'apiLogout']);
         Route::get('/home', [PortalController::class, 'apiHome']);
         Route::get('/live', [PortalController::class, 'apiLive']);
+        Route::get('/live/{id}', [PortalController::class, 'apiLiveStream'])->whereNumber('id');
         Route::get('/movies', [PortalController::class, 'apiMovies']);
         Route::get('/series', [PortalController::class, 'apiSeries']);
     });

@@ -4,6 +4,7 @@ import Hls from "hls.js";
 import "../css/app.css";
 import { fetchHomeData } from "./services/homeApi";
 import { getContentLabel, getSectionItemHref, getSectionItemTitle, isMovieOnlyContent, isTmdbImage, proxiedImageUrl, tmdbSize } from "./spa/helpers";
+import { LiveTv } from "./spa/LiveTv";
 import { MobileNav, Navbar } from "./spa/Navbar";
 import { Billboard, LandscapeCard, PosterCard, Row } from "./spa/Browse";
 
@@ -69,7 +70,9 @@ function setDesktopPlayerMode(mode) {
   window.localStorage.setItem(DESKTOP_PLAYER_MODE_KEY, mode === "vlc" ? "vlc" : "internal");
 }
 
-const WEB_PAGES = new Set(["home", "movies", "series", "settings"]);
+const WEB_PAGES = new Set(["home", "live", "movies", "series", "settings"]);
+
+const getLiveStream = (id) => api(`/live/${id}`);
 
 function Icon({ name, className = "size-5" }) {
   const stroke = "currentColor";
@@ -1215,6 +1218,8 @@ function App() {
     series: null,
     seriesCategories: [],
     unplayableSeriesIds: [],
+    live: null,
+    liveError: false,
   });
   const [playerMode, setPlayerModeState] = useState(() => (desktopMode ? getDesktopPlayerMode() : "internal"));
   const [hasVlc, setHasVlc] = useState(false);
@@ -1275,6 +1280,13 @@ function App() {
       cancelled = true;
     };
   }, [auth.ok, page, data.home]);
+
+  useEffect(() => {
+    if (!auth.ok || page !== "live" || data.live || data.liveError) return;
+    api("/live")
+      .then((d) => setData((state) => ({ ...state, live: { channels: d.channels || [], categories: d.categories || [] } })))
+      .catch(() => setData((state) => ({ ...state, liveError: true })));
+  }, [auth.ok, page, data.live, data.liveError]);
 
   const setPlayerMode = (mode) => {
     const nextMode = mode === "vlc" ? "vlc" : "internal";
@@ -1356,6 +1368,18 @@ function App() {
                 homeError: null,
               }));
             }}
+          />
+        )}
+        {page === "live" && (
+          <LiveTv
+            channels={data.live?.channels || []}
+            categories={data.live?.categories || []}
+            loading={!data.live && !data.liveError}
+            error={data.liveError}
+            searchQuery={searchQuery}
+            hideUnplayable={hideUnplayable}
+            getStream={getLiveStream}
+            onRetry={() => setData((state) => ({ ...state, live: null, liveError: false }))}
           />
         )}
         {page === "movies" && (

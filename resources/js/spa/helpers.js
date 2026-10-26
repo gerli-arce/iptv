@@ -3,6 +3,8 @@ export function proxiedImageUrl(url) {
   if (/^\/|^data:|^blob:/i.test(String(url))) return url;
   // TMDB ya es https y permite cargarlo directo; asi no pasa por el servidor (que atiende de a una peticion en local).
   if (/^https:\/\/image\.tmdb\.org\//i.test(String(url))) return url;
+  // Los logos de canales del propio panel (https) tambien se cargan directo.
+  if (/^https:\/\/iptv\.fastnetperu\.com\.pe\//i.test(String(url))) return url;
   return `/image-proxy?url=${encodeURIComponent(url)}`;
 }
 

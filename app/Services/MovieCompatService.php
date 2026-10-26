@@ -17,6 +17,9 @@ class MovieCompatService
     /** @var array<string, mixed>|null */
     private ?array $seriesData = null;
 
+    /** @var array<string, string>|null */
+    private ?array $livePlayable = null;
+
     /**
      * @return array<string, string> stream_id => motivo
      */
@@ -106,6 +109,44 @@ class MovieCompatService
         $good = array_values(array_filter($episodes, fn ($episode) => ! isset($bad[(string) ($episode['id'] ?? '')])));
 
         return $good === [] ? $episodes : $good;
+    }
+
+    /**
+     * Canales en vivo que un navegador reproduce con imagen y sonido (lista de scripts/scan_live_compat.py).
+     *
+     * @return array<string, string> stream_id => nombre. Vacio si todavia no se genero la lista.
+     */
+    public function livePlayable(): array
+    {
+        if ($this->livePlayable !== null) {
+            return $this->livePlayable;
+        }
+
+        $data = $this->readJson('live-compat.json');
+
+        return $this->livePlayable = is_array($data['playable'] ?? null) ? $data['playable'] : [];
+    }
+
+    /**
+     * Marca cada canal con web_playable (true/false). Si no hay lista generada, no marca nada.
+     *
+     * @param array<int, mixed> $items
+     * @return array<int, mixed>
+     */
+    public function annotateLive(array $items): array
+    {
+        $playable = $this->livePlayable();
+        if ($playable === []) {
+            return $items;
+        }
+
+        foreach ($items as $index => $item) {
+            if (is_array($item)) {
+                $items[$index]['web_playable'] = isset($playable[(string) ($item['stream_id'] ?? '')]);
+            }
+        }
+
+        return $items;
     }
 
     /**

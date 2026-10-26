@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { Clapperboard, Film, Home, LogOut, Search, Settings, X } from "lucide-react";
+import { Clapperboard, Film, Home, LogOut, Search, Settings, Tv, X } from "lucide-react";
 
 export const NAV_ITEMS = [
   { key: "home", label: "Inicio", Icon: Home },
+  { key: "live", label: "TV en vivo", Icon: Tv },
   { key: "movies", label: "Peliculas", Icon: Film },
   { key: "series", label: "Series", Icon: Clapperboard },
 ];
@@ -149,7 +150,7 @@ export function Navbar({ page, setPage, searchQuery, setSearchQuery, user, onLog
 export function MobileNav({ page, setPage }) {
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-white/[0.07] bg-[#0a0a0d]/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden">
-      <div className="grid grid-cols-4">
+      <div className="grid grid-cols-5">
         {[...NAV_ITEMS, { key: "settings", label: "Ajustes", Icon: Settings }].map(({ key, label, Icon }) => (
           <button
             key={key}
