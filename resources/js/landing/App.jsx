@@ -10,6 +10,7 @@ import Pricing from "./components/sections/Pricing";
 import Testimonials from "./components/sections/Testimonials";
 import FloatingActions from "./components/ui/FloatingActions";
 import { FOOTER_LINKS, FOOTER_TEXT } from "./data/constants";
+import { HalloweenBats } from "../spa/Halloween";
 
 function LandingApp() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -19,6 +20,7 @@ function LandingApp() {
       <ManualModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
 
       <div className="relative z-10">
+        <HalloweenBats fixed />
         <Header />
         <main>
           <Hero />

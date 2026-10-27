@@ -7,6 +7,7 @@ import { getContentLabel, getSectionItemHref, getSectionItemTitle, isMovieOnlyCo
 import { FeaturedChannels, LiveTv } from "./spa/LiveTv";
 import { CategoryNav, CategoryRow } from "./spa/Catalog";
 import { useRoute } from "./spa/router";
+import { HalloweenBats } from "./spa/Halloween";
 import { MobileNav, Navbar } from "./spa/Navbar";
 import { Billboard, LandscapeCard, PosterCard, Row } from "./spa/Browse";
 
@@ -197,6 +198,7 @@ function Login({ onDone }) {
         <div className="absolute inset-x-0 top-0 h-[560px] bg-[radial-gradient(ellipse_60%_60%_at_50%_-10%,rgba(255,99,99,0.28),transparent_70%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.07)_1px,transparent_1px)] bg-[size:28px_28px] [mask-image:radial-gradient(ellipse_70%_55%_at_50%_30%,black,transparent_75%)]" />
       </div>
+      <HalloweenBats />
 
       <div className="relative z-10 w-full max-w-md">
         <a href={salesUrl} className="mx-auto mb-8 flex w-fit items-center gap-3">

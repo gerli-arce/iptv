@@ -51,10 +51,15 @@ export function Navbar({ page, setPage, searchQuery, setSearchQuery, user, onLog
       }`}
     >
       <div className="mx-auto flex h-16 w-full max-w-[1800px] items-center gap-4 px-4 md:h-[72px] md:gap-8 md:px-10">
-        <button onClick={() => go("home")} className="flex shrink-0 items-center gap-2.5" aria-label="Inicio">
-          <img src="/logo-fastnet-player.png" alt="Fastnet Player" className="size-9 rounded-[10px] shadow-[0_0_18px_rgba(255,60,60,0.35)] md:size-10" />
-          <span className="hidden text-base font-bold tracking-tight text-white sm:block">FastnetPlayer</span>
-        </button>
+        <a href="/" className="flex shrink-0 items-center" aria-label="Fastnet Player - ir a la pagina web">
+          <img
+            src="/logo-fastnet-wordmark.png"
+            alt="Fastnet Player"
+            width="636"
+            height="344"
+            className="h-14 w-auto drop-shadow-[0_2px_14px_rgba(255,60,60,0.28)] transition duration-300 hover:scale-[1.04] md:h-16"
+          />
+        </a>
 
         <nav className="hidden items-center gap-1 md:flex">
           {NAV_ITEMS.map(({ key, label }) => (

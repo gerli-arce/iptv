@@ -112,12 +112,13 @@
     <style>
         html, body { background: #08080b; }
         #boot-splash { display: none; position: fixed; inset: 0; z-index: 50; place-items: center; background: #08080b; }
-        #boot-splash img { width: 64px; height: 64px; border-radius: 16px; animation: bootPulse 1.2s ease-in-out infinite; }
+        #boot-splash img { width: min(46vw, 170px); height: auto; animation: bootPulse 1.2s ease-in-out infinite; }
         .js #boot-splash { display: grid; }
         .js #seo-fallback { display: none; }
         @keyframes bootPulse { 0%, 100% { opacity: .55; transform: scale(.94); } 50% { opacity: 1; transform: scale(1); } }
     </style>
 
+    <link rel="preload" as="image" href="/logo-fastnet-wordmark.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -132,7 +133,7 @@
          React lo reemplaza apenas carga, con el mismo contenido. --}}
     <div id="app">
         <div id="boot-splash" aria-hidden="true">
-            <img src="/logo-fastnet-player.png" alt="" width="64" height="64">
+            <img src="/logo-fastnet-wordmark.png" alt="" width="636" height="344">
         </div>
         <div id="seo-fallback" class="mx-auto max-w-3xl px-4 py-16 text-zinc-200">
             <a href="{{ $url }}" class="flex items-center gap-3">

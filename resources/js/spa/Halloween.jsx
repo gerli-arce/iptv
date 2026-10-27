@@ -47,10 +47,11 @@ function Bat({ bat }) {
   );
 }
 
-export function HalloweenBats({ className = "" }) {
+// fixed: cubre toda la ventana y sigue visible al hacer scroll (landing). Sin fixed llena el contenedor que la contiene.
+export function HalloweenBats({ className = "", fixed = false }) {
   if (!isHalloweenSeason()) return null;
   return (
-    <div aria-hidden="true" className={`pointer-events-none absolute inset-0 overflow-hidden motion-reduce:hidden ${className}`}>
+    <div aria-hidden="true" className={`pointer-events-none ${fixed ? "fixed z-30" : "absolute"} inset-0 overflow-hidden motion-reduce:hidden ${className}`}>
       {BATS.map((bat, i) => (
         <Bat key={i} bat={bat} />
       ))}
