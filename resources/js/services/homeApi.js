@@ -2,7 +2,21 @@ export function getHomeApiUrl() {
   return window.__FASTPLAYER_CONFIG__?.homeApiUrl || import.meta.env.VITE_HOME_API_URL || "";
 }
 
+// El servidor entrega el inicio con la imagen de fondo de cada destacado ya resuelta. Si falla, se pide directo al panel.
+async function fetchHomeFeed() {
+  const response = await fetch("/api/player/home-feed", { credentials: "same-origin", headers: { Accept: "application/json" } });
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  return response.json();
+}
+
 export async function fetchHomeData() {
+  try {
+    const feed = await fetchHomeFeed();
+    if (feed && (Array.isArray(feed.banners) || Array.isArray(feed.sections))) return feed;
+  } catch {
+    // Se usa la direccion directa del panel.
+  }
+
   const url = getHomeApiUrl();
 
   if (!url) {

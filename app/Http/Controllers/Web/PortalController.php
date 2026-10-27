@@ -438,6 +438,101 @@ class PortalController extends Controller
         ]);
     }
 
+    /**
+     * Los banners y secciones del inicio (los publica el panel), con la imagen horizontal de fondo de TMDB ya
+     * resuelta en cada destacado. Asi el navegador muestra el fondo completo desde el primer momento, sin una
+     * segunda consulta a TMDB.
+     */
+    public function apiHomeFeed(): JsonResponse
+    {
+        $url = (string) config('app.home_api_url');
+        if ($url === '') {
+            return response()->json(['message' => 'Inicio no configurado'], 503);
+        }
+
+        try {
+            $data = Cache::remember('home.feed', now()->addSeconds(60), function () use ($url): array {
+                $response = Http::timeout(6)->acceptJson()->get($url);
+                if (! $response->successful() || ! is_array($response->json())) {
+                    throw new \RuntimeException('respuesta invalida del inicio');
+                }
+
+                return $response->json();
+            });
+        } catch (Throwable) {
+            return response()->json(['message' => 'No se pudo cargar el inicio'], 502);
+        }
+
+        return response()->json($this->withBackdrops($data));
+    }
+
+    /**
+     * Agrega backdrop_url a los primeros elementos de las secciones que tienen poster de TMDB (los que usa el banner).
+     *
+     * @param array<string, mixed> $data
+     * @return array<string, mixed>
+     */
+    private function withBackdrops(array $data): array
+    {
+        $deadline = microtime(true) + 3.0;
+        $count = 0;
+
+        foreach (($data['sections'] ?? []) as $s => $section) {
+            foreach (($section['items'] ?? []) as $i => $item) {
+                if ($count >= 8) {
+                    break 2;
+                }
+                if (! str_contains((string) ($item['custom_image'] ?? ''), 'image.tmdb.org')) {
+                    continue;
+                }
+                $count++;
+                $title = (string) ($item['custom_title'] ?? $item['title'] ?? $item['name'] ?? $item['external_id'] ?? '');
+                $kind = strtolower((string) ($item['content_type'] ?? '')) === 'series' ? 'tv' : 'movie';
+                $backdrop = $this->tmdbBackdrop($title, $kind, $deadline);
+                if ($backdrop) {
+                    $data['sections'][$s]['items'][$i]['backdrop_url'] = $backdrop;
+                }
+            }
+        }
+
+        return $data;
+    }
+
+    /**
+     * Imagen horizontal de TMDB para un titulo. Se guarda 7 dias (los titulos sin imagen, 6 horas; los errores no
+     * se guardan). Si se acaba el tiempo disponible devuelve null y la web la busca por su cuenta.
+     */
+    private function tmdbBackdrop(string $title, string $kind, float $deadline): ?string
+    {
+        $query = trim((string) preg_replace('/\s+/', ' ', (string) preg_replace('/[._-]/', ' ', (string) preg_replace('/\b(HD|FHD|4K|LATINO|SUBTITULADO|ESPANOL)\b/i', '', $title))));
+        if (mb_strlen($query) < 2) {
+            return null;
+        }
+
+        $key = 'tmdb.backdrop.' . $kind . '.' . md5(mb_strtolower($query));
+        $cached = Cache::get($key);
+        if ($cached !== null) {
+            return $cached === '' ? null : $cached;
+        }
+        if (microtime(true) > $deadline) {
+            return null;
+        }
+
+        $result = $this->tmdbService->searchMulti($query);
+        if (! ($result['ok'] ?? false)) {
+            return null;
+        }
+
+        $results = collect($result['data']['results'] ?? []);
+        $hit = $results->first(fn ($r) => ($r['media_type'] ?? null) === $kind && ! empty($r['backdrop_path']))
+            ?: $results->first(fn ($r) => ! empty($r['backdrop_path']));
+        $url = $hit ? 'https://image.tmdb.org/t/p/original' . $hit['backdrop_path'] : null;
+
+        Cache::put($key, $url ?? '', $url ? now()->addDays(7) : now()->addHours(6));
+
+        return $url;
+    }
+
     public function apiLive(Request $request): JsonResponse
     {
         [$serverUrl, $username, $password] = $this->getIptvSessionCredentials();

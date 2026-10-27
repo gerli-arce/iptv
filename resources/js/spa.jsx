@@ -647,6 +647,29 @@ function HomeSkeleton() {
   );
 }
 
+const BACKDROP_CACHE_KEY = "fp-backdrops-v1";
+const backdropKey = (slide) => `${slide.kind || "movie"}:${normalizeTitle(slide.query)}`;
+
+function readBackdropCache() {
+  try {
+    const data = JSON.parse(localStorage.getItem(BACKDROP_CACHE_KEY) || "{}");
+    return data && typeof data === "object" ? data : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveBackdrop(key, url) {
+  try {
+    const cache = { ...readBackdropCache(), [key]: url };
+    // Se conservan solo las ultimas para que no crezca sin limite.
+    const entries = Object.entries(cache).slice(-40);
+    localStorage.setItem(BACKDROP_CACHE_KEY, JSON.stringify(Object.fromEntries(entries)));
+  } catch {
+    // Sin almacenamiento local el banner funciona igual, solo que carga un poco mas tarde.
+  }
+}
+
 function HomeLike({ home, isLoading, error, onRetry, searchQuery = "", movies = [], movieCategories = [], blockedIds = new Set(), liveChannels = [], liveCategories = [] }) {
   const q = searchQuery.trim().toLowerCase();
 
@@ -678,13 +701,15 @@ function HomeLike({ home, isLoading, error, onRetry, searchQuery = "", movies = 
     if (sectionItems.length) {
       return sectionItems.map((item, i) => {
         const poster = isTmdbImage(item.custom_image);
+        // backdrop_url lo resuelve el servidor junto con el inicio; sin el, se busca en TMDB desde el navegador.
+        const backdrop = item.backdrop_url ? proxiedImageUrl(item.backdrop_url) : "";
         return {
           id: item.id || `${item.external_id}-${i}`,
           title: getSectionItemTitle(item),
           subtitle: item.overview || item.description || item.plot || "",
-          image: poster ? "" : proxiedImageUrl(item.custom_image),
-          poster: poster ? proxiedImageUrl(tmdbSize(item.custom_image, "w780")) : "",
-          query: poster ? getSectionItemTitle(item) : "",
+          image: backdrop || (poster ? "" : proxiedImageUrl(item.custom_image)),
+          poster: !backdrop && poster ? proxiedImageUrl(tmdbSize(item.custom_image, "w780")) : "",
+          query: !backdrop && poster ? getSectionItemTitle(item) : "",
           kind: String(item.content_type).toLowerCase() === "series" ? "tv" : "movie",
           href: getSectionItemHref(item),
           badge: item.badge || getContentLabel(item.content_type),
@@ -709,30 +734,55 @@ function HomeLike({ home, isLoading, error, onRetry, searchQuery = "", movies = 
   }, [home, movies]);
 
   // Fondo horizontal en HD desde TMDB; mientras llega (o si falla) se ve el poster con desenfoque.
+  // backdrops[id] = url (encontrada) | false (no hay o TMDB no respondio) | undefined (buscando).
+  // Las ya encontradas se guardan en el navegador para que al recargar el banner salga directo con su fondo.
   const [backdrops, setBackdrops] = useState({});
+  const cachedBackdrops = useMemo(readBackdropCache, []);
   useEffect(() => {
     let cancelled = false;
     slides
-      .filter((slide) => slide.query && !backdrops[slide.id])
+      .filter((slide) => slide.query && backdrops[slide.id] === undefined && !cachedBackdrops[backdropKey(slide)])
       .forEach(async (slide) => {
+        const finish = (value) => !cancelled && setBackdrops((prev) => ({ ...prev, [slide.id]: value }));
         try {
-          const res = await fetch(`/api/imdb/search?q=${encodeURIComponent(normalizeTitle(slide.query))}&language=es-MX`, { credentials: "same-origin" });
-          if (!res.ok) return;
+          const controller = new AbortController();
+          const timer = setTimeout(() => controller.abort(), 4000);
+          const res = await fetch(`/api/imdb/search?q=${encodeURIComponent(normalizeTitle(slide.query))}&language=es-MX`, { credentials: "same-origin", signal: controller.signal });
+          clearTimeout(timer);
+          if (!res.ok) return finish(false);
           const data = await res.json();
           const results = data?.data?.results || [];
           const hit = results.find((r) => r?.media_type === slide.kind && r?.backdrop_path) || results.find((r) => r?.backdrop_path);
-          if (hit && !cancelled) {
-            setBackdrops((prev) => ({ ...prev, [slide.id]: proxiedImageUrl(`https://image.tmdb.org/t/p/original${hit.backdrop_path}`) }));
-          }
+          if (!hit) return finish(false);
+          const url = proxiedImageUrl(`https://image.tmdb.org/t/p/original${hit.backdrop_path}`);
+          // Se espera a que la imagen cargue para mostrarla ya completa, sin que aparezca a pedazos.
+          await new Promise((resolve) => {
+            const img = new Image();
+            img.onload = resolve;
+            img.onerror = resolve;
+            img.src = url;
+          });
+          saveBackdrop(backdropKey(slide), url);
+          finish(url);
         } catch {
-          // Sin TMDB se mantiene el poster.
+          // Sin TMDB se usa el poster.
+          finish(false);
         }
       });
     return () => {
       cancelled = true;
     };
   }, [slides]);
-  const heroSlides = useMemo(() => slides.map((slide) => (backdrops[slide.id] ? { ...slide, image: backdrops[slide.id] } : slide)), [slides, backdrops]);
+  const heroSlides = useMemo(
+    () =>
+      slides.map((slide) => {
+        if (!slide.query) return slide;
+        const url = backdrops[slide.id] || cachedBackdrops[backdropKey(slide)];
+        if (url) return { ...slide, image: url };
+        return backdrops[slide.id] === false ? slide : { ...slide, pending: true };
+      }),
+    [slides, backdrops, cachedBackdrops],
+  );
 
   const catalogRows = useMemo(() => {
     if (!movies.length) return [];

@@ -34,7 +34,10 @@ export function Billboard({ slides = [] }) {
     <section className="relative isolate min-h-[420px] overflow-hidden sm:min-h-[520px] md:min-h-[640px] lg:min-h-[72vh]">
       <div key={slide.id} className="absolute inset-0 animate-[fpFade_0.8s_ease-out]">
         {slide.image ? (
-          <img src={slide.image} alt="" className="h-full w-full object-cover object-center" />
+          <img key={slide.image} src={slide.image} alt="" className="h-full w-full animate-[fpFade_0.9s_ease-out] object-cover object-center" />
+        ) : slide.pending ? (
+          // Se esta buscando la imagen horizontal: fondo neutro en vez de mostrar el poster y cambiarlo despues.
+          <div className="h-full w-full bg-[radial-gradient(ellipse_at_70%_40%,#1b1b24_0%,#0b0b10_70%)]" />
         ) : slide.poster ? (
           <>
             <img src={slide.poster} alt="" className="h-full w-full scale-110 object-cover opacity-40 blur-2xl" />
