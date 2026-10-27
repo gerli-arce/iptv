@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $title }}</title>
+    <title>{{ $seriesTitle ?? $title }}</title>
     @include('partials.favicon')
     @include('partials.noindex')
     <script src="https://cdn.tailwindcss.com"></script>
@@ -51,7 +51,7 @@
                             <span>{{ count($episodes) }} episodios</span>
                         @endif
                     </div>
-                    <h1 class="mt-2 line-clamp-2 text-xl font-black text-white md:text-2xl">{{ $title }}</h1>
+                    <h1 class="mt-2 line-clamp-2 text-xl font-black text-white md:text-2xl">{{ $seriesTitle ?? $title }}</h1>
                 </div>
 
                 <div class="shrink-0 rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2 text-right">

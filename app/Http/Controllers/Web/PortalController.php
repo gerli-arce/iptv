@@ -247,7 +247,8 @@ class PortalController extends Controller
                 $this->buildStreamProxyUrl(rtrim($serverUrl, '/') . "/movie/{$username}/{$password}/{$id}.ts"),
             ])));
             $url = $candidates[0];
-            $title = "Pelicula {$id}";
+            $vod = $this->xtreamService->getVodInfo($serverUrl, $username, $password, $id);
+            $title = trim((string) ($vod['info']['name'] ?? $vod['movie_data']['name'] ?? '')) ?: "Pelicula {$id}";
         }
 
         if (! $url) {
@@ -337,6 +338,7 @@ class PortalController extends Controller
             'url' => $url,
             'title' => $title,
             'type' => 'series',
+            'seriesTitle' => trim((string) ($seriesInfo['info']['name'] ?? '')) ?: null,
             'candidates' => $candidates,
             'episodes' => $flatEpisodes,
             'seriesId' => $seriesId,
