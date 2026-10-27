@@ -4,6 +4,8 @@ import Hls from "hls.js";
 import { ChevronLeft, ChevronRight, Maximize, Minimize, Pause, PictureInPicture2, Play, Radio, RotateCcw, Tv, Volume2, VolumeX, X } from "lucide-react";
 import { proxiedImageUrl } from "./helpers";
 import { HalloweenBats } from "./Halloween";
+import { ScrollStrip } from "./Catalog";
+import { isIos } from "./pwa";
 
 const HLS_CONFIG = {
   enableWorker: true,
@@ -73,8 +75,10 @@ export function LivePlayer({ channel, categoryName, getStream, onClose, onStep, 
   };
 
   const toggleFullscreen = () => {
+    const video = videoRef.current;
     if (document.fullscreenElement) document.exitFullscreen?.();
-    else frameRef.current?.requestFullscreen?.().catch(() => {});
+    else if (frameRef.current?.requestFullscreen) frameRef.current.requestFullscreen().catch(() => {});
+    else if (video?.webkitEnterFullscreen) video.webkitEnterFullscreen(); // iPhone: solo el video puede ir a pantalla completa
   };
 
   const togglePip = () => {
@@ -134,6 +138,8 @@ export function LivePlayer({ channel, categoryName, getStream, onClose, onStep, 
     let hls = null;
     let cancelled = false;
     let silenceTimer = null;
+    let nativeTimer = null;
+    let nativeFail = null;
     setStatus("loading");
     setSilent(false);
     setBuffering(false);
@@ -171,6 +177,11 @@ export function LivePlayer({ channel, categoryName, getStream, onClose, onStep, 
     video.addEventListener("pause", onPlayState);
     video.addEventListener("volumechange", onVolume);
     video.addEventListener("timeupdate", onTime);
+    // Con el reproductor nativo (iPhone) los fallos llegan como evento del video.
+    const onError = () => nativeFail && nativeFail();
+    const onLoaded = () => clearTimeout(nativeTimer);
+    video.addEventListener("error", onError);
+    video.addEventListener("loadeddata", onLoaded);
     onVolume();
 
     getStream(channel.stream_id)
@@ -178,7 +189,27 @@ export function LivePlayer({ channel, categoryName, getStream, onClose, onStep, 
         if (cancelled) return;
         // Primero la direccion directa del panel (si la hay) y, si falla, la que pasa por el proxy de la app.
         const sources = [url, fallbackUrl].filter(Boolean);
-        if (Hls.isSupported()) {
+        const canNative = Boolean(video.canPlayType("application/vnd.apple.mpegurl"));
+
+        // iPhone/iPad: Safari reproduce HLS por si mismo y es mas fiable que hls.js (que necesita funciones que alli
+        // son limitadas). Si una fuente falla o no arranca en 15 s, se prueba la siguiente.
+        const startNative = (index) => {
+          clearTimeout(nativeTimer);
+          const failOver = () => {
+            if (cancelled) return;
+            if (index + 1 < sources.length) startNative(index + 1);
+            else setStatus("error");
+          };
+          nativeFail = failOver;
+          video.src = sources[index];
+          video.load();
+          tryPlay();
+          nativeTimer = setTimeout(() => video.readyState < 2 && failOver(), 15000);
+        };
+
+        if (isIos() && canNative) {
+          startNative(0);
+        } else if (Hls.isSupported()) {
           const start = (index) => {
             if (hls) hls.destroy();
             const instance = new Hls(HLS_CONFIG);
@@ -207,9 +238,8 @@ export function LivePlayer({ channel, categoryName, getStream, onClose, onStep, 
             });
           };
           start(0);
-        } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
-          video.src = sources[0];
-          tryPlay();
+        } else if (canNative) {
+          startNative(0);
         } else {
           setStatus("error");
         }
@@ -219,6 +249,10 @@ export function LivePlayer({ channel, categoryName, getStream, onClose, onStep, 
     return () => {
       cancelled = true;
       clearTimeout(silenceTimer);
+      clearTimeout(nativeTimer);
+      nativeFail = null;
+      video.removeEventListener("error", onError);
+      video.removeEventListener("loadeddata", onLoaded);
       video.removeEventListener("playing", onPlaying);
       video.removeEventListener("waiting", onWaiting);
       video.removeEventListener("play", onPlayState);
@@ -351,6 +385,7 @@ export function LivePlayer({ channel, categoryName, getStream, onClose, onStep, 
               <IconButton label={muted || volume === 0 ? "Activar sonido (M)" : "Silenciar (M)"} onClick={toggleMute}>
                 {muted || volume === 0 ? <VolumeX className="size-5" /> : <Volume2 className="size-5" />}
               </IconButton>
+              {isIos() ? null : (
               <input
                 type="range"
                 min="0"
@@ -367,6 +402,7 @@ export function LivePlayer({ channel, categoryName, getStream, onClose, onStep, 
                 style={{ "--fp-fill": `${(muted ? 0 : volume) * 100}%` }}
                 className="fp-range w-0 opacity-0 transition-all duration-200 group-hover/vol:ml-1 group-hover/vol:mr-2 group-hover/vol:w-20 group-hover/vol:opacity-100 focus:ml-1 focus:mr-2 focus:w-20 focus:opacity-100"
               />
+              )}
             </div>
 
             {behindLive ? (
@@ -397,7 +433,7 @@ export function LivePlayer({ channel, categoryName, getStream, onClose, onStep, 
         {related.length ? (
           <section className="mx-auto mt-5 w-full" style={{ maxWidth: frameWidth }}>
             <p className="mb-2.5 px-0.5 font-mono text-[10px] uppercase tracking-[0.18em] text-zinc-500">{categoryName ? `Más en ${categoryName}` : "Más canales"}</p>
-            <div className="fp-no-scrollbar -mx-3 flex gap-2.5 overflow-x-auto px-3 pb-1 md:mx-0 md:px-0">
+            <ScrollStrip className="-mx-3 gap-2.5 px-3 pb-1 md:mx-0 md:px-0" arrowTop="2.4rem">
               {related.map((item) => {
                 const itemLogo = proxiedImageUrl(item.stream_icon);
                 return (
@@ -405,7 +441,7 @@ export function LivePlayer({ channel, categoryName, getStream, onClose, onStep, 
                     key={item.stream_id}
                     onClick={() => onSelect?.(item)}
                     aria-label={`Ver ${item.name}`}
-                    className="group w-[132px] shrink-0 text-left md:w-[150px]"
+                    className="group w-[132px] shrink-0 snap-start text-left md:w-[150px]"
                   >
                     <div className="relative grid aspect-video place-items-center overflow-hidden rounded-lg bg-white/[0.06] ring-1 ring-white/10 transition group-hover:-translate-y-0.5 group-hover:ring-coral/60">
                       {itemLogo ? <img src={itemLogo} alt="" loading="lazy" className="size-full object-contain p-3" /> : <Tv className="size-5 text-zinc-600" />}
@@ -414,7 +450,7 @@ export function LivePlayer({ channel, categoryName, getStream, onClose, onStep, 
                   </button>
                 );
               })}
-            </div>
+            </ScrollStrip>
           </section>
         ) : null}
       </div>

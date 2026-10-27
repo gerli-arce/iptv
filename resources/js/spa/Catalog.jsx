@@ -1,7 +1,54 @@
-import { useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 // Piezas compartidas por TV en vivo, Peliculas y Series: menu de categorias y fila por categoria.
+
+// Fila que se desplaza a los lados con flechas (en pantallas grandes) y con el dedo (en celulares). Las flechas
+// aparecen solo hacia el lado donde todavia hay mas. arrowTop: altura de las flechas respecto al inicio de la fila.
+export function ScrollStrip({ children, className = "", arrowTop = "50%" }) {
+  const ref = useRef(null);
+  const [edges, setEdges] = useState({ left: false, right: false });
+
+  const update = useCallback(() => {
+    const el = ref.current;
+    if (!el) return;
+    setEdges({ left: el.scrollLeft > 4, right: el.scrollLeft + el.clientWidth < el.scrollWidth - 4 });
+  }, []);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return undefined;
+    update();
+    el.addEventListener("scroll", update, { passive: true });
+    const observer = typeof ResizeObserver !== "undefined" ? new ResizeObserver(update) : null;
+    observer?.observe(el);
+    return () => {
+      el.removeEventListener("scroll", update);
+      observer?.disconnect();
+    };
+  }, [update, children]);
+
+  const scrollBy = (dir) => ref.current?.scrollBy({ left: dir * ref.current.clientWidth * 0.8, behavior: "smooth" });
+  const arrow = "absolute z-10 hidden size-9 -translate-y-1/2 place-items-center rounded-full border border-white/20 bg-black/75 text-white shadow-[0_6px_20px_rgba(0,0,0,0.6)] backdrop-blur transition hover:scale-105 hover:bg-black md:grid";
+
+  return (
+    <div className="relative">
+      {edges.left ? (
+        <button onClick={() => scrollBy(-1)} aria-label="Anterior" style={{ top: arrowTop }} className={`${arrow} left-1`}>
+          <ChevronLeft className="size-5" />
+        </button>
+      ) : null}
+      <div ref={ref} className={`fp-no-scrollbar flex snap-x overflow-x-auto scroll-smooth ${className}`}>
+        {children}
+      </div>
+      {edges.right ? (
+        <button onClick={() => scrollBy(1)} aria-label="Siguiente" style={{ top: arrowTop }} className={`${arrow} right-1`}>
+          <ChevronRight className="size-5" />
+        </button>
+      ) : null}
+    </div>
+  );
+}
 
 // Fila horizontal de una categoria: titulo con cantidad, "Ver todos" y flechas al pasar el raton.
 export function CategoryRow({ title, count, onSeeAll, children }) {

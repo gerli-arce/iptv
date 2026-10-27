@@ -32,6 +32,14 @@ class XtreamService
         ]);
     }
 
+    public function getVodInfo(string $serverUrl, string $username, string $password, int|string $vodId): array
+    {
+        return $this->request($serverUrl, $username, $password, [
+            'action' => 'get_vod_info',
+            'vod_id' => $vodId,
+        ]);
+    }
+
     public function getVodCategories(string $serverUrl, string $username, string $password): array
     {
         return $this->request($serverUrl, $username, $password, [

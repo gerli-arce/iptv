@@ -254,7 +254,7 @@ class PortalController extends Controller
             return redirect()->route('app');
         }
 
-        return view('portal.player', compact('url', 'title', 'type', 'candidates'));
+        return view('portal.player', compact('url', 'title', 'type', 'candidates', 'id'));
     }
 
     public function playSeries(int $seriesId, ?int $episodeId = null): View|RedirectResponse
@@ -533,6 +533,317 @@ class PortalController extends Controller
         return $url;
     }
 
+    /**
+     * Ficha de una pelicula o serie para la ventana de detalle: los datos del panel (siempre) mejorados con TMDB
+     * (reparto con fotos, trailer, fondo grande). El panel entrega el id exacto de TMDB de cada pelicula.
+     */
+    public function apiTitleInfo(string $type, int $id): JsonResponse
+    {
+        [$serverUrl, $username, $password] = $this->getIptvSessionCredentials();
+        if (! $serverUrl || ! $username || ! $password) {
+            return response()->json(['message' => 'No autenticado'], 401);
+        }
+
+        $payload = $type === 'series'
+            ? $this->seriesInfoPayload($serverUrl, $username, $password, $id)
+            : $this->movieInfoPayload($serverUrl, $username, $password, $id);
+
+        return $payload
+            ? response()->json($payload)
+            : response()->json(['message' => 'No se encontro la informacion'], 404);
+    }
+
+    /**
+     * Datos de TMDB de una temporada (titulo, sinopsis e imagen de cada capitulo), por numero de capitulo.
+     */
+    public function apiSeriesSeason(Request $request, int $id, int $season): JsonResponse
+    {
+        [$serverUrl, $username, $password] = $this->getIptvSessionCredentials();
+        if (! $serverUrl || ! $username || ! $password) {
+            return response()->json(['message' => 'No autenticado'], 401);
+        }
+
+        $tmdbId = (int) $request->query('tmdb', 0);
+        $episodes = [];
+        if ($tmdbId > 0) {
+            $result = $this->tmdbService->tvSeason($tmdbId, $season);
+            foreach ((($result['ok'] ?? false) ? ($result['data']['episodes'] ?? []) : []) as $episode) {
+                $rating = round((float) ($episode['vote_average'] ?? 0), 1);
+                $episodes[(int) ($episode['episode_number'] ?? 0)] = [
+                    'title' => (string) ($episode['name'] ?? ''),
+                    'overview' => (string) ($episode['overview'] ?? ''),
+                    'still' => ! empty($episode['still_path']) ? 'https://image.tmdb.org/t/p/w300' . $episode['still_path'] : null,
+                    'runtime' => $episode['runtime'] ?? null,
+                    'air_date' => $episode['air_date'] ?? null,
+                    'rating' => $rating > 0 ? $rating : null,
+                ];
+            }
+        }
+
+        return response()->json(['episodes' => (object) $episodes]);
+    }
+
+    private function movieInfoPayload(string $serverUrl, string $username, string $password, int $id): ?array
+    {
+        $vod = $this->xtreamService->getVodInfo($serverUrl, $username, $password, $id);
+        $info = is_array($vod['info'] ?? null) ? $vod['info'] : [];
+        $data = is_array($vod['movie_data'] ?? null) ? $vod['movie_data'] : [];
+        $name = trim((string) ($info['name'] ?? $data['name'] ?? ''));
+        if ($name === '' && ! $info) {
+            return null;
+        }
+
+        $tmdb = $this->tmdbTitle('movie', (int) ($info['tmdb_id'] ?? 0), $name, $this->yearOf($info['releasedate'] ?? $info['release_date'] ?? null));
+        $ext = (string) ($data['container_extension'] ?? $info['container_extension'] ?? '') ?: 'mp4';
+
+        return array_merge($this->titlePayload('movie', $id, $name, $info, $tmdb), [
+            'play_url' => "/play/movie/{$id}?ext={$ext}",
+        ]);
+    }
+
+    private function seriesInfoPayload(string $serverUrl, string $username, string $password, int $id): ?array
+    {
+        $series = $this->xtreamService->getSeriesInfo($serverUrl, $username, $password, $id);
+        $info = is_array($series['info'] ?? null) ? $series['info'] : [];
+        $episodesBySeason = is_array($series['episodes'] ?? null) ? $series['episodes'] : [];
+        $name = trim((string) ($info['name'] ?? ''));
+        if ($name === '' && ! $episodesBySeason) {
+            return null;
+        }
+
+        $tmdb = $this->tmdbTitle('tv', (int) ($info['tmdb_id'] ?? $info['tmdb'] ?? 0), $name, $this->yearOf($info['releaseDate'] ?? $info['release_date'] ?? null));
+        $payload = $this->titlePayload('series', $id, $name, $info, $tmdb);
+
+        $flat = [];
+        foreach ($episodesBySeason as $season => $episodes) {
+            if (! is_array($episodes)) {
+                continue;
+            }
+            foreach ($episodes as $episode) {
+                if (! is_array($episode) || empty($episode['id'])) {
+                    continue;
+                }
+                $episodeInfo = is_array($episode['info'] ?? null) ? $episode['info'] : [];
+                $flat[] = [
+                    'season' => (int) $season,
+                    'id' => (string) $episode['id'],
+                    'number' => (int) ($episode['episode_num'] ?? 0),
+                    'title' => trim((string) ($episode['title'] ?? '')),
+                    'overview' => trim((string) ($episodeInfo['plot'] ?? '')),
+                    'still' => ($episodeInfo['movie_image'] ?? null) ?: null,
+                    'runtime' => isset($episodeInfo['duration_secs']) ? (int) round(((int) $episodeInfo['duration_secs']) / 60) : null,
+                    'ext' => ($episode['container_extension'] ?? '') ?: 'mp4',
+                ];
+            }
+        }
+
+        // Los episodios que el navegador no reproduce se ocultan, igual que en la pagina de reproduccion.
+        $bySeason = [];
+        foreach ($this->movieCompat->playableEpisodes($flat) as $episode) {
+            $bySeason[$episode['season']][] = $episode;
+        }
+        ksort($bySeason);
+
+        $payload['seasons'] = [];
+        foreach ($bySeason as $number => $episodes) {
+            usort($episodes, fn ($a, $b) => $a['number'] <=> $b['number']);
+            $payload['seasons'][] = [
+                'number' => $number,
+                'name' => $number === 0 ? 'Especiales' : "Temporada {$number}",
+                'episodes' => array_map(fn ($episode) => Arr::except($episode, ['season']), $episodes),
+            ];
+        }
+        $payload['tmdb_id'] = $tmdb['id'] ?? null;
+        $payload['play_url'] = "/play/series/{$id}";
+
+        return $payload;
+    }
+
+    /**
+     * Ficha comun de pelicula o serie. TMDB manda cuando hay dato; el panel completa lo que falte.
+     *
+     * @param array<string, mixed> $info datos del panel
+     * @param array<string, mixed>|null $tmdb detalle de TMDB (con credits y videos)
+     * @return array<string, mixed>
+     */
+    private function titlePayload(string $kind, int $id, string $name, array $info, ?array $tmdb): array
+    {
+        $isMovie = $kind === 'movie';
+        $image = fn (?string $path, string $size) => $path ? "https://image.tmdb.org/t/p/{$size}{$path}" : null;
+
+        $genres = $tmdb
+            ? array_values(array_filter(array_column($tmdb['genres'] ?? [], 'name')))
+            : array_values(array_filter(array_map('trim', explode('/', (string) ($info['genre'] ?? '')))));
+
+        $cast = [];
+        foreach (array_slice($tmdb['credits']['cast'] ?? [], 0, 14) as $person) {
+            $cast[] = [
+                'name' => (string) ($person['name'] ?? ''),
+                'character' => (string) ($person['character'] ?? ''),
+                'photo' => $image($person['profile_path'] ?? null, 'w185'),
+            ];
+        }
+        if (! $cast) {
+            foreach (array_slice(array_values(array_filter(array_map('trim', explode(',', (string) ($info['cast'] ?? ''))))), 0, 14) as $person) {
+                $cast[] = ['name' => $person, 'character' => '', 'photo' => null];
+            }
+        }
+
+        $directors = [];
+        foreach (($tmdb['credits']['crew'] ?? []) as $member) {
+            if (($member['job'] ?? '') === 'Director') {
+                $directors[] = (string) ($member['name'] ?? '');
+            }
+        }
+        foreach (($tmdb['created_by'] ?? []) as $creator) {
+            $directors[] = (string) ($creator['name'] ?? '');
+        }
+        if (! $directors && trim((string) ($info['director'] ?? '')) !== '') {
+            $directors = array_map('trim', explode(',', (string) $info['director']));
+        }
+
+        $trailer = null;
+        foreach (['es', 'en', null] as $language) {
+            foreach (($tmdb['videos']['results'] ?? []) as $video) {
+                if (($video['site'] ?? '') !== 'YouTube' || ! in_array($video['type'] ?? '', ['Trailer', 'Teaser'], true)) {
+                    continue;
+                }
+                if ($language !== null && ($video['iso_639_1'] ?? '') !== $language) {
+                    continue;
+                }
+                $trailer = (string) ($video['key'] ?? '') ?: null;
+                if ($trailer) {
+                    break 2;
+                }
+            }
+        }
+        $trailer ??= (trim((string) ($info['youtube_trailer'] ?? '')) ?: null);
+
+        $runtime = $isMovie
+            ? ((int) ($tmdb['runtime'] ?? 0) ?: (int) round(((int) ($info['duration_secs'] ?? 0)) / 60))
+            : ((int) ($tmdb['episode_run_time'][0] ?? 0) ?: (int) ($info['episode_run_time'] ?? 0));
+        $rating = round((float) ($tmdb['vote_average'] ?? 0), 1) ?: round((float) ($info['rating'] ?? 0), 1);
+        $backdropPanel = is_array($info['backdrop_path'] ?? null) ? ($info['backdrop_path'][0] ?? null) : ($info['backdrop_path'] ?? $info['backdrop'] ?? null);
+        $title = trim((string) ($tmdb[$isMovie ? 'title' : 'name'] ?? '')) ?: $name;
+        $originalTitle = trim((string) ($tmdb[$isMovie ? 'original_title' : 'original_name'] ?? ''));
+
+        return [
+            'type' => $kind,
+            'id' => $id,
+            'title' => $title,
+            'original_title' => $originalTitle !== '' && $originalTitle !== $title ? $originalTitle : null,
+            'tagline' => trim((string) ($tmdb['tagline'] ?? '')) ?: null,
+            'overview' => trim((string) ($tmdb['overview'] ?? '')) ?: trim((string) ($info['plot'] ?? $info['description'] ?? '')),
+            'year' => $this->yearOf($tmdb[$isMovie ? 'release_date' : 'first_air_date'] ?? null) ?? $this->yearOf($info['releasedate'] ?? $info['releaseDate'] ?? $info['release_date'] ?? null),
+            'runtime' => $runtime ?: null,
+            'rating' => $rating ?: null,
+            'genres' => $genres,
+            'poster' => $image($tmdb['poster_path'] ?? null, 'w500') ?? ($info['movie_image'] ?? $info['cover'] ?? null),
+            'backdrop' => $image($tmdb['backdrop_path'] ?? null, 'w1280') ?? $backdropPanel,
+            'cast' => $cast,
+            'directors' => array_values(array_unique(array_filter($directors))),
+            'trailer' => $trailer,
+            'seasons_count' => $isMovie ? null : ($tmdb['number_of_seasons'] ?? null),
+            'source' => $tmdb ? 'tmdb' : 'panel',
+        ];
+    }
+
+    /**
+     * Detalle de TMDB de un titulo: por el id que da el panel y, si no hay, buscando por nombre (y año si se conoce).
+     *
+     * @return array<string, mixed>|null
+     */
+    private function tmdbTitle(string $kind, int $tmdbId, string $name, ?int $year): ?array
+    {
+        try {
+            if (! $tmdbId && $name !== '') {
+                $query = trim((string) preg_replace('/\s+/', ' ', (string) preg_replace('/[._-]/', ' ', (string) preg_replace(['/\(\s*\d{4}\s*\)/', '/\b(HD|FHD|4K|LATINO|SUBTITULADO|ESPANOL)\b/i'], ' ', $name))));
+                if (mb_strlen($query) >= 2) {
+                    $search = fn (?int $y) => $kind === 'movie' ? $this->tmdbService->searchMovie($query, $y) : $this->tmdbService->searchTv($query, $y);
+                    $found = $search($year);
+                    $results = ($found['ok'] ?? false) ? ($found['data']['results'] ?? []) : [];
+                    if (! $results && $year) {
+                        $found = $search(null);
+                        $results = ($found['ok'] ?? false) ? ($found['data']['results'] ?? []) : [];
+                    }
+                    $tmdbId = (int) ($results[0]['id'] ?? 0);
+                }
+            }
+            if (! $tmdbId) {
+                return null;
+            }
+
+            $details = $kind === 'movie' ? $this->tmdbService->movieDetails($tmdbId) : $this->tmdbService->seriesDetails($tmdbId);
+
+            return ($details['ok'] ?? false) ? $details['data'] : null;
+        } catch (Throwable) {
+            return null;
+        }
+    }
+
+    private function yearOf(mixed $value): ?int
+    {
+        if (preg_match('/(19|20)\d{2}/', (string) $value, $match)) {
+            return (int) $match[0];
+        }
+
+        return null;
+    }
+
+    /**
+     * Mas peliculas (o series) de la misma categoria que la que se esta viendo, para la fila de recomendados del
+     * reproductor. Deja fuera lo que el navegador no reproduce.
+     */
+    public function apiRelated(string $type, int $id): JsonResponse
+    {
+        [$serverUrl, $username, $password] = $this->getIptvSessionCredentials();
+        if (! $serverUrl || ! $username || ! $password) {
+            return response()->json(['message' => 'No autenticado'], 401);
+        }
+
+        $isSeries = $type === 'series';
+        $key = $isSeries ? 'series_id' : 'stream_id';
+        $who = md5($serverUrl . '|' . $username);
+
+        $items = Cache::remember("catalog.{$type}.{$who}", now()->addMinutes(2), fn () => $isSeries
+            ? $this->xtreamService->getSeries($serverUrl, $username, $password)
+            : $this->xtreamService->getVodStreams($serverUrl, $username, $password));
+
+        $current = collect($items)->first(fn ($item) => (int) ($item[$key] ?? 0) === $id);
+        if (! $current) {
+            return response()->json(['category' => null, 'items' => []]);
+        }
+
+        $categoryId = (string) ($current['category_id'] ?? '');
+        $categories = Cache::remember("catalog.{$type}.categories.{$who}", now()->addMinutes(10), fn () => $isSeries
+            ? $this->xtreamService->getSeriesCategories($serverUrl, $username, $password)
+            : $this->xtreamService->getVodCategories($serverUrl, $username, $password));
+        $categoryName = collect($categories)->first(fn ($category) => (string) ($category['category_id'] ?? '') === $categoryId)['category_name'] ?? null;
+
+        $blocked = $isSeries ? $this->movieCompat->unplayableSeries() : $this->movieCompat->unplayable();
+
+        $related = collect($items)
+            ->filter(fn ($item) => (string) ($item['category_id'] ?? '') === $categoryId
+                && (int) ($item[$key] ?? 0) !== $id
+                && ! isset($blocked[(string) ($item[$key] ?? '')]))
+            ->take(60)
+            ->map(function ($item) use ($key) {
+                $year = substr((string) ($item['year'] ?? $item['release_date'] ?? $item['releaseDate'] ?? ''), 0, 4);
+                $rating = (float) ($item['rating_5based'] ?? 0) * 2 ?: (float) ($item['rating'] ?? 0);
+
+                return [
+                    'id' => (int) $item[$key],
+                    'name' => (string) ($item['name'] ?? ''),
+                    'poster' => (string) ($item['stream_icon'] ?? $item['cover'] ?? ''),
+                    'meta' => trim(($year ?: '') . ($year && $rating > 0 ? ' · ' : '') . ($rating > 0 ? '★ ' . number_format($rating, 1) : '')),
+                    'ext' => (string) ($item['container_extension'] ?? 'mp4') ?: 'mp4',
+                ];
+            })
+            ->values();
+
+        return response()->json(['category' => $categoryName, 'items' => $related]);
+    }
+
     public function apiLive(Request $request): JsonResponse
     {
         [$serverUrl, $username, $password] = $this->getIptvSessionCredentials();
@@ -653,8 +964,15 @@ class PortalController extends Controller
             $headers['Content-Range'] = $streamResponse->header('Content-Range');
         }
 
-        if ($streamResponse->header('Accept-Ranges')) {
-            $headers['Accept-Ranges'] = $streamResponse->header('Accept-Ranges');
+        // El panel responde "Accept-Ranges: 0-<tamano>" en vez del valor estandar "bytes". Safari (iPhone) es estricto
+        // con ese encabezado y no reproduce el video, asi que se normaliza.
+        $acceptRanges = strtolower(trim((string) $streamResponse->header('Accept-Ranges')));
+        if ($acceptRanges !== '' && $acceptRanges !== 'none') {
+            $headers['Accept-Ranges'] = 'bytes';
+        } elseif ($acceptRanges === 'none') {
+            $headers['Accept-Ranges'] = 'none';
+        } elseif ($streamResponse->header('Content-Range')) {
+            $headers['Accept-Ranges'] = 'bytes';
         }
 
         return response()->stream(function () use ($body) {

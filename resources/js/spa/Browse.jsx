@@ -12,7 +12,14 @@ function placeholderStyle(seed = "") {
 
 const isExternal = (href) => Boolean(href && /^https?:\/\//i.test(href));
 
-export function Billboard({ slides = [] }) {
+// Con onOpen la tarjeta abre la ventana de informacion; con clic medio o Ctrl/Cmd conserva el enlace normal.
+function openWithoutNavigating(event, onOpen) {
+  if (!onOpen || event.metaKey || event.ctrlKey || event.shiftKey || event.button === 1) return;
+  event.preventDefault();
+  onOpen();
+}
+
+export function Billboard({ slides = [], onInfo }) {
   const [index, setIndex] = useState(0);
   const count = slides.length;
 
@@ -79,6 +86,12 @@ export function Billboard({ slides = [] }) {
               href={slide.href || "#"}
               target={external ? "_blank" : undefined}
               rel={external ? "noreferrer" : undefined}
+              onClick={(event) => {
+                if (slide.detail && onInfo) {
+                  event.preventDefault();
+                  onInfo(slide.detail, slide);
+                }
+              }}
               className="inline-flex items-center gap-2 rounded-lg bg-white/15 px-6 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/25 md:text-base"
             >
               <Info className="size-5" />
@@ -141,13 +154,14 @@ export function Row({ title, subtitle, children }) {
   );
 }
 
-export function LandscapeCard({ title, image, href, badge, label }) {
+export function LandscapeCard({ title, image, href, badge, label, onOpen }) {
   const external = isExternal(href);
   return (
     <a
       href={href || "#"}
       target={external ? "_blank" : undefined}
       rel={external ? "noreferrer" : undefined}
+      onClick={(event) => openWithoutNavigating(event, onOpen)}
       className="group relative aspect-video w-[250px] shrink-0 snap-start overflow-hidden rounded-lg bg-zinc-900 ring-1 ring-white/10 transition duration-300 hover:z-10 hover:scale-[1.04] hover:ring-white/30 md:w-[320px]"
     >
       {image ? (
@@ -170,9 +184,9 @@ export function LandscapeCard({ title, image, href, badge, label }) {
   );
 }
 
-export function PosterCard({ title, image, href, meta, className = "w-[130px] shrink-0 snap-start md:w-[168px]" }) {
+export function PosterCard({ title, image, href, meta, onOpen, className = "w-[130px] shrink-0 snap-start md:w-[168px]" }) {
   return (
-    <a href={href || "#"} className={`group block ${className}`}>
+    <a href={href || "#"} onClick={(event) => openWithoutNavigating(event, onOpen)} className={`group block ${className}`}>
       <div className="relative aspect-[2/3] overflow-hidden rounded-lg bg-zinc-900 ring-1 ring-white/10 transition duration-300 group-hover:-translate-y-1 group-hover:ring-white/35 group-hover:shadow-[0_18px_40px_rgba(0,0,0,0.6)]">
         {image ? (
           <img src={image} alt={title} loading="lazy" className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105" />

@@ -221,7 +221,7 @@ export function LiveTv({ channels = [], categories = [], loading, error, searchQ
           getStream={getStream}
           onClose={player.close}
           onStep={step}
-          related={visible.filter((c) => String(c.category_id) === String(active.category_id) && c.stream_id !== active.stream_id).slice(0, 16)}
+          related={visible.filter((c) => String(c.category_id) === String(active.category_id) && c.stream_id !== active.stream_id)}
           onSelect={(c) => player.change(c.stream_id)}
         />
       ) : null}

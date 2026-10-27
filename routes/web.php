@@ -41,6 +41,9 @@ foreach (['/api/player', '/portal-api'] as $prefix) {
         Route::get('/live/{id}', [PortalController::class, 'apiLiveStream'])->whereNumber('id');
         Route::get('/movies', [PortalController::class, 'apiMovies']);
         Route::get('/series', [PortalController::class, 'apiSeries']);
+        Route::get('/info/series/{id}/season/{season}', [PortalController::class, 'apiSeriesSeason'])->whereNumber(['id', 'season']);
+        Route::get('/related/{type}/{id}', [PortalController::class, 'apiRelated'])->whereIn('type', ['movie', 'series'])->whereNumber('id');
+        Route::get('/info/{type}/{id}', [PortalController::class, 'apiTitleInfo'])->whereIn('type', ['movie', 'series'])->whereNumber('id');
     });
 }
 

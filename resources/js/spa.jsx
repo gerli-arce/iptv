@@ -9,6 +9,7 @@ import { CategoryNav, CategoryRow } from "./spa/Catalog";
 import { useRoute } from "./spa/router";
 import { HalloweenBats } from "./spa/Halloween";
 import { InstallAction, InstallHost } from "./spa/InstallApp";
+import { MediaModal } from "./spa/MediaModal";
 import { usePwaInstall } from "./spa/pwa";
 import { MobileNav, Navbar } from "./spa/Navbar";
 import { Billboard, LandscapeCard, PosterCard, Row } from "./spa/Browse";
@@ -376,7 +377,7 @@ function movieMeta(it = {}, extra = {}) {
   return [year, rating > 0 ? `★ ${rating.toFixed(1)}` : ""].filter(Boolean).join(" · ");
 }
 
-function HoverCards({ items = [], type = "movie", limit = 10, imageOverrides = {}, metaOverrides = {} }) {
+function HoverCards({ items = [], type = "movie", limit = 10, imageOverrides = {}, metaOverrides = {}, onOpenItem }) {
   return (
     <div className="grid grid-cols-3 gap-x-3 gap-y-5 sm:grid-cols-4 md:grid-cols-5 md:gap-x-4 xl:grid-cols-6 2xl:grid-cols-7">
       {items.slice(0, limit).map((it, i) => {
@@ -392,6 +393,7 @@ function HoverCards({ items = [], type = "movie", limit = 10, imageOverrides = {
             image={img}
             href={href}
             meta={movieMeta(it, meta)}
+            onOpen={onOpenItem ? () => onOpenItem(it, id, img) : undefined}
           />
         );
       })}
@@ -399,8 +401,9 @@ function HoverCards({ items = [], type = "movie", limit = 10, imageOverrides = {
   );
 }
 
-function CatalogSection({ title, items = [], categories = [], type = "movie", searchQuery = "", categoryId = "all", onCategoryChange }) {
+function CatalogSection({ title, items = [], categories = [], type = "movie", searchQuery = "", categoryId = "all", onCategoryChange, detail }) {
   const setCategoryId = onCategoryChange;
+  const openTitle = detail ? (it, id, image) => detail.open(type, id, { title: it.name, poster: image, year: movieMeta(it).slice(0, 4), rating: Number(it.rating || 0) || null }) : undefined;
   const [imageOverrides, setImageOverrides] = useState({});
   const [metaOverrides, setMetaOverrides] = useState({});
   const q = searchQuery.trim().toLowerCase();
@@ -516,6 +519,7 @@ function CatalogSection({ title, items = [], categories = [], type = "movie", se
         image={imageOverrides[id] || it.stream_icon || it.cover}
         href={type === "series" ? `/play/series/${id}` : `/play/movie/${id}`}
         meta={movieMeta(it, metaOverrides[id] || {})}
+        onOpen={openTitle ? () => openTitle(it, id, imageOverrides[id] || it.stream_icon || it.cover) : undefined}
       />
     );
   };
@@ -544,7 +548,7 @@ function CatalogSection({ title, items = [], categories = [], type = "movie", se
                 </CategoryRow>
               ))
             : (
-              <HoverCards items={filteredItems} type={type} limit={filteredItems.length || 0} imageOverrides={imageOverrides} metaOverrides={metaOverrides} />
+              <HoverCards items={filteredItems} type={type} limit={filteredItems.length || 0} imageOverrides={imageOverrides} metaOverrides={metaOverrides} onOpenItem={openTitle} />
             )}
         </div>
       </div>
@@ -715,7 +719,7 @@ function saveBackdrop(key, url) {
   }
 }
 
-function HomeLike({ home, isLoading, error, onRetry, searchQuery = "", movies = [], movieCategories = [], blockedIds = new Set(), liveChannels = [], liveCategories = [], player }) {
+function HomeLike({ home, isLoading, error, onRetry, searchQuery = "", movies = [], movieCategories = [], blockedIds = new Set(), liveChannels = [], liveCategories = [], player, detail }) {
   const q = searchQuery.trim().toLowerCase();
 
   // Solo las peliculas se bloquean: los ids de series/canales son otra numeracion.
@@ -756,6 +760,7 @@ function HomeLike({ home, isLoading, error, onRetry, searchQuery = "", movies = 
           poster: !backdrop && poster ? proxiedImageUrl(tmdbSize(item.custom_image, "w780")) : "",
           query: !backdrop && poster ? getSectionItemTitle(item) : "",
           kind: String(item.content_type).toLowerCase() === "series" ? "tv" : "movie",
+          detail: item.external_id ? { type: String(item.content_type).toLowerCase() === "series" ? "series" : "movie", id: item.external_id } : null,
           href: getSectionItemHref(item),
           badge: item.badge || getContentLabel(item.content_type),
         };
@@ -773,6 +778,7 @@ function HomeLike({ home, isLoading, error, onRetry, searchQuery = "", movies = 
         poster: proxiedImageUrl(movie.stream_icon || movie.cover),
         query: movie.name,
         kind: "movie",
+        detail: { type: "movie", id: movie.stream_id || movie.id },
         href: movieHref(movie),
         badge: "Pelicula",
       }));
@@ -886,7 +892,7 @@ function HomeLike({ home, isLoading, error, onRetry, searchQuery = "", movies = 
           Resultados para <span className="text-coral">"{searchQuery.trim()}"</span>
         </h1>
         {searchResults.length ? (
-          <HoverCards items={searchResults} type="movie" limit={120} />
+          <HoverCards items={searchResults} type="movie" limit={120} onOpenItem={detail ? (it, id, image) => detail.open("movie", id, { title: it.name, poster: image }) : undefined} />
         ) : (
           <p className="rounded-xl border border-dashed border-white/10 px-5 py-10 text-center text-sm text-zinc-400">
             No encontramos peliculas con ese nombre.
@@ -898,9 +904,18 @@ function HomeLike({ home, isLoading, error, onRetry, searchQuery = "", movies = 
 
   const hasContent = slides.length || sections.length || featuredMovies.length || catalogRows.length;
 
+  // Abre la ventana de informacion; los elementos que no son pelicula ni serie (colecciones, enlaces) siguen su enlace.
+  const openSectionItem = (item, image) => {
+    const kind = String(item?.content_type || "").toLowerCase();
+    if (!detail || !item?.external_id || !/^(movie|movies|vod|series)$/.test(kind)) return undefined;
+    return () => detail.open(kind === "series" ? "series" : "movie", item.external_id, { title: getSectionItemTitle(item), poster: image });
+  };
+  const openMovie = (movie) =>
+    detail ? () => detail.open("movie", movie.stream_id || movie.id, { title: movie.name, poster: movie.stream_icon || movie.cover, year: movieMeta(movie).slice(0, 4) }) : undefined;
+
   return (
     <div className="pb-12">
-      <Billboard slides={heroSlides} />
+      <Billboard slides={heroSlides} onInfo={detail ? (target, slide) => detail.open(target.type, target.id, { title: slide.title, poster: slide.poster, backdrop: slide.image }) : undefined} />
 
       <div className={`relative z-10 space-y-8 md:space-y-10 ${slides.length ? "-mt-8 md:-mt-14" : "pt-24 md:pt-28"}`}>
         <div className="pt-5 md:pt-2">
@@ -917,6 +932,7 @@ function HomeLike({ home, isLoading, error, onRetry, searchQuery = "", movies = 
                   image={proxiedImageUrl(tmdbSize(item.custom_image, "w500"))}
                   href={getSectionItemHref(item)}
                   meta={getContentLabel(item.content_type)}
+                  onOpen={openSectionItem(item, proxiedImageUrl(tmdbSize(item.custom_image, "w500")))}
                 />
               ) : (
                 <LandscapeCard
@@ -926,6 +942,7 @@ function HomeLike({ home, isLoading, error, onRetry, searchQuery = "", movies = 
                   href={getSectionItemHref(item)}
                   badge={item.badge}
                   label={getContentLabel(item.content_type)}
+                  onOpen={openSectionItem(item, proxiedImageUrl(item.custom_image))}
                 />
               ),
             )}
@@ -935,7 +952,7 @@ function HomeLike({ home, isLoading, error, onRetry, searchQuery = "", movies = 
         {featuredMovies.length ? (
           <Row title="Recomendadas para ti">
             {featuredMovies.slice(0, 24).map((movie) => (
-              <PosterCard key={movie.stream_id || movie.id} title={movie.name} image={movie.stream_icon || movie.cover} href={movieHref(movie)} meta={movieMeta(movie)} />
+              <PosterCard key={movie.stream_id || movie.id} title={movie.name} image={movie.stream_icon || movie.cover} href={movieHref(movie)} meta={movieMeta(movie)} onOpen={openMovie(movie)} />
             ))}
           </Row>
         ) : null}
@@ -943,7 +960,7 @@ function HomeLike({ home, isLoading, error, onRetry, searchQuery = "", movies = 
         {catalogRows.map((row) => (
           <Row key={row.key} title={row.title}>
             {row.items.map((movie) => (
-              <PosterCard key={movie.stream_id || movie.id} title={movie.name} image={movie.stream_icon || movie.cover} href={movieHref(movie)} meta={movieMeta(movie)} />
+              <PosterCard key={movie.stream_id || movie.id} title={movie.name} image={movie.stream_icon || movie.cover} href={movieHref(movie)} meta={movieMeta(movie)} onOpen={openMovie(movie)} />
             ))}
           </Row>
         ))}
@@ -1313,6 +1330,21 @@ function App() {
     },
     [route.setParams],
   );
+  // Ventana de informacion de una pelicula (?pelicula=ID) o serie (?serie=ID): "atras" la cierra.
+  const movieParam = route.params.get("pelicula");
+  const seriesParam = route.params.get("serie");
+  const detailSeed = useRef(null);
+  const detail = useMemo(
+    () => ({
+      active: movieParam ? { type: "movie", id: movieParam } : seriesParam ? { type: "series", id: seriesParam } : null,
+      open: (type, id, seed) => {
+        detailSeed.current = { type, id: String(id), ...seed };
+        route.setParams({ pelicula: type === "movie" ? id : null, serie: type === "series" ? id : null }, { state: { detail: true } });
+      },
+      close: () => (window.history.state?.detail ? window.history.back() : route.setParams({ pelicula: null, serie: null }, { replace: true })),
+    }),
+    [movieParam, seriesParam, route.setParams],
+  );
   const channelParam = route.params.get("canal");
   const player = useMemo(
     () => ({
@@ -1472,6 +1504,7 @@ function App() {
             liveChannels={(data.live?.channels || []).filter((c) => !(hideUnplayable && c.web_playable === false))}
             liveCategories={data.live?.categories || []}
             player={player}
+            detail={detail}
             onRetry={() => {
               setData((state) => ({
                 ...state,
@@ -1506,6 +1539,7 @@ function App() {
             searchQuery={searchQuery}
             categoryId={categoryParam}
             onCategoryChange={setCategory}
+            detail={detail}
           />
         )}
         {page === "series" && (
@@ -1517,6 +1551,7 @@ function App() {
             searchQuery={searchQuery}
             categoryId={categoryParam}
             onCategoryChange={setCategory}
+            detail={detail}
           />
         )}
         {page === "settings" && (
@@ -1535,6 +1570,15 @@ function App() {
 
       <MobileNav page={page} setPage={setPage} />
       <InstallHost />
+      {detail.active ? (
+        <MediaModal
+          key={`${detail.active.type}-${detail.active.id}`}
+          type={detail.active.type}
+          id={detail.active.id}
+          seed={detailSeed.current && detailSeed.current.type === detail.active.type && detailSeed.current.id === String(detail.active.id) ? detailSeed.current : null}
+          onClose={detail.close}
+        />
+      ) : null}
     </div>
   );
 }

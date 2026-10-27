@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Throwable;
 
@@ -13,7 +14,32 @@ class TmdbService
             "query" => $query,
             "include_adult" => false,
             "language" => $language,
-        ]);
+        ], 1440);
+    }
+
+    public function searchMovie(string $query, ?int $year = null, string $language = "es-MX"): array
+    {
+        return $this->request("/search/movie", array_filter([
+            "query" => $query,
+            "include_adult" => false,
+            "language" => $language,
+            "year" => $year,
+        ], fn ($value) => $value !== null), 1440);
+    }
+
+    public function searchTv(string $query, ?int $year = null, string $language = "es-MX"): array
+    {
+        return $this->request("/search/tv", array_filter([
+            "query" => $query,
+            "include_adult" => false,
+            "language" => $language,
+            "first_air_date_year" => $year,
+        ], fn ($value) => $value !== null), 1440);
+    }
+
+    public function tvSeason(int|string $tvId, int $season, string $language = "es-MX"): array
+    {
+        return $this->request("/tv/{$tvId}/season/{$season}", ["language" => $language], 10080);
     }
 
     public function movieDetails(int|string $id, string $language = "es-MX"): array
@@ -21,7 +47,8 @@ class TmdbService
         return $this->request("/movie/{$id}", [
             "language" => $language,
             "append_to_response" => "credits,videos,external_ids",
-        ]);
+            "include_video_language" => "es,en,null",
+        ], 10080);
     }
 
     public function seriesDetails(int|string $id, string $language = "es-MX"): array
@@ -29,7 +56,8 @@ class TmdbService
         return $this->request("/tv/{$id}", [
             "language" => $language,
             "append_to_response" => "credits,videos,external_ids",
-        ]);
+            "include_video_language" => "es,en,null",
+        ], 10080);
     }
 
     public function movieImages(int|string $id): array
@@ -39,8 +67,16 @@ class TmdbService
         ]);
     }
 
-    protected function request(string $path, array $params = []): array
+    /**
+     * @param int $cacheMinutes minutos que se guarda una respuesta correcta (0 = sin guardar). Los errores nunca se guardan.
+     */
+    protected function request(string $path, array $params = [], int $cacheMinutes = 0): array
     {
+        $cacheKey = "tmdb." . md5($path . json_encode($params));
+        if ($cacheMinutes > 0 && ($cached = Cache::get($cacheKey)) !== null) {
+            return $cached;
+        }
+
         $apiKey = env("TMDB_API_KEY");
         if (! $apiKey) {
             return [
@@ -81,10 +117,16 @@ class TmdbService
             ];
         }
 
-        return [
+        $result = [
             "ok" => true,
             "status" => 200,
             "data" => $response->json(),
         ];
+
+        if ($cacheMinutes > 0) {
+            Cache::put($cacheKey, $result, now()->addMinutes($cacheMinutes));
+        }
+
+        return $result;
     }
 }

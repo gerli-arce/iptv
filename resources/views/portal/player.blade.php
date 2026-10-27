@@ -132,6 +132,24 @@
                 </div>
             </section>
         @endif
+
+        @php($relatedId = $type === 'series' ? ($seriesId ?? null) : ($id ?? null))
+        @if(in_array($type, ['movie', 'series'], true) && !empty($relatedId))
+            {{-- Mas peliculas o series de la misma categoria; se llena con /api/player/related. --}}
+            <section id="related-section" data-type="{{ $type }}" data-id="{{ $relatedId }}" class="hidden rounded-[28px] border border-white/10 bg-[#0d0d11]/82 p-4 backdrop-blur-xl md:p-5">
+                <div class="flex items-center justify-between gap-3">
+                    <div class="min-w-0">
+                        <p class="text-[11px] uppercase tracking-[0.18em] text-slate-500">Recomendadas</p>
+                        <h2 id="related-title" class="mt-1 truncate text-lg font-black text-white md:text-xl">Mas como esta</h2>
+                    </div>
+                    <div class="hidden shrink-0 gap-2 md:flex">
+                        <button id="related-prev" type="button" aria-label="Anterior" class="grid size-10 place-items-center rounded-full border border-white/15 bg-white/[0.06] text-xl text-white transition hover:border-white/35 hover:bg-white/15">&lsaquo;</button>
+                        <button id="related-next" type="button" aria-label="Siguiente" class="grid size-10 place-items-center rounded-full border border-white/15 bg-white/[0.06] text-xl text-white transition hover:border-white/35 hover:bg-white/15">&rsaquo;</button>
+                    </div>
+                </div>
+                <div id="related-scroller" class="-mx-1 mt-4 flex snap-x gap-3 overflow-x-auto scroll-smooth px-1 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"></div>
+            </section>
+        @endif
     </div>
 
     <script>
@@ -140,7 +158,14 @@
         const playerOverlay = document.getElementById('player-overlay');
         const retryButton = document.getElementById('retry-button');
         const fullscreenButton = document.getElementById('fullscreen-button');
-        const candidates = @json($candidates ?? [$url]);
+        let candidates = @json($candidates ?? [$url]);
+        // iPhone/iPad (Safari): el panel responde encabezados no estandar en la direccion directa, asi que primero se
+        // prueba la que pasa por el servidor y la directa queda de respaldo. Ademas Safari reproduce HLS por si mismo.
+        const isApple = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        if (isApple) {
+            candidates = [...candidates.filter((c) => c.startsWith('/')), ...candidates.filter((c) => !c.startsWith('/'))];
+        }
+        let watchdog = null;
         const desktopBridge = window.desktopBridge;
         const desktopMode = Boolean(desktopBridge && typeof desktopBridge.openNativeStream === 'function');
         let currentIndex = 0;
@@ -191,7 +216,13 @@
             video.removeAttribute('src');
             video.load();
 
-            if (window.Hls && Hls.isSupported() && src.includes('.m3u8')) {
+            // Si en un rato la fuente no empieza a cargar (Safari a veces no avisa del error), se pasa a la siguiente.
+            clearTimeout(watchdog);
+            watchdog = setTimeout(() => {
+                if (video.readyState < 2) tryPlay(currentIndex + 1);
+            }, 15000);
+
+            if (window.Hls && Hls.isSupported() && src.includes('.m3u8') && !(isApple && video.canPlayType('application/vnd.apple.mpegurl'))) {
                 hls = new Hls();
                 hls.loadSource(src);
                 hls.attachMedia(video);
@@ -217,7 +248,10 @@
             tryPlay(currentIndex + 1);
         });
 
+        video.addEventListener('loadeddata', () => clearTimeout(watchdog));
+
         video.addEventListener('playing', () => {
+            clearTimeout(watchdog);
             setStatus('Reproduciendo', 'emerald');
             hideOverlay();
             scheduleAudioCheck();
@@ -254,6 +288,77 @@
         });
 
         tryPlay(0);
+    </script>
+    <script>
+        // Fila de recomendados de la misma categoria, con flechas para recorrerla.
+        (function () {
+            const section = document.getElementById('related-section');
+            if (!section) return;
+            const type = section.dataset.type;
+            const scroller = document.getElementById('related-scroller');
+            const prev = document.getElementById('related-prev');
+            const next = document.getElementById('related-next');
+
+            function updateArrows() {
+                const atStart = scroller.scrollLeft < 12;
+                const atEnd = scroller.scrollLeft + scroller.clientWidth >= scroller.scrollWidth - 12;
+                prev.classList.toggle('opacity-30', atStart);
+                prev.classList.toggle('pointer-events-none', atStart);
+                next.classList.toggle('opacity-30', atEnd);
+                next.classList.toggle('pointer-events-none', atEnd);
+            }
+
+            prev.addEventListener('click', () => scroller.scrollBy({ left: -scroller.clientWidth * 0.8, behavior: 'smooth' }));
+            next.addEventListener('click', () => scroller.scrollBy({ left: scroller.clientWidth * 0.8, behavior: 'smooth' }));
+            scroller.addEventListener('scroll', updateArrows, { passive: true });
+            window.addEventListener('resize', updateArrows);
+
+            fetch('/api/player/related/' + type + '/' + section.dataset.id, { credentials: 'same-origin', headers: { Accept: 'application/json' } })
+                .then((response) => (response.ok ? response.json() : Promise.reject()))
+                .then((data) => {
+                    if (!data.items || !data.items.length) return;
+                    document.getElementById('related-title').textContent = data.category ? 'Mas en ' + data.category : 'Mas como esta';
+
+                    data.items.forEach((item) => {
+                        const link = document.createElement('a');
+                        link.href = type === 'series' ? '/play/series/' + item.id : '/play/movie/' + item.id + '?ext=' + encodeURIComponent(item.ext);
+                        link.className = 'group block w-[132px] shrink-0 snap-start md:w-[150px]';
+
+                        const poster = document.createElement('div');
+                        poster.className = 'relative aspect-[2/3] overflow-hidden rounded-xl bg-zinc-900 ring-1 ring-white/10 transition duration-300 group-hover:-translate-y-1 group-hover:ring-white/35';
+                        if (item.poster) {
+                            const img = document.createElement('img');
+                            img.src = item.poster;
+                            img.alt = item.name;
+                            img.loading = 'lazy';
+                            img.className = 'absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105';
+                            poster.appendChild(img);
+                        } else {
+                            const fallback = document.createElement('div');
+                            fallback.className = 'absolute inset-0 grid place-items-center p-3 text-center text-sm font-bold text-white/80';
+                            fallback.textContent = item.name;
+                            poster.appendChild(fallback);
+                        }
+
+                        const name = document.createElement('p');
+                        name.className = 'mt-2 line-clamp-1 text-[13px] font-medium text-zinc-100';
+                        name.textContent = item.name;
+                        link.append(poster, name);
+
+                        if (item.meta) {
+                            const meta = document.createElement('p');
+                            meta.className = 'text-[11px] text-zinc-500';
+                            meta.textContent = item.meta;
+                            link.appendChild(meta);
+                        }
+                        scroller.appendChild(link);
+                    });
+
+                    section.classList.remove('hidden');
+                    updateArrows();
+                })
+                .catch(() => {});
+        })();
     </script>
 </body>
 </html>
