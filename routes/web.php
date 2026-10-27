@@ -11,7 +11,7 @@ Route::view('/privacy-policy', 'privacy-policy')->name('privacy-policy');
 Route::view('/tv-privacy-policy', 'tv-privacy-policy')->name('tv-privacy-policy');
 Route::view('/data-deletion', 'data-deletion')->name('data-deletion');
 
-if (env('APP_TARGET', 'player') === 'admin') {
+if (config('app.target') === 'admin') {
     Route::redirect('/', '/admin');
     Route::redirect('/login', '/admin/login')->name('login');
     Route::redirect('/app', '/admin')->name('app');
@@ -33,7 +33,7 @@ Route::get('/stream', [PortalController::class, 'streamProxy'])->name('stream.pr
 foreach (['/api/player', '/portal-api'] as $prefix) {
     Route::prefix($prefix)->group(function () {
         Route::get('/me', [PortalController::class, 'apiMe']);
-        Route::post('/login', [PortalController::class, 'apiLogin']);
+        Route::post('/login', [PortalController::class, 'apiLogin'])->middleware('throttle:login');
         Route::post('/logout', [PortalController::class, 'apiLogout']);
         Route::get('/home', [PortalController::class, 'apiHome']);
         Route::get('/home-feed', [PortalController::class, 'apiHomeFeed']);
@@ -56,4 +56,4 @@ Route::get('/play/series/{seriesId}/{episodeId?}', [PortalController::class, 'pl
 Route::get('/play/{type}/{id}', [PortalController::class, 'play'])
     ->whereIn('type', ['channel', 'movie'])
     ->name('portal.play');
-Route::get('/image-proxy', [ImageProxyController::class, 'show'])->name('image.proxy');
+Route::get('/image-proxy', [ImageProxyController::class, 'show'])->middleware('throttle:image-proxy')->name('image.proxy');

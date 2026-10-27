@@ -51,12 +51,13 @@ class PortalController extends Controller
     public function login(Request $request): RedirectResponse
     {
         $data = $request->validate([
-            'server_url' => ['required', 'url'],
-            'username' => ['required', 'string'],
-            'password' => ['required', 'string'],
+            'username' => ['required', 'string', 'max:100'],
+            'password' => ['required', 'string', 'max:100'],
         ]);
 
-        $auth = $this->xtreamService->login($data['server_url'], $data['username'], $data['password']);
+        // El servidor lo fija la configuracion; ignorar lo que mande el cliente evita SSRF y relays abiertos.
+        $serverUrl = $this->iptvServerUrl();
+        $auth = $this->xtreamService->login($serverUrl, $data['username'], $data['password']);
 
         if (empty($auth['user_info'])) {
             return back()->withInput()->withErrors([
@@ -65,7 +66,7 @@ class PortalController extends Controller
         }
 
         session([
-            'iptv.server_url' => $data['server_url'],
+            'iptv.server_url' => $serverUrl,
             'iptv.username' => $data['username'],
             'iptv.password' => $data['password'],
             'iptv.user_info' => $auth['user_info'],
@@ -213,7 +214,7 @@ class PortalController extends Controller
 
     public function play(string $type, int $id): View|RedirectResponse
     {
-        $serverUrl = session('iptv.server_url');
+        $serverUrl = $this->iptvServerUrl();
         $username = session('iptv.username');
         $password = session('iptv.password');
 
@@ -260,7 +261,7 @@ class PortalController extends Controller
 
     public function playSeries(int $seriesId, ?int $episodeId = null): View|RedirectResponse
     {
-        $serverUrl = session('iptv.server_url');
+        $serverUrl = $this->iptvServerUrl();
         $username = session('iptv.username');
         $password = session('iptv.password');
 
@@ -348,11 +349,17 @@ class PortalController extends Controller
 
     private function getIptvSessionCredentials(): array
     {
+        // El servidor siempre sale de la configuracion, tambien para sesiones iniciadas antes de este cambio.
         return [
-            session('iptv.server_url'),
+            $this->iptvServerUrl(),
             session('iptv.username'),
             session('iptv.password'),
         ];
+    }
+
+    private function iptvServerUrl(): string
+    {
+        return rtrim((string) config('xtream.server_url'), '/');
     }
 
     private function hasIptvSession(): bool
@@ -378,18 +385,19 @@ class PortalController extends Controller
     public function apiLogin(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'server_url' => ['required', 'url'],
-            'username' => ['required', 'string'],
-            'password' => ['required', 'string'],
+            'username' => ['required', 'string', 'max:100'],
+            'password' => ['required', 'string', 'max:100'],
         ]);
 
-        $auth = $this->xtreamService->login($data['server_url'], $data['username'], $data['password']);
+        // El servidor lo fija la configuracion; ignorar lo que mande el cliente evita SSRF y relays abiertos.
+        $serverUrl = $this->iptvServerUrl();
+        $auth = $this->xtreamService->login($serverUrl, $data['username'], $data['password']);
         if (empty($auth['user_info'])) {
             return response()->json(['message' => 'Credenciales invalidas'], 422);
         }
 
         session([
-            'iptv.server_url' => $data['server_url'],
+            'iptv.server_url' => $serverUrl,
             'iptv.username' => $data['username'],
             'iptv.password' => $data['password'],
             'iptv.user_info' => $auth['user_info'],
@@ -925,9 +933,8 @@ class PortalController extends Controller
                 'Content-Type' => 'application/vnd.apple.mpegurl',
                 'Cache-Control' => 'no-cache',
                 'X-Accel-Buffering' => 'no',
-                'Access-Control-Allow-Origin' => '*',
                 'Content-Encoding' => 'identity',
-            ]);
+            ] + $this->streamCorsHeaders($request));
         }
 
         $streamResponse = Http::withHeaders($requestHeaders)
@@ -954,9 +961,8 @@ class PortalController extends Controller
             'Content-Type' => $contentType ?: 'application/octet-stream',
             'Cache-Control' => 'no-cache',
             'X-Accel-Buffering' => 'no',
-            'Access-Control-Allow-Origin' => '*',
             'Content-Encoding' => 'identity',
-        ];
+        ] + $this->streamCorsHeaders($request);
 
         if ($streamResponse->header('Content-Length')) {
             $headers['Content-Length'] = $streamResponse->header('Content-Length');
@@ -1116,6 +1122,29 @@ class PortalController extends Controller
         }
 
         return $headers;
+    }
+
+    /**
+     * CORS solo para el propio sitio (el reproductor web y la app de escritorio piden desde su mismo origen).
+     * Antes era "*", lo que dejaba a cualquier pagina leer los streams de un usuario con sesion abierta.
+     */
+    private function streamCorsHeaders(Request $request): array
+    {
+        $origin = (string) $request->headers->get('Origin', '');
+        $originHost = strtolower((string) parse_url($origin, PHP_URL_HOST));
+        if ($originHost === '') {
+            return [];
+        }
+
+        $allowed = array_filter([
+            strtolower($request->getHost()),
+            strtolower((string) parse_url((string) config('app.site_url'), PHP_URL_HOST)),
+            strtolower((string) parse_url((string) config('app.url'), PHP_URL_HOST)),
+        ]);
+
+        return in_array($originHost, $allowed, true)
+            ? ['Access-Control-Allow-Origin' => $origin, 'Vary' => 'Origin']
+            : [];
     }
 
     private function isAllowedStreamUrl(string $remoteUrl, string $serverUrl): bool

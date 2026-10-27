@@ -12,7 +12,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // Detras del proxy del hosting la IP real viene en X-Forwarded-For; sin esto el limite de intentos
+        // contaria a todos los usuarios como una sola IP. Ajusta TRUSTED_PROXIES si el servidor esta expuesto directo.
+        $proxies = (string) env('TRUSTED_PROXIES', '*');
+        $middleware->trustProxies(at: $proxies === '*' ? '*' : array_map('trim', explode(',', $proxies)));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

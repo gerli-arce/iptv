@@ -77,7 +77,7 @@ class TmdbService
             return $cached;
         }
 
-        $apiKey = env("TMDB_API_KEY");
+        $apiKey = config("services.tmdb.key");
         if (! $apiKey) {
             return [
                 "ok" => false,
@@ -91,7 +91,7 @@ class TmdbService
                 ->timeout(5)
                 ->retry(2, 250);
 
-            $verifySsl = filter_var(env("TMDB_VERIFY_SSL", env("APP_ENV") !== "local"), FILTER_VALIDATE_BOOL);
+            $verifySsl = (bool) config("services.tmdb.verify_ssl");
             if (! $verifySsl) {
                 $http = $http->withoutVerifying();
             }

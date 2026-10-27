@@ -12,7 +12,6 @@ class DeviceTokenController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'user_id' => ['nullable', 'integer', 'exists:users,id'],
             'token' => ['required', 'string', 'max:2048'],
             'platform' => ['nullable', 'string', 'max:50'],
             'device_name' => ['nullable', 'string', 'max:255'],
@@ -23,10 +22,7 @@ class DeviceTokenController extends Controller
             'token' => $validated['token'],
         ]);
 
-        if (array_key_exists('user_id', $validated) && filled($validated['user_id'])) {
-            $deviceToken->user_id = $validated['user_id'];
-        }
-
+        // user_id no se acepta del cliente: la ruta es publica y cualquiera podria asociar su token a otro usuario.
         $deviceToken->platform = $validated['platform'] ?? $deviceToken->platform ?? 'android';
         $deviceToken->device_name = $validated['device_name'] ?? $deviceToken->device_name;
         $deviceToken->app_version = $validated['app_version'] ?? $deviceToken->app_version;

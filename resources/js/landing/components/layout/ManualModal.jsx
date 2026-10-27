@@ -154,7 +154,7 @@ const ManualModal = ({ isOpen, onClose }) => {
                                         <div className="animate-in fade-in duration-500 space-y-6">
                                             <h3 className="mb-4 text-xl font-semibold text-white">Video Tutorial</h3>
                                             <div className="overflow-hidden rounded-xl border border-white/10 bg-black">
-                                                <video controls className="w-full" poster="/video-poster-placeholder.jpg">
+                                                <video controls preload="metadata" className="w-full">
                                                     <source src="/tuto_tv.mp4" type="video/mp4" />
                                                     Tu navegador no soporta el video.
                                                 </video>

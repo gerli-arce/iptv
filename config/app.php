@@ -55,6 +55,12 @@ return [
     'url' => env('APP_URL', 'http://localhost'),
 
     /*
+    | Que se despliega: "player" (landing + reproductor) o "admin" (panel). Se lee desde config() para que
+    | siga funcionando con `php artisan config:cache`.
+    */
+    'target' => env('APP_TARGET', 'player'),
+
+    /*
     | URL publica del sitio para SEO (canonical, sitemap, Open Graph). Cambiala con SITE_URL si cambia el dominio.
     */
     'site_url' => env('SITE_URL', 'https://fastv.fastnetperu.com.pe'),
@@ -99,7 +105,7 @@ return [
     |
     */
 
-    'timezone' => 'UTC',
+    'timezone' => env('APP_TIMEZONE', 'UTC'),
 
     /*
     |--------------------------------------------------------------------------

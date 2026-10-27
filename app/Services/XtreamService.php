@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class XtreamService
 {
@@ -78,7 +80,14 @@ class XtreamService
             'password' => $password,
         ], $params);
 
-        $response = Http::timeout(30)->get("{$serverUrl}/player_api.php", $query);
+        try {
+            $response = Http::timeout(30)->get("{$serverUrl}/player_api.php", $query);
+        } catch (Throwable $e) {
+            // El mensaje lleva la URL con usuario y clave; el canal de logs los oculta (App\Logging\RedactSecrets).
+            Log::warning('Xtream no disponible: ' . $e->getMessage());
+
+            return [];
+        }
 
         if (! $response->successful()) {
             return [];

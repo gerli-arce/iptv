@@ -14,6 +14,11 @@ return [
     |
     */
 
+    'tmdb' => [
+        'key' => env('TMDB_API_KEY'),
+        'verify_ssl' => filter_var(env('TMDB_VERIFY_SSL', env('APP_ENV') !== 'local'), FILTER_VALIDATE_BOOL),
+    ],
+
     'postmark' => [
         'key' => env('POSTMARK_API_KEY'),
     ],

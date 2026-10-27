@@ -9,7 +9,7 @@ use App\Http\Controllers\Api\HomeController;
 use App\Http\Controllers\Api\ImdbController;
 use Illuminate\Support\Facades\Route;
 
-if (env('APP_TARGET', 'player') === 'admin') {
+if (config('app.target') === 'admin') {
     Route::prefix("admin")->group(function () {
         Route::post("/login", [AuthController::class, "login"]);
 
@@ -31,9 +31,12 @@ if (env('APP_TARGET', 'player') === 'admin') {
     return;
 }
 
-Route::post('/device-tokens', [DeviceTokenController::class, 'store']);
+// Rutas publicas: con limite por IP porque gastan cuota de TMDB o aceptan datos anonimos.
+Route::middleware('throttle:public-api')->group(function () {
+    Route::post('/device-tokens', [DeviceTokenController::class, 'store']);
 
-Route::get("/home", [HomeController::class, "index"]);
-Route::get("/imdb/search", [ImdbController::class, "search"]);
-Route::get("/imdb/movie/{id}", [ImdbController::class, "movie"]);
-Route::get("/imdb/series/{id}", [ImdbController::class, "series"]);
+    Route::get("/home", [HomeController::class, "index"]);
+    Route::get("/imdb/search", [ImdbController::class, "search"]);
+    Route::get("/imdb/movie/{id}", [ImdbController::class, "movie"]);
+    Route::get("/imdb/series/{id}", [ImdbController::class, "series"]);
+});
