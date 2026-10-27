@@ -9,7 +9,7 @@ const fadeInUp = {
   show: { opacity: 1, y: 0 },
 };
 
-const Hero = () => {
+const Hero = ({ onOpenDemo }) => {
   const startPlan = PRICING.plans[0];
   const typedWord = useTypewriter(HERO.rotatingWords);
 
@@ -76,7 +76,7 @@ const Hero = () => {
             {HERO.primaryCta}
             <ArrowUpRight className="h-5 w-5" />
           </Button>
-          <Button as="a" href="#features" variant="secondary" size="lg" className="sm:px-8 sm:py-4 sm:text-lg">
+          <Button type="button" onClick={onOpenDemo} variant="secondary" size="lg" className="sm:px-8 sm:py-4 sm:text-lg">
             <Play className="h-5 w-5" />
             {HERO.secondaryCta}
           </Button>

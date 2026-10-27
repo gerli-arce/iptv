@@ -30,6 +30,29 @@ export const HERO = {
   highlights: ["+150 canales HD", "4K Ultra HD", "Multi-dispositivo"],
 };
 
+// WhatsApp del area de ventas (sin "+"); a este numero llegan las solicitudes de demo.
+export const SALES_WHATSAPP = "51942059874";
+
+export const CUSTOMER_OPTIONS = [
+  { value: "No soy cliente de Fastnet", label: "No soy cliente" },
+  { value: "Sí, cliente de internet Fastnet", label: "Sí, tengo internet Fastnet" },
+  { value: "Sí, cliente de otro servicio Fastnet", label: "Sí, tengo otro servicio" },
+];
+
+// Configuracion de cada formulario que termina en WhatsApp con el area de ventas.
+export const DEMO_LEAD = {
+  title: "Prueba gratis 2 días",
+  subtitle:
+    "Completa tus datos y te enviamos tu acceso de prueba por WhatsApp. Sin compromiso.",
+  intro: "Hola, quiero solicitar la demo de 2 días de Fastnet Player.",
+};
+
+export const planLead = (plan) => ({
+  title: `Contratar plan ${plan.name}`,
+  subtitle: `Rellena tus datos para registrarte en el plan ${plan.name} (${plan.currency} ${plan.price} al ${plan.period}).`,
+  intro: `Hola, quiero contratar el plan ${plan.name} de Fastnet Player (${plan.currency} ${plan.price} al ${plan.period}).`,
+});
+
 export const STATS = [
   { value: "150+", label: "Canales HD" },
   { value: "10+", label: "Peliculas nuevas" },

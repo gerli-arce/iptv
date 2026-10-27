@@ -1,10 +1,10 @@
 {
-  "_Halloween-BO3WDdfh.js": {
-    "file": "assets/Halloween-BO3WDdfh.js",
+  "_Halloween-C_X1XzIs.js": {
+    "file": "assets/Halloween-C_X1XzIs.js",
     "name": "Halloween"
   },
   "resources/css/app.css": {
-    "file": "assets/app-BjCZtnZZ.css",
+    "file": "assets/app-JdZCwH2q.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "name": "app",
@@ -13,27 +13,27 @@
     ]
   },
   "resources/js/landing.jsx": {
-    "file": "assets/landing-BMTbEw74.js",
+    "file": "assets/landing-B_3_qoUu.js",
     "name": "landing",
     "src": "resources/js/landing.jsx",
     "isEntry": true,
     "imports": [
-      "_Halloween-BO3WDdfh.js"
+      "_Halloween-C_X1XzIs.js"
     ],
     "css": [
-      "assets/app-BjCZtnZZ.css"
+      "assets/app-JdZCwH2q.css"
     ]
   },
   "resources/js/spa.jsx": {
-    "file": "assets/spa-DbzoJszb.js",
+    "file": "assets/spa-Duybq895.js",
     "name": "spa",
     "src": "resources/js/spa.jsx",
     "isEntry": true,
     "imports": [
-      "_Halloween-BO3WDdfh.js"
+      "_Halloween-C_X1XzIs.js"
     ],
     "css": [
-      "assets/app-BjCZtnZZ.css"
+      "assets/app-JdZCwH2q.css"
     ]
   }
 }

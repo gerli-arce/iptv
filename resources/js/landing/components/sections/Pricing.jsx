@@ -8,7 +8,7 @@ const fadeInUp = {
   show: { opacity: 1, y: 0 },
 };
 
-const Pricing = () => {
+const Pricing = ({ onSelectPlan }) => {
   return (
     <section id="pricing" className="scroll-mt-0 border-t-8 border-[#17171c] py-20 sm:py-28">
       <div className="mx-auto w-full max-w-6xl px-4 sm:px-6">
@@ -85,8 +85,8 @@ const Pricing = () => {
               </ul>
 
               <Button
-                as="a"
-                href="/login"
+                type="button"
+                onClick={() => onSelectPlan(plan)}
                 variant={plan.highlighted ? "primary" : "secondary"}
                 size="lg"
                 className="relative mt-8 w-full"

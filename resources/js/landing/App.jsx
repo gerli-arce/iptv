@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Header from "./components/layout/Header";
+import LeadModal from "./components/layout/LeadModal";
 import ManualModal from "./components/layout/ManualModal";
 import About from "./components/sections/About";
 import Downloads from "./components/sections/Downloads";
@@ -9,27 +10,29 @@ import Hero from "./components/sections/Hero";
 import Pricing from "./components/sections/Pricing";
 import Testimonials from "./components/sections/Testimonials";
 import FloatingActions from "./components/ui/FloatingActions";
-import { FOOTER_LINKS, FOOTER_TEXT } from "./data/constants";
+import { DEMO_LEAD, FOOTER_LINKS, FOOTER_TEXT, planLead } from "./data/constants";
 import { HalloweenBats } from "../spa/Halloween";
 import { InstallHost } from "../spa/InstallApp";
 
 function LandingApp() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [lead, setLead] = useState(null);
 
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-ink font-display text-zinc-100 antialiased selection:bg-coral/30">
       <ManualModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      <LeadModal lead={lead} onClose={() => setLead(null)} />
 
       <div className="relative z-10">
         <HalloweenBats fixed />
         <InstallHost />
         <Header />
         <main>
-          <Hero />
+          <Hero onOpenDemo={() => setLead(DEMO_LEAD)} />
           <About />
           <Features />
           <Downloads onOpenManual={() => setIsModalOpen(true)} />
-          <Pricing />
+          <Pricing onSelectPlan={(plan) => setLead(planLead(plan))} />
           <Testimonials />
           <Faq />
         </main>
