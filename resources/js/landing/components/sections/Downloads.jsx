@@ -1,8 +1,9 @@
 import { motion } from "framer-motion";
-import { BookOpen, Smartphone, Tv } from "lucide-react";
+import { BookOpen, Download, Smartphone, Tv } from "lucide-react";
 import Button from "../ui/Button";
 import { PhoneFrame } from "../ui/DeviceFrame";
 import { PLAY_STORE_URL, SHOWCASE, STEPS } from "../../data/constants";
+import { InstallAction } from "../../../spa/InstallApp";
 
 const fadeInUp = {
     hidden: { opacity: 0, y: 24 },
@@ -114,6 +115,19 @@ const Downloads = ({ onOpenManual }) => {
                             </Button>
                         </div>
                     </div>
+                    <InstallAction>
+                        {({ onClick }) => (
+                            <div className="space-y-3">
+                                <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-zinc-500">
+                                    O úsala como app, sin descargar nada
+                                </p>
+                                <Button type="button" onClick={onClick} variant="secondary" size="md" className="w-full px-5 text-sm sm:w-auto">
+                                    <Download className="h-5 w-5" />
+                                    Instalar Fastnet Player en este dispositivo
+                                </Button>
+                            </div>
+                        )}
+                    </InstallAction>
                     {onOpenManual && (
                         <button
                             type="button"

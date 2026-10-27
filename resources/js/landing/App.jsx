@@ -11,6 +11,7 @@ import Testimonials from "./components/sections/Testimonials";
 import FloatingActions from "./components/ui/FloatingActions";
 import { FOOTER_LINKS, FOOTER_TEXT } from "./data/constants";
 import { HalloweenBats } from "../spa/Halloween";
+import { InstallHost } from "../spa/InstallApp";
 
 function LandingApp() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -21,6 +22,7 @@ function LandingApp() {
 
       <div className="relative z-10">
         <HalloweenBats fixed />
+        <InstallHost />
         <Header />
         <main>
           <Hero />

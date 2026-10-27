@@ -8,6 +8,8 @@ import { FeaturedChannels, LiveTv } from "./spa/LiveTv";
 import { CategoryNav, CategoryRow } from "./spa/Catalog";
 import { useRoute } from "./spa/router";
 import { HalloweenBats } from "./spa/Halloween";
+import { InstallAction, InstallHost } from "./spa/InstallApp";
+import { usePwaInstall } from "./spa/pwa";
 import { MobileNav, Navbar } from "./spa/Navbar";
 import { Billboard, LandscapeCard, PosterCard, Row } from "./spa/Browse";
 
@@ -245,6 +247,7 @@ function SettingsPanel({ desktopMode, playerMode, setPlayerMode, hasVlc, user, o
   const displayName = user?.name || user?.username || "Usuario";
   const subscription = user?.status || "Activo";
   const expiry = user?.exp_date || user?.expiry || user?.exp || "Sin fecha visible";
+  const { standalone } = usePwaInstall();
 
   return (
     <section className="space-y-5">
@@ -260,6 +263,23 @@ function SettingsPanel({ desktopMode, playerMode, setPlayerMode, hasVlc, user, o
           </div>
         </div>
       </div>
+
+      <InstallAction>
+        {({ onClick }) => (
+          <div className="flex flex-col gap-4 rounded-[28px] border border-coral/25 bg-coral/[0.06] p-5 sm:flex-row sm:items-center sm:justify-between md:p-6">
+            <div>
+              <h2 className="text-xl font-black text-white">Instala Fastnet Player en este dispositivo</h2>
+              <p className="mt-1 text-sm text-slate-300">Abre como una aplicacion, a pantalla completa y con su icono en tu pantalla de inicio.</p>
+            </div>
+            <button onClick={onClick} className="shrink-0 rounded-xl bg-coral px-6 py-3 text-sm font-bold text-white shadow-[0_8px_28px_rgba(255,99,99,0.35)] transition hover:bg-coral-soft">
+              Instalar aplicacion
+            </button>
+          </div>
+        )}
+      </InstallAction>
+      {standalone ? (
+        <p className="rounded-2xl border border-emerald-300/20 bg-emerald-400/10 px-5 py-3 text-sm text-emerald-200">Estas usando Fastnet Player como aplicacion instalada.</p>
+      ) : null}
 
       <div className="rounded-[28px] border border-white/10 bg-white/[0.03] p-5 md:p-6">
         <h2 className="text-2xl font-black text-white">Preferencias de reproduccion</h2>
@@ -1514,6 +1534,7 @@ function App() {
       </main>
 
       <MobileNav page={page} setPage={setPage} />
+      <InstallHost />
     </div>
   );
 }

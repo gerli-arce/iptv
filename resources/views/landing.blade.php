@@ -105,6 +105,7 @@
     <meta name="twitter:image" content="{{ $image }}">
 
     @include('partials.favicon')
+    @include('partials.pwa')
 
     {{-- Con JavaScript se oculta el contenido de respaldo (para que no parpadee) y se muestra el logo mientras carga.
          Sin JavaScript (buscadores simples) el respaldo queda visible. --}}

@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { Clapperboard, Film, Home, LogOut, Search, Settings, Tv, X } from "lucide-react";
+import { Clapperboard, Download, Film, Home, LogOut, Search, Settings, Tv, X } from "lucide-react";
+import { InstallAction } from "./InstallApp";
+import { isStandalone } from "./pwa";
 
 export const NAV_ITEMS = [
   { key: "home", label: "Inicio", Icon: Home },
@@ -51,7 +53,7 @@ export function Navbar({ page, setPage, searchQuery, setSearchQuery, user, onLog
       }`}
     >
       <div className="mx-auto flex h-16 w-full max-w-[1800px] items-center gap-4 px-4 md:h-[72px] md:gap-8 md:px-10">
-        <a href="/" className="flex shrink-0 items-center" aria-label="Fastnet Player - ir a la pagina web">
+        <a href={isStandalone() ? "/app" : "/"} className="flex shrink-0 items-center" aria-label={isStandalone() ? "Fastnet Player - inicio" : "Fastnet Player - ir a la pagina web"}>
           <img
             src="/logo-fastnet-wordmark.png"
             alt="Fastnet Player"
@@ -134,6 +136,20 @@ export function Navbar({ page, setPage, searchQuery, setSearchQuery, user, onLog
                   </p>
                 </div>
                 <div className="p-1.5">
+                  <InstallAction>
+                    {({ onClick }) => (
+                      <button
+                        onClick={() => {
+                          setMenuOpen(false);
+                          onClick();
+                        }}
+                        className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-zinc-200 transition hover:bg-white/[0.06]"
+                      >
+                        <Download className="size-4 text-coral" />
+                        Instalar aplicacion
+                      </button>
+                    )}
+                  </InstallAction>
                   <button onClick={() => go("settings")} className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-zinc-200 transition hover:bg-white/[0.06]">
                     <Settings className="size-4 text-zinc-400" />
                     Ajustes
