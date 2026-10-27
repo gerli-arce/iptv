@@ -8,7 +8,9 @@ use Illuminate\Http\Response;
 class SeoController extends Controller
 {
     /**
-     * robots.txt: permite indexar la pagina publica y deja fuera la app, el login y los endpoints internos.
+     * robots.txt: permite indexar la pagina publica y deja fuera la app y los endpoints internos. /login no se bloquea
+     * a proposito: Google tiene que poder abrirlo para leer su "noindex" y quitarlo de los resultados (si estuviera
+     * bloqueado, se quedaria el resultado viejo).
      */
     public function robots(): Response
     {
@@ -18,7 +20,6 @@ class SeoController extends Controller
             'User-agent: *',
             'Allow: /',
             'Disallow: /app',
-            'Disallow: /login',
             'Disallow: /panel',
             'Disallow: /play/',
             'Disallow: /stream',
