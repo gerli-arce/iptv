@@ -1,10 +1,12 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import Hls from "hls.js";
 import "../css/app.css";
 import { fetchHomeData } from "./services/homeApi";
 import { getContentLabel, getSectionItemHref, getSectionItemTitle, isMovieOnlyContent, isTmdbImage, proxiedImageUrl, tmdbSize } from "./spa/helpers";
 import { FeaturedChannels, LiveTv } from "./spa/LiveTv";
+import { CategoryNav, CategoryRow } from "./spa/Catalog";
+import { useRoute } from "./spa/router";
 import { MobileNav, Navbar } from "./spa/Navbar";
 import { Billboard, LandscapeCard, PosterCard, Row } from "./spa/Browse";
 
@@ -354,7 +356,7 @@ function movieMeta(it = {}, extra = {}) {
 
 function HoverCards({ items = [], type = "movie", limit = 10, imageOverrides = {}, metaOverrides = {} }) {
   return (
-    <div className="grid grid-cols-3 gap-x-3 gap-y-5 sm:grid-cols-4 md:grid-cols-5 md:gap-x-4 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-8">
+    <div className="grid grid-cols-3 gap-x-3 gap-y-5 sm:grid-cols-4 md:grid-cols-5 md:gap-x-4 xl:grid-cols-6 2xl:grid-cols-7">
       {items.slice(0, limit).map((it, i) => {
         const id = it.stream_id || it.series_id || it.id;
         const href = type === "series" ? `/play/series/${id}` : `/play/movie/${id}`;
@@ -375,8 +377,8 @@ function HoverCards({ items = [], type = "movie", limit = 10, imageOverrides = {
   );
 }
 
-function CatalogSection({ title, items = [], categories = [], type = "movie", searchQuery = "" }) {
-  const [categoryId, setCategoryId] = useState("all");
+function CatalogSection({ title, items = [], categories = [], type = "movie", searchQuery = "", categoryId = "all", onCategoryChange }) {
+  const setCategoryId = onCategoryChange;
   const [imageOverrides, setImageOverrides] = useState({});
   const [metaOverrides, setMetaOverrides] = useState({});
   const q = searchQuery.trim().toLowerCase();
@@ -456,53 +458,74 @@ function CatalogSection({ title, items = [], categories = [], type = "movie", se
     };
   }, [items, type]);
 
+  // Una categoria que no existe (enlace viejo) vuelve a "Todas"; no antes de que llegue el catalogo.
   useEffect(() => {
-    if (categoryId === "all") return;
+    if (categoryId === "all" || !items.length || !categories.length) return;
     const exists = categories.some((cat) => String(cat.category_id) === String(categoryId));
-    if (!exists) {
-      setCategoryId("all");
-    }
-  }, [categories, categoryId]);
+    if (!exists) setCategoryId("all");
+  }, [categories, categoryId, items.length]);
+
+  // Categorias con contenido visible y su cantidad.
+  const visibleCategories = useMemo(() => {
+    const counts = new Map();
+    items.forEach((it) => counts.set(String(it.category_id ?? ""), (counts.get(String(it.category_id ?? "")) || 0) + 1));
+    return categories.filter((cat) => counts.has(String(cat.category_id))).map((cat) => ({ ...cat, count: counts.get(String(cat.category_id)) }));
+  }, [items, categories]);
+
+  // En "Todas" (sin busqueda) el catalogo se muestra en una fila por categoria.
+  const grouped = categoryId === "all" && !q;
+  const groups = useMemo(
+    () => (grouped ? visibleCategories.map((cat) => ({ category: cat, items: items.filter((it) => String(it.category_id ?? "") === String(cat.category_id)) })) : []),
+    [grouped, visibleCategories, items],
+  );
+
+  const navItems = [{ category_id: "all", category_name: "Todas", count: items.length }, ...visibleCategories];
+  const currentCategory = visibleCategories.find((cat) => String(cat.category_id) === String(categoryId));
+  const heading = q ? `Resultados para "${searchQuery.trim()}"` : currentCategory ? currentCategory.category_name : title;
+  const total = grouped ? items.length : filteredItems.length;
+  const noun = type === "series" ? "series" : "peliculas";
+
+  const posterFor = (it, i) => {
+    const id = it.stream_id || it.series_id || it.id;
+    return (
+      <PosterCard
+        key={`${id}-${i}`}
+        title={it.name}
+        image={imageOverrides[id] || it.stream_icon || it.cover}
+        href={type === "series" ? `/play/series/${id}` : `/play/movie/${id}`}
+        meta={movieMeta(it, metaOverrides[id] || {})}
+      />
+    );
+  };
 
   return (
-    <section className="space-y-6 px-4 pb-12 pt-24 md:px-10 md:pt-28">
-      <div className="flex items-baseline gap-3">
-        <h1 className="text-3xl font-extrabold tracking-[-0.03em] text-white md:text-4xl">{title}</h1>
-        <span className="text-sm text-zinc-500">{filteredItems.length} titulos</span>
+    <section className="px-4 pb-12 pt-24 md:px-10 md:pt-28">
+      <div className="mb-6 flex items-baseline gap-3">
+        <h1 className="text-3xl font-extrabold tracking-[-0.03em] text-white md:text-4xl">{heading}</h1>
+        <span className="text-sm text-zinc-500">{total} titulos</span>
       </div>
-      <div className="flex gap-2 overflow-x-auto fp-no-scrollbar pb-1">
-        <button
-          onClick={() => setCategoryId("all")}
-          className={`rounded-full border px-4 py-1.5 text-sm whitespace-nowrap transition duration-200 ${
-            categoryId === "all" ? "border-white bg-white text-black" : "border-white/15 text-zinc-300 hover:border-white/40 hover:text-white"
-          }`}
-        >
-          Todas
-        </button>
-        {categories.map((cat) => (
-          <button
-            key={cat.category_id}
-            onClick={() => setCategoryId(cat.category_id)}
-            className={`rounded-full border px-4 py-1.5 text-sm whitespace-nowrap transition duration-200 ${
-              String(categoryId) === String(cat.category_id) ? "border-white bg-white text-black" : "border-white/15 text-zinc-300 hover:border-white/40 hover:text-white"
-            }`}
-          >
-            {cat.category_name}
-          </button>
-        ))}
-      </div>
-      {!filteredItems.length ? (
-        <div className="rounded-[24px] border border-dashed border-white/10 bg-white/[0.03] px-5 py-8 text-sm text-slate-300">
-          No encontramos {type === "series" ? "series" : "peliculas"} para esta vista.
+
+      <div className="flex flex-col lg:flex-row lg:gap-8">
+        {visibleCategories.length ? <CategoryNav items={navItems} value={categoryId} onChange={setCategoryId} /> : null}
+
+        <div className="min-w-0 flex-1 space-y-8 pt-4 lg:pt-0">
+          {!total ? (
+            <div className="rounded-xl border border-dashed border-white/10 px-5 py-10 text-center text-sm text-zinc-400">
+              No encontramos {noun} para esta vista.
+            </div>
+          ) : null}
+
+          {grouped
+            ? groups.map((g) => (
+                <CategoryRow key={g.category.category_id} title={g.category.category_name} count={g.items.length} onSeeAll={() => setCategoryId(g.category.category_id)}>
+                  {g.items.slice(0, 24).map(posterFor)}
+                </CategoryRow>
+              ))
+            : (
+              <HoverCards items={filteredItems} type={type} limit={filteredItems.length || 0} imageOverrides={imageOverrides} metaOverrides={metaOverrides} />
+            )}
         </div>
-      ) : null}
-      <HoverCards
-        items={filteredItems}
-        type={type}
-        limit={filteredItems.length || 0}
-        imageOverrides={imageOverrides}
-        metaOverrides={metaOverrides}
-      />
+      </div>
     </section>
   );
 }
@@ -670,7 +693,7 @@ function saveBackdrop(key, url) {
   }
 }
 
-function HomeLike({ home, isLoading, error, onRetry, searchQuery = "", movies = [], movieCategories = [], blockedIds = new Set(), liveChannels = [], liveCategories = [] }) {
+function HomeLike({ home, isLoading, error, onRetry, searchQuery = "", movies = [], movieCategories = [], blockedIds = new Set(), liveChannels = [], liveCategories = [], player }) {
   const q = searchQuery.trim().toLowerCase();
 
   // Solo las peliculas se bloquean: los ids de series/canales son otra numeracion.
@@ -859,7 +882,7 @@ function HomeLike({ home, isLoading, error, onRetry, searchQuery = "", movies = 
 
       <div className={`relative z-10 space-y-8 md:space-y-10 ${slides.length ? "-mt-8 md:-mt-14" : "pt-24 md:pt-28"}`}>
         <div className="pt-5 md:pt-2">
-          <FeaturedChannels channels={liveChannels} categories={liveCategories} getStream={getLiveStream} />
+          <FeaturedChannels channels={liveChannels} categories={liveCategories} getStream={getLiveStream} player={player} />
         </div>
 
         {sections.map((section) => (
@@ -1257,10 +1280,29 @@ function LiveLayout({ data, query, setQuery, playerMode }) {
 function App() {
   const desktopMode = hasDesktopBridge();
   const [auth, setAuth] = useState({ ready: false, ok: false, user: null });
-  const [page, setPage] = useState(() => {
-    const saved = localStorage.getItem("fastnet:lastPage");
-    return WEB_PAGES.has(saved) ? saved : "home";
-  });
+  // La vista, el filtro de categoria y el canal abierto viven en la URL (ver spa/router.js).
+  const route = useRoute();
+  const { page, navigate: setPage } = route;
+  const categoryParam = route.params.get("categoria") || "all";
+  const setCategory = useCallback(
+    (id) => {
+      route.setParams({ categoria: id === "all" ? null : id });
+      window.scrollTo(0, 0);
+    },
+    [route.setParams],
+  );
+  const channelParam = route.params.get("canal");
+  const player = useMemo(
+    () => ({
+      activeId: channelParam,
+      // Abrir agrega un paso al historial: "atras" cierra el reproductor y deja la lista donde estaba.
+      open: (id) => route.setParams({ canal: id }, { state: { player: true } }),
+      // Cambiar de canal dentro del reproductor reemplaza la entrada, para que "atras" no recorra todos los canales.
+      change: (id) => route.setParams({ canal: id }, { replace: true }),
+      close: () => (window.history.state?.player ? window.history.back() : route.setParams({ canal: null }, { replace: true })),
+    }),
+    [channelParam, route.setParams],
+  );
   const [searchQuery, setSearchQuery] = useState("");
   const [data, setData] = useState({
     home: null,
@@ -1283,16 +1325,7 @@ function App() {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem("fastnet:lastPage", page);
-  }, [page]);
-
-  useEffect(() => {
     window.scrollTo(0, 0);
-  }, [page]);
-
-  useEffect(() => {
-    if (WEB_PAGES.has(page)) return;
-    setPage("home");
   }, [page]);
 
   useEffect(() => {
@@ -1416,6 +1449,7 @@ function App() {
             movieCategories={movieCategories}
             liveChannels={(data.live?.channels || []).filter((c) => !(hideUnplayable && c.web_playable === false))}
             liveCategories={data.live?.categories || []}
+            player={player}
             onRetry={() => {
               setData((state) => ({
                 ...state,
@@ -1435,6 +1469,9 @@ function App() {
             searchQuery={searchQuery}
             hideUnplayable={hideUnplayable}
             getStream={getLiveStream}
+            categoryId={categoryParam}
+            onCategoryChange={setCategory}
+            player={player}
             onRetry={() => setData((state) => ({ ...state, live: null, liveError: false }))}
           />
         )}
@@ -1445,6 +1482,8 @@ function App() {
             categories={movieCategories}
             type="movie"
             searchQuery={searchQuery}
+            categoryId={categoryParam}
+            onCategoryChange={setCategory}
           />
         )}
         {page === "series" && (
@@ -1454,6 +1493,8 @@ function App() {
             categories={seriesCategories}
             type="series"
             searchQuery={searchQuery}
+            categoryId={categoryParam}
+            onCategoryChange={setCategory}
           />
         )}
         {page === "settings" && (

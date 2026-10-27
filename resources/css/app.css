@@ -146,3 +146,48 @@
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
+
+/* Murcielagos de Halloween del reproductor */
+@keyframes fpBatFly {
+  from { transform: translateX(-14vw); }
+  to { transform: translateX(114vw); }
+}
+
+@keyframes fpBatBob {
+  0%, 100% { transform: translateY(0) rotate(-4deg); }
+  25% { transform: translateY(-26px) rotate(3deg); }
+  50% { transform: translateY(8px) rotate(-2deg); }
+  75% { transform: translateY(-14px) rotate(4deg); }
+}
+
+@keyframes fpBatFlap {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(0.42); }
+}
+
+/* Barra de volumen del reproductor */
+.fp-range {
+  appearance: none;
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(to right, #ff6363 var(--fp-fill, 100%), rgba(255, 255, 255, 0.25) var(--fp-fill, 100%));
+  outline: none;
+  cursor: pointer;
+}
+
+.fp-range::-webkit-slider-thumb {
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(255, 99, 99, 0.35);
+}
+
+.fp-range::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border: 0;
+  border-radius: 999px;
+  background: #fff;
+}

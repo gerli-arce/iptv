@@ -26,7 +26,8 @@ if (env('APP_TARGET', 'player') === 'admin') {
 
 Route::get('/', [PortalController::class, 'landing'])->name('landing');
 Route::get('/login', [PortalController::class, 'showLogin'])->name('login');
-Route::get('/app', [PortalController::class, 'showApp'])->name('app');
+// La app es de una sola pagina, pero cada vista tiene su URL (/app/tv, /app/peliculas...): todas cargan la misma app.
+Route::get('/app/{path?}', [PortalController::class, 'showApp'])->where('path', '.*')->name('app');
 Route::get('/stream', [PortalController::class, 'streamProxy'])->name('stream.proxy');
 
 foreach (['/api/player', '/portal-api'] as $prefix) {

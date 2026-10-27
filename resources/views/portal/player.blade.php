@@ -36,7 +36,7 @@
             <div class="flex items-start justify-between gap-3">
                 <div class="min-w-0">
                     <a
-                        href="{{ route('portal.dashboard') }}"
+                        href="{{ $type === 'series' ? '/app/series' : ($type === 'channel' ? '/app/tv' : '/app/peliculas') }}"
                         class="inline-flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-cyan-300 transition hover:text-cyan-200"
                         onclick="if (window.history.length > 1) { event.preventDefault(); window.history.back(); }"
                     >
