@@ -61,6 +61,26 @@ Notas:
 - `compose.yaml` corre migraciones automaticamente con `RUN_MIGRATIONS=true`.
 - Si quieres usar otras credenciales, ajusta `compose.yaml` o tu `.env`.
 
+### Encabezados de seguridad
+
+`public/.htaccess` configura CSP, HSTS, X-Frame-Options, X-Content-Type-Options,
+Referrer-Policy y Permissions-Policy para Apache (incluidos archivos estaticos).
+La imagen Docker ya habilita `mod_headers` y `AllowOverride All`.
+Para aplicar cambios en Docker, reconstruye y despliega la imagen del servicio `app`.
+En hosting Apache manual, sube tambien `public/.htaccess`.
+
+HSTS se envia por HTTPS o cuando el proxy informa `X-Forwarded-Proto: https`.
+El proxy debe sobrescribir ese encabezado y el origen debe quedar protegido del acceso directo.
+HSTS se limita al dominio actual; no fuerza HTTPS sobre otros subdominios.
+La CSP permite fuentes Google, trailers de YouTube y conexiones/medios de proveedores IPTV.
+Conserva scripts y estilos inline por compatibilidad con las vistas actuales; no es una CSP estricta.
+Esta politica es para produccion: desarrollo con Vite usa su servidor y WebSocket locales.
+
+Tras desplegar, verifica `curl -I https://fastv.fastnetperu.com.pe/`, vuelve a ejecutar
+Security Headers y prueba login, canales, peliculas, trailers y pantalla completa.
+La configuracion `nginx.conf` no participa en la imagen Docker actual; si cambias
+a Nginx, debes configurar estos encabezados alli.
+
 ### Panel admin
 
 El panel administrativo quedó en la carpeta hermana `../iptv-admin`.

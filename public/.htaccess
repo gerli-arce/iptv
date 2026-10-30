@@ -1,3 +1,17 @@
+# Applied by Apache to pages, redirects, errors and static assets.
+# Dockerfile enables mod_headers; manual hosting must enable it as well.
+<IfModule mod_headers.c>
+    Header always set Strict-Transport-Security "max-age=31536000" "expr=%{HTTPS} == 'on' || req('X-Forwarded-Proto') == 'https'"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), fullscreen=(self \"https://www.youtube-nocookie.com\"), autoplay=(self \"https://www.youtube-nocookie.com\"), picture-in-picture=(self \"https://www.youtube-nocookie.com\")"
+    # Inline scripts/styles are currently required by Blade, React and the UI.
+    # IPTV providers can use different hosts; restrict scripts independently.
+    # Do not upgrade all requests: some IPTV origins only support HTTP.
+    Header always set Content-Security-Policy "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; form-action 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' http: https: data: blob:; media-src 'self' http: https: blob:; connect-src 'self' http: https:; worker-src 'self' blob:; frame-src 'self' https://www.youtube-nocookie.com; manifest-src 'self'"
+</IfModule>
+
 <IfModule mod_rewrite.c>
     <IfModule mod_negotiation.c>
         Options -MultiViews -Indexes
