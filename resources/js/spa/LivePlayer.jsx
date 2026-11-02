@@ -3,7 +3,6 @@ import { createPortal } from "react-dom";
 import Hls from "hls.js";
 import { ChevronLeft, ChevronRight, Maximize, Minimize, Pause, PictureInPicture2, Play, Radio, RotateCcw, Tv, Volume2, VolumeX, X } from "lucide-react";
 import { proxiedImageUrl } from "./helpers";
-import { HalloweenBats } from "./Halloween";
 import { ScrollStrip } from "./Catalog";
 import { isIos } from "./pwa";
 
@@ -276,8 +275,6 @@ export function LivePlayer({ channel, categoryName, getStream, onClose, onStep, 
       role="dialog"
       aria-label={channel.name}
     >
-      <HalloweenBats />
-
       <div className="relative z-10 mx-auto flex w-full max-w-[1500px] flex-1 flex-col px-3 pb-6 pt-3 md:px-8 md:pt-5">
         <header className="mb-3 flex items-center justify-between gap-3 md:mb-5">
           <div className="flex min-w-0 items-center gap-3">

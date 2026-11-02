@@ -11,7 +11,6 @@ import Pricing from "./components/sections/Pricing";
 import Testimonials from "./components/sections/Testimonials";
 import FloatingActions from "./components/ui/FloatingActions";
 import { DEMO_LEAD, FOOTER_LINKS, FOOTER_TEXT, planLead } from "./data/constants";
-import { HalloweenBats } from "../spa/Halloween";
 import { InstallHost } from "../spa/InstallApp";
 
 function LandingApp() {
@@ -24,7 +23,6 @@ function LandingApp() {
       <LeadModal lead={lead} onClose={() => setLead(null)} />
 
       <div className="relative z-10">
-        <HalloweenBats fixed />
         <InstallHost />
         <Header />
         <main>
