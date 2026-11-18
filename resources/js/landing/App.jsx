@@ -2,6 +2,7 @@ import { useState } from "react";
 import Header from "./components/layout/Header";
 import LeadModal from "./components/layout/LeadModal";
 import ManualModal from "./components/layout/ManualModal";
+import TrialModal from "./components/layout/TrialModal";
 import About from "./components/sections/About";
 import Downloads from "./components/sections/Downloads";
 import Faq from "./components/sections/Faq";
@@ -10,23 +11,25 @@ import Hero from "./components/sections/Hero";
 import Pricing from "./components/sections/Pricing";
 import Testimonials from "./components/sections/Testimonials";
 import FloatingActions from "./components/ui/FloatingActions";
-import { DEMO_LEAD, FOOTER_LINKS, FOOTER_TEXT, planLead } from "./data/constants";
+import { FOOTER_LINKS, FOOTER_TEXT, planLead } from "./data/constants";
 import { InstallHost } from "../spa/InstallApp";
 
 function LandingApp() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [lead, setLead] = useState(null);
+  const [isTrialOpen, setIsTrialOpen] = useState(false);
 
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-ink font-display text-zinc-100 antialiased selection:bg-coral/30">
       <ManualModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
       <LeadModal lead={lead} onClose={() => setLead(null)} />
+      <TrialModal isOpen={isTrialOpen} onClose={() => setIsTrialOpen(false)} />
 
       <div className="relative z-10">
         <InstallHost />
         <Header />
         <main>
-          <Hero onOpenDemo={() => setLead(DEMO_LEAD)} />
+          <Hero onOpenDemo={() => setIsTrialOpen(true)} />
           <About />
           <Features />
           <Downloads onOpenManual={() => setIsModalOpen(true)} />

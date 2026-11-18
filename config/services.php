@@ -19,6 +19,17 @@ return [
         'verify_ssl' => filter_var(env('TMDB_VERIFY_SSL', env('APP_ENV') !== 'local'), FILTER_VALIDATE_BOOL),
     ],
 
+    // Panel 1-Stream (API "ext"/B2C): alta automatica de cuentas de prueba desde la landing.
+    'onestream' => [
+        'url' => rtrim((string) env('ONESTREAM_API_URL', ''), '/'),
+        'api_token' => env('ONESTREAM_API_TOKEN'),
+        'user_token' => env('ONESTREAM_USER_TOKEN'),
+        'verify_ssl' => filter_var(env('ONESTREAM_VERIFY_SSL', true), FILTER_VALIDATE_BOOL),
+        'trial_days' => (int) env('ONESTREAM_TRIAL_DAYS', 30),
+        // IDs de bouquets del panel: 2 BASICO, 3 PELICULAS, 4 SERIES, 5 PELICULAS DE ESTRENO.
+        'trial_bouquets' => array_values(array_filter(array_map('intval', explode(',', (string) env('ONESTREAM_TRIAL_BOUQUETS', '2,3,4,5'))))),
+    ],
+
     'postmark' => [
         'key' => env('POSTMARK_API_KEY'),
     ],

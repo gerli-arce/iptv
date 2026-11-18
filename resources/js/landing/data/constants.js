@@ -23,7 +23,7 @@ export const HERO = {
   description:
     "Catálogo actualizado cada semana y soporte humano 24/7.",
   primaryCta: "Ver planes",
-  secondaryCta: "Explorar demo",
+  secondaryCta: "Prueba gratis 30 días",
   highlightTitle: "Streaming de nueva generacion",
   highlightDescription:
     "Latencia baja, audio multi-idioma y catalogo actualizado cada semana.",
@@ -39,13 +39,14 @@ export const CUSTOMER_OPTIONS = [
   { value: "Sí, cliente de otro servicio Fastnet", label: "Sí, tengo otro servicio" },
 ];
 
-// Configuracion de cada formulario que termina en WhatsApp con el area de ventas.
-export const DEMO_LEAD = {
-  title: "Prueba gratis 2 días",
-  subtitle:
-    "Completa tus datos y te enviamos tu acceso de prueba por WhatsApp. Sin compromiso.",
-  intro: "Hola, quiero solicitar la demo de 2 días de Fastnet Player.",
+// Prueba gratis automatica: el formulario crea la cuenta en el panel al instante (POST /api/trial).
+export const TRIAL = {
+  days: 30,
+  title: "Prueba gratis 30 días",
+  subtitle: "Crea tu cuenta en un minuto y empieza a ver hoy. Sin tarjeta, sin compromiso.",
 };
+
+// Configuracion de cada formulario que termina en WhatsApp con el area de ventas.
 
 export const planLead = (plan) => ({
   title: `Contratar plan ${plan.name}`,

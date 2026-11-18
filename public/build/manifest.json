@@ -1,10 +1,10 @@
 {
-  "_InstallApp-xnaUaiRs.js": {
-    "file": "assets/InstallApp-xnaUaiRs.js",
+  "_InstallApp-CJxEmT-t.js": {
+    "file": "assets/InstallApp-CJxEmT-t.js",
     "name": "InstallApp"
   },
   "resources/css/app.css": {
-    "file": "assets/app-384nhcQX.css",
+    "file": "assets/app-BrGcdtyT.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "name": "app",
@@ -13,27 +13,27 @@
     ]
   },
   "resources/js/landing.jsx": {
-    "file": "assets/landing-DhbTEwln.js",
+    "file": "assets/landing-B1FeHGy5.js",
     "name": "landing",
     "src": "resources/js/landing.jsx",
     "isEntry": true,
     "imports": [
-      "_InstallApp-xnaUaiRs.js"
+      "_InstallApp-CJxEmT-t.js"
     ],
     "css": [
-      "assets/app-384nhcQX.css"
+      "assets/app-BrGcdtyT.css"
     ]
   },
   "resources/js/spa.jsx": {
-    "file": "assets/spa-7hkyoERZ.js",
+    "file": "assets/spa-BMNMDi8e.js",
     "name": "spa",
     "src": "resources/js/spa.jsx",
     "isEntry": true,
     "imports": [
-      "_InstallApp-xnaUaiRs.js"
+      "_InstallApp-CJxEmT-t.js"
     ],
     "css": [
-      "assets/app-384nhcQX.css"
+      "assets/app-BrGcdtyT.css"
     ]
   }
 }
