@@ -227,14 +227,16 @@ function Login({ onDone }) {
             <span className="h-px flex-1 bg-white/10" />
           </div>
 
-          <p className="text-center text-sm text-zinc-400">Aun no tienes una cuenta de Fastnet Player?</p>
+          <p className="text-center text-sm text-zinc-400">¿Aún no tienes una cuenta de Fastnet Player?</p>
+          {/* Abre la landing con el formulario de prueba ya desplegado (ver landing/App.jsx). */}
           <a
-            href={salesUrl}
-            target="_blank"
-            rel="noreferrer"
+            href="/#prueba-gratis"
             className="block w-full rounded-lg border border-white/10 bg-white/[0.06] py-3 text-center text-sm font-semibold text-zinc-100 shadow-[0_1px_0_rgba(255,255,255,0.06)_inset] transition duration-200 hover:bg-white/10"
           >
-            Contrata aqui o consigue aqui una cuenta
+            Crea tu prueba gratis de 30 días
+          </a>
+          <a href={salesUrl} className="block text-center text-xs text-zinc-500 transition hover:text-zinc-300">
+            Ver planes y más información
           </a>
         </form>
       </div>

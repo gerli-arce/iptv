@@ -4,7 +4,7 @@
     "name": "InstallApp"
   },
   "resources/css/app.css": {
-    "file": "assets/app-BrGcdtyT.css",
+    "file": "assets/app-CUMZVd-V.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "name": "app",
@@ -13,7 +13,7 @@
     ]
   },
   "resources/js/landing.jsx": {
-    "file": "assets/landing-BPZal1ca.js",
+    "file": "assets/landing-C-eTHvl9.js",
     "name": "landing",
     "src": "resources/js/landing.jsx",
     "isEntry": true,
@@ -21,11 +21,11 @@
       "_InstallApp-CJxEmT-t.js"
     ],
     "css": [
-      "assets/app-BrGcdtyT.css"
+      "assets/app-CUMZVd-V.css"
     ]
   },
   "resources/js/spa.jsx": {
-    "file": "assets/spa-BMNMDi8e.js",
+    "file": "assets/spa-Wo1xXmo9.js",
     "name": "spa",
     "src": "resources/js/spa.jsx",
     "isEntry": true,
@@ -33,7 +33,7 @@
       "_InstallApp-CJxEmT-t.js"
     ],
     "css": [
-      "assets/app-BrGcdtyT.css"
+      "assets/app-CUMZVd-V.css"
     ]
   }
 }
