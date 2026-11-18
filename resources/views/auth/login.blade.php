@@ -6,7 +6,7 @@
     <title>Fastnet Login</title>
     @include('partials.favicon')
     @include('partials.noindex')
-    <script src="https://cdn.tailwindcss.com"></script>
+    @vite(['resources/css/app.css'])
 </head>
 <body class="min-h-screen bg-[#070B12] text-[#F4F7FB] flex items-center justify-center p-4">
     <form method="POST" action="{{ route('portal.login.submit') }}" class="w-full max-w-md bg-[#0E1420] border border-white/10 rounded-2xl p-6 space-y-4">

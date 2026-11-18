@@ -4,6 +4,7 @@
 
 @theme {
   --font-display: "Inter", "Segoe UI", system-ui, sans-serif;
+  --font-sans: "Inter", "Segoe UI", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
   --color-ink: #08080b;
   --color-coral: #ff6363;

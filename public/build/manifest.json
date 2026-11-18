@@ -3,8 +3,12 @@
     "file": "assets/InstallApp-CJxEmT-t.js",
     "name": "InstallApp"
   },
+  "_hls-DkI61o3c.js": {
+    "file": "assets/hls-DkI61o3c.js",
+    "name": "hls"
+  },
   "resources/css/app.css": {
-    "file": "assets/app-CUMZVd-V.css",
+    "file": "assets/app-CIGT20LX.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "name": "app",
@@ -12,8 +16,17 @@
       "app.css"
     ]
   },
+  "resources/js/hls-global.js": {
+    "file": "assets/hls-global-Bcd6LGQy.js",
+    "name": "hls-global",
+    "src": "resources/js/hls-global.js",
+    "isEntry": true,
+    "imports": [
+      "_hls-DkI61o3c.js"
+    ]
+  },
   "resources/js/landing.jsx": {
-    "file": "assets/landing-BA-5iDUH.js",
+    "file": "assets/landing-C68gpYAV.js",
     "name": "landing",
     "src": "resources/js/landing.jsx",
     "isEntry": true,
@@ -21,19 +34,20 @@
       "_InstallApp-CJxEmT-t.js"
     ],
     "css": [
-      "assets/app-CUMZVd-V.css"
+      "assets/app-CIGT20LX.css"
     ]
   },
   "resources/js/spa.jsx": {
-    "file": "assets/spa-DHRkFeVC.js",
+    "file": "assets/spa-BZr6ZNJ5.js",
     "name": "spa",
     "src": "resources/js/spa.jsx",
     "isEntry": true,
     "imports": [
-      "_InstallApp-CJxEmT-t.js"
+      "_InstallApp-CJxEmT-t.js",
+      "_hls-DkI61o3c.js"
     ],
     "css": [
-      "assets/app-CUMZVd-V.css"
+      "assets/app-CIGT20LX.css"
     ]
   }
 }

@@ -6,8 +6,7 @@
     <title>TV en vivo - FastnetPlayer</title>
     @include('partials.favicon')
     @include('partials.noindex')
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    @vite(['resources/css/app.css', 'resources/js/hls-global.js'])
 </head>
 <body class="bg-[#030712] text-white">
 <div class="min-h-screen grid grid-cols-1 lg:grid-cols-[240px_1fr]">
@@ -78,7 +77,8 @@
     const video = document.getElementById('video');
     const desktopBridge = window.desktopBridge;
     const desktopMode = Boolean(desktopBridge && typeof desktopBridge.openNativeStream === 'function');
-    if (src) {
+    // Tras DOMContentLoaded ya se ejecuto hls-global.js (modulo), asi que window.Hls esta disponible.
+    if (src) document.addEventListener('DOMContentLoaded', () => {
         if (desktopMode) {
             desktopBridge.openNativeStream(src, @json($currentChannel['name'] ?? 'TV en vivo'));
         } else if (window.Hls && Hls.isSupported()) {
@@ -88,7 +88,7 @@
         } else {
             video.src = src;
         }
-    }
+    });
 </script>
 </body>
 </html>

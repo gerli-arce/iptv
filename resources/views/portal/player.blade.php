@@ -6,25 +6,10 @@
     <title>{{ $seriesTitle ?? $title }}</title>
     @include('partials.favicon')
     @include('partials.noindex')
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: { sans: ['Inter', 'Segoe UI', 'system-ui', 'sans-serif'] },
-                    colors: {
-                        cyan: { 100: '#ffe0de', 200: '#ffc6c2', 300: '#ffa299', 400: '#ff6363', 500: '#ff6363', 600: '#ee4444' },
-                        blue: { 500: '#f05252', 600: '#dc3a3a' },
-                        slate: { 300: '#d4d4d8', 400: '#a1a1aa', 500: '#71717a', 950: '#08080b' },
-                    },
-                },
-            },
-        };
-    </script>
+    @vite(['resources/css/app.css', 'resources/js/hls-global.js'])
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 </head>
 <body class="min-h-screen bg-[#08080b] font-sans text-[#F4F7FB]">
     <div class="pointer-events-none fixed inset-0 overflow-hidden">
@@ -287,7 +272,8 @@
             video.requestFullscreen?.();
         });
 
-        tryPlay(0);
+        // Tras DOMContentLoaded ya se ejecuto hls-global.js (modulo), asi que window.Hls esta disponible.
+        document.addEventListener('DOMContentLoaded', () => tryPlay(0));
     </script>
     <script>
         // Fila de recomendados de la misma categoria, con flechas para recorrerla.

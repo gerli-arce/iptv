@@ -9,6 +9,7 @@ export default defineConfig({
                 "resources/css/app.css",
                 "resources/js/landing.jsx",
                 "resources/js/spa.jsx",
+                "resources/js/hls-global.js",
             ],
             refresh: true,
         }),

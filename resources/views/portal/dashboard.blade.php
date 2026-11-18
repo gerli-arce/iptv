@@ -6,7 +6,7 @@
     <title>FastnetPlayer</title>
     @include('partials.favicon')
     @include('partials.noindex')
-    <script src="https://cdn.tailwindcss.com"></script>
+    @vite(['resources/css/app.css'])
 </head>
 <body class="bg-[#030712] text-white">
 @php
