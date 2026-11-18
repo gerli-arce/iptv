@@ -12,7 +12,6 @@ import {
   Loader2,
   Phone,
   Smartphone,
-  Tv,
   User,
   X,
 } from "lucide-react";
@@ -73,6 +72,7 @@ const TrialModal = ({ isOpen, onClose }) => {
   const [formError, setFormError] = useState("");
   const [sending, setSending] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showCreatedPassword, setShowCreatedPassword] = useState(false);
   // Datos de la cuenta creada; con ellos se muestra la pantalla de exito.
   const [account, setAccount] = useState(null);
 
@@ -130,6 +130,7 @@ const TrialModal = ({ isOpen, onClose }) => {
       const data = await response.json().catch(() => ({}));
 
       if (response.ok) {
+        setShowCreatedPassword(false);
         setAccount({ ...data, password: form.password });
         return;
       }
@@ -200,43 +201,37 @@ const TrialModal = ({ isOpen, onClose }) => {
 
             {account ? (
               <div className="space-y-5 overflow-y-auto px-5 py-5 sm:px-6">
-                <div className="space-y-2 rounded-xl border border-coral/30 bg-coral/[0.06] p-4">
-                  <p className="text-xs text-zinc-400">Tus datos para entrar a la app:</p>
+                <p className="text-sm text-zinc-200">
+                  Descarga la aplicación e inicia sesión con los datos que acabas de crear.
+                </p>
+
+                <div className="space-y-3 rounded-xl border border-coral/30 bg-coral/[0.06] p-4">
                   <div className="flex items-center justify-between gap-3 text-sm">
                     <span className="text-zinc-400">Usuario</span>
                     <span className="font-mono font-semibold text-white">{account.username}</span>
                   </div>
                   <div className="flex items-center justify-between gap-3 text-sm">
                     <span className="text-zinc-400">Contraseña</span>
-                    <span className="font-mono font-semibold text-white">{account.password}</span>
-                  </div>
-                  <p className="pt-1 text-[11px] text-zinc-500">Toma una captura de pantalla para no olvidarlos.</p>
-                </div>
-
-                <div className="space-y-2">
-                  <p className="text-xs font-medium text-zinc-300">1. Descarga la app</p>
-                  <Button as="a" href={PLAY_STORE_URL} target="_blank" rel="noopener noreferrer" variant="primary" size="md" className="w-full">
-                    <Smartphone className="h-5 w-5" />
-                    Descargar en Play Store
-                  </Button>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Button as="a" href="/FASTNET-TV-CELULAR.apk" download variant="secondary" size="md" className="w-full px-3 text-xs">
-                      <Smartphone className="h-4 w-4" />
-                      APK Celular
-                    </Button>
-                    <Button as="a" href="/FASTNET-TV.apk" download variant="secondary" size="md" className="w-full px-3 text-xs">
-                      <Tv className="h-4 w-4" />
-                      APK Android TV
-                    </Button>
+                    <span className="flex items-center gap-2">
+                      <span className="font-mono font-semibold text-white">
+                        {showCreatedPassword ? account.password : "*".repeat(account.password.length)}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setShowCreatedPassword((v) => !v)}
+                        aria-label={showCreatedPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                        className="rounded p-1 text-zinc-500 hover:text-zinc-200"
+                      >
+                        {showCreatedPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </span>
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <p className="text-xs font-medium text-zinc-300">2. Ingresa con tu usuario y contraseña</p>
-                  <Button as="a" href="/login" variant="secondary" size="md" className="w-full">
-                    O mira ahora desde el navegador
-                  </Button>
-                </div>
+                <Button as="a" href={PLAY_STORE_URL} target="_blank" rel="noopener noreferrer" variant="primary" size="lg" className="w-full">
+                  <Smartphone className="h-5 w-5" />
+                  Descargar en Play Store
+                </Button>
               </div>
             ) : (
               <form onSubmit={handleSubmit} noValidate className="space-y-4 overflow-y-auto px-5 py-5 sm:px-6">

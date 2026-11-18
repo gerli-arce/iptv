@@ -72,7 +72,14 @@ class TrialController extends Controller
                 $data['password'],
                 $expiresAt,
                 config('services.onestream.trial_bouquets'),
-                "Prueba web 30d - {$trial->name} - DNI {$trial->dni} - Cel {$trial->phone} - {$trial->city}",
+                implode("\n", [
+                    'Prueba web ' . config('services.onestream.trial_days') . ' dias',
+                    "Nombre: {$trial->name}",
+                    "DNI: {$trial->dni}",
+                    "Celular: {$trial->phone}",
+                    "Direccion: {$trial->address}",
+                    "Ciudad: {$trial->city}",
+                ]),
                 'web-trial-' . $trial->id . '-' . $trial->created_at->timestamp,
             );
         } catch (OneStreamException $e) {

@@ -47,6 +47,8 @@ class OneStreamService
             'is_enabled' => true,
             'max_connections' => 1,
             'bouquets' => $bouquets,
+            // Datos del cliente: visibles en "Admin Notes" de la linea (reseller_notes como respaldo).
+            'admin_notes' => $notes,
             'reseller_notes' => $notes,
             // Evita crear la linea dos veces si la peticion se repite.
             'rid' => $rid,
