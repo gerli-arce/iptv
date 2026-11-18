@@ -18,6 +18,7 @@ class TrialTest extends TestCase
 
         config([
             'app.target' => 'player',
+            'services.onestream.trial_enabled' => true,
             'services.onestream.url' => 'https://panel.test',
             'services.onestream.api_token' => 'api-token',
             'services.onestream.user_token' => 'user-token',
@@ -122,6 +123,17 @@ class TrialTest extends TestCase
             ->assertJsonValidationErrors('username');
         Http::assertNotSent(fn (Request $r) => str_contains($r->url(), 'create-advanced'));
         $this->assertSame(0, TrialAccount::count());
+    }
+
+    public function test_disabled_switch_blocks_creation(): void
+    {
+        config(['services.onestream.trial_enabled' => false]);
+        Http::fake();
+
+        $this->postJson('/api/trial', $this->payload())->assertStatus(503);
+        Http::assertNothingSent();
+        $this->assertSame(0, TrialAccount::count());
+        $this->get('/')->assertSee('<meta name="trial-enabled" content="0">', false);
     }
 
     public function test_honeypot_blocks_bots(): void

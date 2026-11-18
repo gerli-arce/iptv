@@ -13,6 +13,9 @@ export const NAV_LINKS = [
   { label: "Preguntas", href: "#faq" },
 ];
 
+// La prueba automatica se activa desde el servidor (TRIAL_ENABLED en .env); apagada, se usa DEMO_LEAD por WhatsApp.
+export const TRIAL_ENABLED = document.querySelector('meta[name="trial-enabled"]')?.content === "1";
+
 export const HERO = {
   kicker: "Premium · TV por internet",
   title: "Fastnet Player",
@@ -23,7 +26,7 @@ export const HERO = {
   description:
     "Catálogo actualizado cada semana y soporte humano 24/7.",
   primaryCta: "Ver planes",
-  secondaryCta: "Prueba gratis 30 días",
+  secondaryCta: TRIAL_ENABLED ? "Prueba gratis 30 días" : "Explorar demo",
   highlightTitle: "Streaming de nueva generacion",
   highlightDescription:
     "Latencia baja, audio multi-idioma y catalogo actualizado cada semana.",
@@ -47,6 +50,13 @@ export const TRIAL = {
 };
 
 // Configuracion de cada formulario que termina en WhatsApp con el area de ventas.
+export const DEMO_LEAD = {
+  title: "Prueba gratis 2 días",
+  subtitle:
+    "Completa tus datos y te enviamos tu acceso de prueba por WhatsApp. Sin compromiso.",
+  intro: "Hola, quiero solicitar la demo de 2 días de Fastnet Player.",
+};
+
 
 export const planLead = (plan) => ({
   title: `Contratar plan ${plan.name}`,

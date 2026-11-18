@@ -21,6 +21,8 @@ return [
 
     // Panel 1-Stream (API "ext"/B2C): alta automatica de cuentas de prueba desde la landing.
     'onestream' => [
+        // Interruptor de la prueba automatica. Apagado: la landing vuelve a la demo por WhatsApp y /api/trial responde 503.
+        'trial_enabled' => filter_var(env('TRIAL_ENABLED', false), FILTER_VALIDATE_BOOL),
         'url' => rtrim((string) env('ONESTREAM_API_URL', ''), '/'),
         'api_token' => env('ONESTREAM_API_TOKEN'),
         'user_token' => env('ONESTREAM_USER_TOKEN'),

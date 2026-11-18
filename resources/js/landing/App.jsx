@@ -11,36 +11,46 @@ import Hero from "./components/sections/Hero";
 import Pricing from "./components/sections/Pricing";
 import Testimonials from "./components/sections/Testimonials";
 import FloatingActions from "./components/ui/FloatingActions";
-import { FOOTER_LINKS, FOOTER_TEXT, planLead } from "./data/constants";
+import { DEMO_LEAD, FOOTER_LINKS, FOOTER_TEXT, TRIAL_ENABLED, planLead } from "./data/constants";
 import { InstallHost } from "../spa/InstallApp";
 
 const TRIAL_HASH = "#prueba-gratis";
 
 function LandingApp() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [lead, setLead] = useState(null);
-  // /#prueba-gratis (p. ej. desde el login) abre directamente el formulario de prueba.
-  const [isTrialOpen, setIsTrialOpen] = useState(() => window.location.hash === TRIAL_HASH);
+  // /#prueba-gratis (p. ej. desde el login) abre directamente el formulario de prueba: el automatico si esta
+  // activo, si no la demo por WhatsApp.
+  const openedFromLink = window.location.hash === TRIAL_HASH;
+  const [lead, setLead] = useState(() => (openedFromLink && !TRIAL_ENABLED ? DEMO_LEAD : null));
+  const [isTrialOpen, setIsTrialOpen] = useState(() => openedFromLink && TRIAL_ENABLED);
+  const openTrial = () => (TRIAL_ENABLED ? setIsTrialOpen(true) : setLead(DEMO_LEAD));
 
-  const closeTrial = () => {
-    setIsTrialOpen(false);
-    // Sin el hash, recargar la pagina no vuelve a abrir el formulario.
+  // Sin el hash, recargar la pagina no vuelve a abrir el formulario.
+  const clearTrialHash = () => {
     if (window.location.hash === TRIAL_HASH) {
       window.history.replaceState(null, "", window.location.pathname + window.location.search);
     }
+  };
+  const closeTrial = () => {
+    setIsTrialOpen(false);
+    clearTrialHash();
+  };
+  const closeLead = () => {
+    setLead(null);
+    clearTrialHash();
   };
 
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-ink font-display text-zinc-100 antialiased selection:bg-coral/30">
       <ManualModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
-      <LeadModal lead={lead} onClose={() => setLead(null)} />
-      <TrialModal isOpen={isTrialOpen} onClose={closeTrial} />
+      <LeadModal lead={lead} onClose={closeLead} />
+      {TRIAL_ENABLED && <TrialModal isOpen={isTrialOpen} onClose={closeTrial} />}
 
       <div className="relative z-10">
         <InstallHost />
         <Header />
         <main>
-          <Hero onOpenDemo={() => setIsTrialOpen(true)} />
+          <Hero onOpenDemo={openTrial} />
           <About />
           <Features />
           <Downloads onOpenManual={() => setIsModalOpen(true)} />

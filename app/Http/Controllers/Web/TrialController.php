@@ -20,6 +20,10 @@ class TrialController extends Controller
 {
     public function store(Request $request, OneStreamService $panel): JsonResponse
     {
+        if (! config('services.onestream.trial_enabled')) {
+            return response()->json(['message' => 'Las pruebas gratis no están disponibles en este momento.'], 503);
+        }
+
         // Campo trampa: invisible para personas, los bots suelen llenarlo.
         if (filled($request->input('website'))) {
             return response()->json(['message' => 'No pudimos procesar tu solicitud.'], 422);

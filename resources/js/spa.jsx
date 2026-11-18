@@ -233,7 +233,7 @@ function Login({ onDone }) {
             href="/#prueba-gratis"
             className="block w-full rounded-lg border border-white/10 bg-white/[0.06] py-3 text-center text-sm font-semibold text-zinc-100 shadow-[0_1px_0_rgba(255,255,255,0.06)_inset] transition duration-200 hover:bg-white/10"
           >
-            Crea tu prueba gratis de 30 días
+            Solicita tu prueba gratis
           </a>
           <a href={salesUrl} className="block text-center text-xs text-zinc-500 transition hover:text-zinc-300">
             Ver planes y más información
