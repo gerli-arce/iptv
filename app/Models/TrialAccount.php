@@ -16,6 +16,7 @@ class TrialAccount extends Model
         'panel_line_id',
         'expires_at',
         'ip',
+        'device_id',
     ];
 
     protected function casts(): array

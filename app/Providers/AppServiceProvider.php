@@ -47,10 +47,11 @@ class AppServiceProvider extends ServiceProvider
         // Rutas publicas que gastan cuota de terceros (TMDB) o aceptan datos anonimos.
         RateLimiter::for('public-api', fn (Request $request) => Limit::perMinute(60)->by($request->ip()));
 
-        // Prueba gratis: cada solicitud crea una cuenta real en el panel.
+        // Prueba gratis: freno de intentos (spam y cuota de consultas de DNI). Las cuentas creadas por dia se limitan
+        // aparte en TrialController (dispositivo, IP y total); aqui se tolera equivocarse al escribir los datos.
         RateLimiter::for('trial', fn (Request $request) => [
-            Limit::perHour(3)->by('trial-h:' . $request->ip()),
-            Limit::perDay(5)->by('trial-d:' . $request->ip()),
+            Limit::perHour(10)->by('trial-h:' . $request->ip()),
+            Limit::perDay(30)->by('trial-d:' . $request->ip()),
         ]);
 
         // Una pagina de catalogo pide muchas portadas a la vez.

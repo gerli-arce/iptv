@@ -66,6 +66,30 @@ const formatDate = (iso) =>
 
 const csrfToken = () => document.querySelector('meta[name="csrf-token"]')?.content ?? "";
 
+// Identificador de este navegador para el limite de pruebas por dispositivo (la web no puede leer la MAC).
+// Se guarda en localStorage y en una cookie de un año: si se borra uno, se recupera del otro.
+const DEVICE_KEY = "fp_device_id";
+const deviceId = () => {
+  const fromCookie = document.cookie.match(new RegExp(`(?:^|; )${DEVICE_KEY}=([A-Za-z0-9-]{16,64})`))?.[1];
+  let id = null;
+  try {
+    id = window.localStorage.getItem(DEVICE_KEY);
+  } catch {
+    // Sin acceso a localStorage (modo privado estricto): se usa solo la cookie.
+  }
+  id = (id && /^[A-Za-z0-9-]{16,64}$/.test(id) ? id : null) || fromCookie;
+  if (!id) {
+    id = window.crypto?.randomUUID?.() ?? `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
+  }
+  try {
+    window.localStorage.setItem(DEVICE_KEY, id);
+  } catch {
+    // Ignorado: la cookie basta.
+  }
+  document.cookie = `${DEVICE_KEY}=${id}; max-age=31536000; path=/; SameSite=Lax; Secure`;
+  return id;
+};
+
 const TrialModal = ({ isOpen, onClose }) => {
   const [form, setForm] = useState(EMPTY_FORM);
   const [errors, setErrors] = useState({});
@@ -125,7 +149,7 @@ const TrialModal = ({ isOpen, onClose }) => {
         method: "POST",
         credentials: "same-origin",
         headers: { "Content-Type": "application/json", Accept: "application/json", "X-CSRF-TOKEN": csrfToken() },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, device_id: deviceId() }),
       });
       const data = await response.json().catch(() => ({}));
 
@@ -140,7 +164,8 @@ const TrialModal = ({ isOpen, onClose }) => {
       if (response.status === 419) {
         setFormError("La página caducó. Recárgala e inténtalo de nuevo.");
       } else if (response.status === 429) {
-        setFormError("Hiciste muchos intentos. Espera un rato e inténtalo de nuevo.");
+        // Limite diario de pruebas (mensaje del servidor) o freno de intentos.
+        setFormError(data.daily_limit ? data.message : "Hiciste muchos intentos. Espera un rato e inténtalo de nuevo.");
       } else if (!data.errors) {
         // Solo se muestran los mensajes que el servidor escribe para el cliente (502/503); nunca errores internos.
         const friendly = [502, 503].includes(response.status) && data.message;
@@ -235,7 +260,7 @@ const TrialModal = ({ isOpen, onClose }) => {
               </div>
             ) : (
               <form onSubmit={handleSubmit} noValidate className="space-y-4 overflow-y-auto px-5 py-5 sm:px-6">
-                <Field id="trial-name" label="Nombre completo" icon={User} error={errors.name}>
+                <Field id="trial-name" label="Nombre completo" icon={User} error={errors.name} hint="Tal como figura en tu DNI">
                   <input id="trial-name" type="text" autoComplete="name" value={form.name} onChange={update("name")} placeholder="Ej. Juan Pérez Quispe" className={inputClasses} />
                 </Field>
 
