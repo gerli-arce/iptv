@@ -56,6 +56,15 @@ class TrialController extends Controller
             return response()->json(['message' => $limit, 'daily_limit' => true], 429);
         }
 
+        // Clientes registrados a mano en el panel usan su DNI como usuario: si ya hay una linea asi, ya es (o fue) cliente.
+        try {
+            if ($panel->usernameTaken($data['dni'])) {
+                return $this->fieldError('dni', 'Este DNI ya tiene una cuenta registrada. Escríbenos por WhatsApp si necesitas ayuda.');
+            }
+        } catch (OneStreamException) {
+            return response()->json(['message' => 'No pudimos crear tu cuenta en este momento. Intenta en unos minutos.'], 502);
+        }
+
         // Identidad: el DNI debe existir y el nombre escrito debe ser el de su titular (frena DNIs inventados).
         try {
             $person = $dniService->lookup($data['dni']);

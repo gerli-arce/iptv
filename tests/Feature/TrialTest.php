@@ -108,7 +108,7 @@ class TrialTest extends TestCase
             ->assertStatus(422)->assertJsonValidationErrors('dni');
         $this->postJson('/api/trial', $this->payload(['username' => 'otro123', 'dni' => '87654321']))
             ->assertStatus(422)->assertJsonValidationErrors('phone');
-        Http::assertSentCount(3); // DNI + busqueda de usuario + creacion; los rechazos no llaman a nadie
+        Http::assertSentCount(4); // DNI en panel + consulta DNI + busqueda de usuario + creacion; los rechazos no llaman a nadie
     }
 
     public function test_rejects_invalid_fields_without_calling_panel(): void
@@ -139,7 +139,11 @@ class TrialTest extends TestCase
 
     public function test_username_already_in_panel_is_rejected_without_creating(): void
     {
-        $this->fakePanel(lines: [['line_id' => 'x', 'username' => 'juanperez']]);
+        Http::fake([
+            'panel.test/ext/lines?username=juanperez' => Http::response([['line_id' => 'x', 'username' => 'juanperez']]),
+            'panel.test/ext/lines*' => Http::response([]),
+            'dni.test/*' => Http::response($this->dniResponse()),
+        ]);
 
         $this->postJson('/api/trial', $this->payload())
             ->assertStatus(422)
@@ -165,7 +169,7 @@ class TrialTest extends TestCase
 
         $this->postJson('/api/trial', $this->payload())
             ->assertStatus(422)->assertJsonValidationErrors('dni');
-        Http::assertNotSent(fn (Request $r) => str_contains($r->url(), 'panel.test'));
+        Http::assertNotSent(fn (Request $r) => str_contains($r->url(), 'create-advanced'));
         $this->assertSame(0, TrialAccount::count());
     }
 
@@ -178,7 +182,7 @@ class TrialTest extends TestCase
             $this->postJson('/api/trial', $this->payload(['name' => $name]))
                 ->assertStatus(422)->assertJsonValidationErrors('name');
         }
-        Http::assertNotSent(fn (Request $r) => str_contains($r->url(), 'panel.test'));
+        Http::assertNotSent(fn (Request $r) => str_contains($r->url(), 'create-advanced'));
     }
 
     public function test_filler_data_from_api_does_not_pass(): void
@@ -210,7 +214,7 @@ class TrialTest extends TestCase
         $this->fakePanel(dni: Http::response(['message' => 'error'], 500));
 
         $this->postJson('/api/trial', $this->payload())->assertStatus(503);
-        Http::assertNotSent(fn (Request $r) => str_contains($r->url(), 'panel.test'));
+        Http::assertNotSent(fn (Request $r) => str_contains($r->url(), 'create-advanced'));
         $this->assertSame(0, TrialAccount::count());
     }
 
@@ -295,6 +299,21 @@ class TrialTest extends TestCase
         $this->get('/')->assertSee('<meta name="trial-enabled" content="0">', false);
         $this->postJson('/api/trial', $this->payload())->assertStatus(503);
         Http::assertNothingSent();
+    }
+
+    public function test_dni_already_used_as_username_in_panel_is_rejected(): void
+    {
+        // Linea creada a mano con el DNI como usuario (asi registran a los clientes en el panel).
+        Http::fake([
+            'panel.test/ext/lines?username=12345678' => Http::response([['line_id' => 'x', 'username' => '12345678']]),
+            'dni.test/*' => Http::response($this->dniResponse()),
+            'panel.test/*' => Http::response([]),
+        ]);
+
+        $this->postJson('/api/trial', $this->payload())
+            ->assertStatus(422)->assertJsonValidationErrors('dni');
+        Http::assertNotSent(fn (Request $r) => str_contains($r->url(), 'dni.test') || str_contains($r->url(), 'create-advanced'));
+        $this->assertSame(0, TrialAccount::count());
     }
 
     public function test_honeypot_blocks_bots(): void
