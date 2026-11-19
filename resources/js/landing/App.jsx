@@ -2,7 +2,6 @@ import { useState } from "react";
 import Header from "./components/layout/Header";
 import LeadModal from "./components/layout/LeadModal";
 import ManualModal from "./components/layout/ManualModal";
-import TrialModal from "./components/layout/TrialModal";
 import About from "./components/sections/About";
 import Downloads from "./components/sections/Downloads";
 import Faq from "./components/sections/Faq";
@@ -11,46 +10,39 @@ import Hero from "./components/sections/Hero";
 import Pricing from "./components/sections/Pricing";
 import Testimonials from "./components/sections/Testimonials";
 import FloatingActions from "./components/ui/FloatingActions";
-import { DEMO_LEAD, FOOTER_LINKS, FOOTER_TEXT, TRIAL_ENABLED, planLead } from "./data/constants";
+import { DEMO_LEAD, FOOTER_LINKS, FOOTER_TEXT, TRIAL_ENABLED, TRIAL_URL, planLead } from "./data/constants";
 import { InstallHost } from "../spa/InstallApp";
 
 const TRIAL_HASH = "#prueba-gratis";
 
+// Enlaces antiguos a /#prueba-gratis: con la prueba automatica activa van a su pagina propia.
+if (TRIAL_ENABLED && window.location.hash === TRIAL_HASH) {
+  window.location.replace(TRIAL_URL);
+}
+
 function LandingApp() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  // /#prueba-gratis (p. ej. desde el login) abre directamente el formulario de prueba: el automatico si esta
-  // activo, si no la demo por WhatsApp.
-  const openedFromLink = window.location.hash === TRIAL_HASH;
-  const [lead, setLead] = useState(() => (openedFromLink && !TRIAL_ENABLED ? DEMO_LEAD : null));
-  const [isTrialOpen, setIsTrialOpen] = useState(() => openedFromLink && TRIAL_ENABLED);
-  const openTrial = () => (TRIAL_ENABLED ? setIsTrialOpen(true) : setLead(DEMO_LEAD));
+  // Con la prueba automatica apagada, /#prueba-gratis (y /prueba-gratis, que redirige aqui) abre la demo por WhatsApp.
+  const [lead, setLead] = useState(() => (window.location.hash === TRIAL_HASH && !TRIAL_ENABLED ? DEMO_LEAD : null));
 
-  // Sin el hash, recargar la pagina no vuelve a abrir el formulario.
-  const clearTrialHash = () => {
+  const closeLead = () => {
+    setLead(null);
+    // Sin el hash, recargar la pagina no vuelve a abrir el formulario.
     if (window.location.hash === TRIAL_HASH) {
       window.history.replaceState(null, "", window.location.pathname + window.location.search);
     }
-  };
-  const closeTrial = () => {
-    setIsTrialOpen(false);
-    clearTrialHash();
-  };
-  const closeLead = () => {
-    setLead(null);
-    clearTrialHash();
   };
 
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-ink font-display text-zinc-100 antialiased selection:bg-coral/30">
       <ManualModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
       <LeadModal lead={lead} onClose={closeLead} />
-      {TRIAL_ENABLED && <TrialModal isOpen={isTrialOpen} onClose={closeTrial} />}
 
       <div className="relative z-10">
         <InstallHost />
         <Header />
         <main>
-          <Hero onOpenDemo={openTrial} />
+          <Hero trialHref={TRIAL_ENABLED ? TRIAL_URL : null} onOpenDemo={() => setLead(DEMO_LEAD)} />
           <About />
           <Features />
           <Downloads onOpenManual={() => setIsModalOpen(true)} />

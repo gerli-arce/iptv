@@ -15,6 +15,8 @@ export const NAV_LINKS = [
 
 // La prueba automatica se activa desde el servidor (TRIAL_ENABLED en .env); apagada, se usa DEMO_LEAD por WhatsApp.
 export const TRIAL_ENABLED = document.querySelector('meta[name="trial-enabled"]')?.content === "1";
+// Pagina propia del formulario (tambien es el destino del QR impreso).
+export const TRIAL_URL = "/prueba-gratis";
 
 export const HERO = {
   kicker: "Premium · TV por internet",

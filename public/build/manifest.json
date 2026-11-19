@@ -1,14 +1,35 @@
 {
-  "_InstallApp-CJxEmT-t.js": {
-    "file": "assets/InstallApp-CJxEmT-t.js",
-    "name": "InstallApp"
+  "_InstallApp-DHge9WZs.js": {
+    "file": "assets/InstallApp-DHge9WZs.js",
+    "name": "InstallApp",
+    "imports": [
+      "_user-BxK-8GnD.js"
+    ]
   },
   "_hls-DkI61o3c.js": {
     "file": "assets/hls-DkI61o3c.js",
     "name": "hls"
   },
+  "_house-dwsrCP30.js": {
+    "file": "assets/house-dwsrCP30.js",
+    "name": "house",
+    "imports": [
+      "_user-BxK-8GnD.js"
+    ]
+  },
+  "_smartphone-5oQXvnO8.js": {
+    "file": "assets/smartphone-5oQXvnO8.js",
+    "name": "smartphone",
+    "imports": [
+      "_user-BxK-8GnD.js"
+    ]
+  },
+  "_user-BxK-8GnD.js": {
+    "file": "assets/user-BxK-8GnD.js",
+    "name": "user"
+  },
   "resources/css/app.css": {
-    "file": "assets/app-CIGT20LX.css",
+    "file": "assets/app-BCq1y8GT.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "name": "app",
@@ -26,28 +47,46 @@
     ]
   },
   "resources/js/landing.jsx": {
-    "file": "assets/landing-aYGNIh9U.js",
+    "file": "assets/landing-mtbKGCtc.js",
     "name": "landing",
     "src": "resources/js/landing.jsx",
     "isEntry": true,
     "imports": [
-      "_InstallApp-CJxEmT-t.js"
+      "_user-BxK-8GnD.js",
+      "_smartphone-5oQXvnO8.js",
+      "_InstallApp-DHge9WZs.js"
     ],
     "css": [
-      "assets/app-CIGT20LX.css"
+      "assets/app-BCq1y8GT.css"
     ]
   },
   "resources/js/spa.jsx": {
-    "file": "assets/spa-BZr6ZNJ5.js",
+    "file": "assets/spa-DK6kNpx0.js",
     "name": "spa",
     "src": "resources/js/spa.jsx",
     "isEntry": true,
     "imports": [
-      "_InstallApp-CJxEmT-t.js",
-      "_hls-DkI61o3c.js"
+      "_user-BxK-8GnD.js",
+      "_hls-DkI61o3c.js",
+      "_InstallApp-DHge9WZs.js",
+      "_house-dwsrCP30.js"
     ],
     "css": [
-      "assets/app-CIGT20LX.css"
+      "assets/app-BCq1y8GT.css"
+    ]
+  },
+  "resources/js/trial.jsx": {
+    "file": "assets/trial-Cq1cppwh.js",
+    "name": "trial",
+    "src": "resources/js/trial.jsx",
+    "isEntry": true,
+    "imports": [
+      "_user-BxK-8GnD.js",
+      "_smartphone-5oQXvnO8.js",
+      "_house-dwsrCP30.js"
+    ],
+    "css": [
+      "assets/app-BCq1y8GT.css"
     ]
   }
 }

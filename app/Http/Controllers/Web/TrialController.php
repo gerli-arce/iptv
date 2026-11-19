@@ -8,7 +8,9 @@ use App\Services\DniService;
 use App\Services\OneStreamException;
 use App\Services\OneStreamService;
 use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -20,6 +22,19 @@ use Illuminate\Validation\Rule;
  */
 class TrialController extends Controller
 {
+    /**
+     * Pagina propia del formulario (/prueba-gratis): destino del boton de la landing, del login y del QR impreso.
+     * Si la prueba automatica esta apagada, lleva a la landing con la demo por WhatsApp abierta.
+     */
+    public function show(): View|RedirectResponse
+    {
+        if (! self::available()) {
+            return redirect('/#prueba-gratis');
+        }
+
+        return view('trial');
+    }
+
     public function store(Request $request, OneStreamService $panel, DniService $dniService): JsonResponse
     {
         if (! self::available()) {

@@ -228,9 +228,9 @@ function Login({ onDone }) {
           </div>
 
           <p className="text-center text-sm text-zinc-400">¿Aún no tienes una cuenta de Fastnet Player?</p>
-          {/* Abre la landing con el formulario de prueba ya desplegado (ver landing/App.jsx). */}
+          {/* Pagina de la prueba gratis (si esta apagada, el servidor la manda a la demo por WhatsApp de la landing). */}
           <a
-            href="/#prueba-gratis"
+            href="/prueba-gratis"
             className="block w-full rounded-lg border border-white/10 bg-white/[0.06] py-3 text-center text-sm font-semibold text-zinc-100 shadow-[0_1px_0_rgba(255,255,255,0.06)_inset] transition duration-200 hover:bg-white/10"
           >
             Solicita tu prueba gratis

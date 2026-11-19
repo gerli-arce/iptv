@@ -26,6 +26,7 @@ if (config('app.target') === 'admin') {
 }
 
 Route::get('/', [PortalController::class, 'landing'])->name('landing');
+Route::get('/prueba-gratis', [TrialController::class, 'show'])->name('trial.show');
 Route::post('/api/trial', [TrialController::class, 'store'])->middleware('throttle:trial')->name('trial.store');
 Route::get('/login', [PortalController::class, 'showLogin'])->name('login');
 // La app es de una sola pagina, pero cada vista tiene su URL (/app/tv, /app/peliculas...): todas cargan la misma app.

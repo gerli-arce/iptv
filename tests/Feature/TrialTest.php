@@ -301,6 +301,18 @@ class TrialTest extends TestCase
         Http::assertNothingSent();
     }
 
+    public function test_trial_page_shows_form_or_falls_back_to_whatsapp_demo(): void
+    {
+        $this->get('/prueba-gratis')
+            ->assertOk()
+            ->assertSee('<title>Prueba gratis 30 días | Fastnet Player</title>', false)
+            ->assertSee('<link rel="canonical" href="https://fastv.fastnetperu.com.pe/prueba-gratis">', false);
+
+        // Apagada (o sin claves): el QR y los enlaces llevan a la landing con la demo por WhatsApp.
+        config(['services.onestream.trial_enabled' => false]);
+        $this->get('/prueba-gratis')->assertRedirect('/#prueba-gratis');
+    }
+
     public function test_dni_already_used_as_username_in_panel_is_rejected(): void
     {
         // Linea creada a mano con el DNI como usuario (asi registran a los clientes en el panel).

@@ -9,7 +9,8 @@ const fadeInUp = {
   show: { opacity: 1, y: 0 },
 };
 
-const Hero = ({ onOpenDemo }) => {
+// trialHref: pagina de la prueba gratis automatica; sin ella, el boton abre la demo por WhatsApp (onOpenDemo).
+const Hero = ({ trialHref, onOpenDemo }) => {
   const startPlan = PRICING.plans[0];
   const typedWord = useTypewriter(HERO.rotatingWords);
 
@@ -76,7 +77,12 @@ const Hero = ({ onOpenDemo }) => {
             {HERO.primaryCta}
             <ArrowUpRight className="h-5 w-5" />
           </Button>
-          <Button type="button" onClick={onOpenDemo} variant="secondary" size="lg" className="sm:px-8 sm:py-4 sm:text-lg">
+          <Button
+            {...(trialHref ? { as: "a", href: trialHref } : { type: "button", onClick: onOpenDemo })}
+            variant="secondary"
+            size="lg"
+            className="sm:px-8 sm:py-4 sm:text-lg"
+          >
             <Play className="h-5 w-5" />
             {HERO.secondaryCta}
           </Button>

@@ -44,6 +44,7 @@ class SeoController extends Controller
 
         $pages = [
             ['/', '1.0', 'weekly'],
+            ['/prueba-gratis', '0.8', 'monthly'],
             ['/privacy-policy', '0.3', 'yearly'],
             ['/tv-privacy-policy', '0.3', 'yearly'],
             ['/data-deletion', '0.3', 'yearly'],
